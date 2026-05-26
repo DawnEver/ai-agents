@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone:*)",
+      "Bash(git pull:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(gh repo view:*)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:github.com)",
+      "Read(*/ai-post/**)",
+      "Write(*/ai-post/articles/**)",
+      "Write(*/ai-post/style/**)",
+      "Write(*/ai-post/.claude/skills/**)",
+      "Write(*/ai-post/.claude/agents/**)",
+      "Write(*/ai-post/templates/**)",
+      "Write(*/ai-post/CLAUDE.md)",
+      "Glob(*/ai-post/**)",
+      "Grep(*/ai-post/**)"
+    ]
+  }
+}
