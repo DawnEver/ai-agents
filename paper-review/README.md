@@ -30,8 +30,7 @@ ongoing/                — papers currently under review
       draft.md          — user-written draft
       final.md          — polished plain-text review
 archived/<slug>/        — completed reviews (mirrors ongoing/ 0-1-2-3 structure)
-style/profile.md        — GLOBAL: synthesised voice + 10-slug rolling samples
-critiques-library/
-  angles.md             — GLOBAL: deduped angle library
+style/profile.md        — GLOBAL: synthesised voice + 10-slug rolling samples (gitignored — contains paper samples)
+critiques-library/      — GLOBAL: local-only angle library (gitignored — contains paper samples)
 templates/              — default-angles, polish-checklist, summary-template, reviewer-voice
 ```
