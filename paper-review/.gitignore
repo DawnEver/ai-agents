@@ -1,0 +1,6 @@
+ongoing/*
+archived/*
+.claude/.*state.json
+.claude/.review-gate-state.json
+__pycache__/
+.DS_Store

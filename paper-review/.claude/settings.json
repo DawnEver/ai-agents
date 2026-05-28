@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(marker:*)",
+      "Bash(python:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(cp:*)",
+      "Read(*/paper-review/**)",
+      "Write(*/paper-review/ongoing/**)",
+      "Write(*/paper-review/archived/**)",
+      "Write(*/paper-review/style/**)",
+      "Write(*/paper-review/critiques-library/**)",
+      "Write(*/paper-review/.claude/**)",
+      "Write(*/paper-review/templates/**)",
+      "Write(*/paper-review/CLAUDE.md)",
+      "Glob(*/paper-review/**)",
+      "Grep(*/paper-review/**)"
+    ]
+  }
+}

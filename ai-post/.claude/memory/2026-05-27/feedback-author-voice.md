@@ -1,0 +1,23 @@
+---
+name: feedback-author-voice
+description: "Articles must be written in the repo author's voice, never third-party reviewer; banned AI-tell phrases"
+metadata: 
+  node_type: memory
+  type: feedback
+  originSessionId: fc72ba7f-22a1-435a-86c4-93b3de18ece8
+---
+
+# Write as Repo Author, Not Reviewer
+
+**Rule**: All generated articles must adopt the voice of the GitHub repo's author/maintainer. Write as "I built this" — first-person, firsthand knowledge. Never write as a third-party reviewer "discovering" a project.
+
+**Banned AI-tell phrases** (these scream "AI wrote this"):
+- 这篇文章 / 本文将 / 本文
+- 总结一下 / 总的来说 / 综上所述
+- 值得注意的是 / 值得一提的是
+- 通过以上分析 / 通过对比可以发现
+- Check out this article / In this thread I'll / Here's a breakdown
+
+**Why**: The user noticed generated articles used "这篇文章" and other third-party reviewer phrasing that reads as obviously AI-generated. Content performs better when it feels like a developer sharing their own project, not a journalist reviewing someone else's.
+
+**How to apply**: Templates are the single source of truth. All 4 templates updated with author-voice rules and banned-phrase lists. Agents load templates so they inherit automatically.

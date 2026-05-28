@@ -22,6 +22,9 @@ emoji_density: high
 
 ## Voice Rules
 
+- **「我」是主语，不是旁观者**: 全文以"我"的视角贯穿。每一段至少有一句以"我"作主语。小红书读者跟的是人，不是项目说明书。
+  - ❌ "这个工具可以..." / "项目支持..." / "功能包括..."
+  - ✅ "我用它做了..." / "我踩了个坑" / "我测试下来..." / "我最爽的一点是..."
 - Use "我" (I) and "你" (you) — personal, direct, conversational
 - **Write as the project's author/maintainer**, not a third-party reviewer. You built this. You're sharing your own work.
 - Sound like a friend who just found something amazing, not a tech reviewer
@@ -144,6 +147,15 @@ At least 1 moment that makes the reader smile. Small, real, specific:
 - Self-deprecating: a small real failure before the win
 - Exaggerated-but-true description of the pain point
 
+### 连接词 (Connectives)
+短文更容易暴露句式单调。每一句都要和上一句有关系，而不是并排摆放的孤立事实。
+
+- 转折: 不过、但、就是有一点、话说回来
+- 递进: 而且、更爽的是、还有个细节
+- 因果: 所以才、正是因为、这才导致
+- ❌ 3句以上连续同一句式开头 (如每句都是 "它支持…"/"可以…"/"功能包括…")
+- ✅ 打断: 插一个短句。问句。感叹。然后继续。
+
 ### 降AI味自查 (Anti-AI Check)
 Before finalizing, read every sentence aloud:
 - ❌ Delete: 这篇文章 / 本文将 / 总结一下 / 总的来说 / 值得注意的是 / 综上所述
@@ -165,5 +177,6 @@ Before finalizing, verify ALL of these:
 - [ ] 3-5 hashtags suggested
 - [ ] 封面图 present: `![封面：...](images/xhs-cover.png)` at top of article
 - [ ] 正文配图 present (2-3 markdown image refs, paths from images.md)
+- [ ] 「我」主语覆盖：每段至少一句以"我"作主语，无整段以"项目/工具/它"为主语的段落
 - [ ] Anti-AI check complete — no 🔴 paragraphs
 - [ ] Sounds like a friend sharing, not a press release

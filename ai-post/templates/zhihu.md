@@ -29,6 +29,9 @@ emoji_density: minimal
 
 ## Voice Rules
 
+- **「我」是主语，不是旁观者**: 文章必须以"我"的视角贯穿始终。每一段至少有一句以"我"作主语。不是介绍项目——是我在讲我的经历。
+  - ❌ "该项目提供了X功能" / "项目支持Y" / "用户可以Z"
+  - ✅ "我用它做了X" / "我踩了个坑" / "我最开始以为Y，结果发现Z"
 - **Write as the project's maintainer sharing firsthand experience**: You built or deeply use this tool. Share real insights, not academic observations. Frame as "我做了X，发现Y" not "该项目具有X特性".
 - **Objective, measured, professional**: Present facts and analysis, not enthusiasm. Even as the author, be honest about trade-offs.
 - Use concrete, personal framing: "在实际使用中我发现..." (In actual use I found...), "用下来感觉..." (After using it...), "有个地方被我踩到了..." (I stepped on a landmine...)
@@ -152,9 +155,27 @@ Every paragraph should have a clear core point expressible in one sentence. If y
 ### 句子节奏 (Sentence Rhythm)
 Even analytical writing needs rhythm. After a long explanatory sentence, drop a short one to let the reader breathe. Avoid 5+ consecutive long sentences — it becomes a wall.
 
+### 连接词与段落过渡 (Connectives & Transitions)
+Every paragraph needs connective tissue — both within sentences and between paragraphs. AI writing often omits this, making each sentence feel like an isolated bullet point.
+
+**句内连接词** — vary by function:
+- 转折: 不过、但、然而、只是、话虽如此
+- 递进: 而且、另外、更重要的是、加上
+- 因果: 所以、因此、正是因为、这也导致了
+- 举例: 比如、比方说、具体来说、以X为例
+- 解释: 也就是说、换句话说、说白了
+- 让步: 当然、确实、倒是、不可否认
+
+**段落衔接** — the first sentence of each paragraph should connect to the previous one:
+- ❌ AI pattern:每段开头都是主语+动词 ("A项目提供了...", "B功能支持了...", "C场景下...")
+- ✅ Human pattern: "这带来了另一个问题..." / "但真正麻烦的地方在这里..." / "相比之下..." / "用下来，最意外的其实是..."
+
+**句首不重复**: Never start 3+ consecutive sentences with the same structure. Mix: 主语开头 / 状语开头 / 连词开头 / 短句.
+
 ### 降AI味自查 (Anti-AI Check)
 - ❌ Delete: 这篇文章 / 本文将 / 总的来说 / 值得注意的是 / 综上所述 / 通过对比可以发现
 - ❌ Delete hype: 惊艳 / 震撼 / 逆天 / 神器
+- ❌ 主语不是"我"的段落扫描: 凡是一整段主语都是"项目/它/该工具/用户"，必须改写成"我"的视角
 - ❌ Replace vague quantifiers with numbers or explicit uncertainty: "大幅提升" → "提升约3倍（benchmark见原文）" or "我没有测试，但官方声称..."
 - ✅ Keep: specific versions, concrete limitations, "在X场景下" qualifiers
 - Grade each paragraph: 🟢 technical human / 🟡 slightly formulaic / 🔴 obvious AI (must rewrite 🔴)
@@ -167,10 +188,13 @@ Even analytical writing needs rhythm. After a long explanatory sentence, drop a 
 - [ ] At least 1-2 limitations or "not suitable for" scenarios acknowledged
 - [ ] Paragraph mini-thesis check passed (every paragraph has a core point)
 - [ ] Sentence rhythm: no 5+ consecutive long sentences
+- [ ] Connectives used: transitions between paragraphs not naked subject-verb starts
+- [ ] No 3+ consecutive sentences with same opening structure
 - [ ] Objective, measured tone — no hype words (惊艳/震撼/逆天/神器)
 - [ ] Specific, verifiable claims (not "fastest ever")
 - [ ] 封面图 present: `![封面](images/zhihu-cover.png)` at top of article
 - [ ] 正文配图 present (2-3 markdown image refs, paths from images.md)
+- [ ] 「我」主语覆盖：每段至少一句以"我"作主语，无整段以"项目/它"为主语的段落
 - [ ] Anti-AI check complete — no 🔴 paragraphs
 - [ ] GitHub link at the end
 - [ ] Frame answers a real question/need
