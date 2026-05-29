@@ -8,6 +8,7 @@ Claude Code agent for reviewing academic papers. Ingest a PDF, build a shared su
 /paper-review:new <pdf>                   (single entry, orchestrator)
   ├── 01-ingest         pdf → 1-paper-text/paper.md + md/ + img/sec*/ + INDEX.md  (marker-pdf)
   ├── 02-consensus      2-review/summary.md (shared truth, includes Obvious gaps)
+  ├── 02b-literature    top N refs (paper + IEEE Xplore) + author background → 2-review/literature.md
   ├── ⭐ 03-angle-gate  4 defaults + library, user confirms
   ├── 04-fanout         spawn reviewers in parallel (Sonnet vision + takeover codex/deepseek)
   ├── 05-aggregate      merge → 2-review/critiques.md
@@ -33,6 +34,7 @@ Claude Code agent for reviewing academic papers. Ingest a PDF, build a shared su
                   1-paper-text/img/sec01/, sec02/, ...
                   1-paper-text/INDEX.md (figure-number ↔ file ↔ caption)
   → write 2-review/summary.md (incl. Obvious gaps section) — shared ground truth
+  → 2-review/literature.md: top N refs (from paper + IEEE Xplore) + author background (first/corresponding author prior work, affiliation, research focus) → landscape summary
   → ⭐ ANGLE GATE: 4 defaults + top library angles → user picks/edits
   → fanout (parallel):
       reviewer-novelty       (sonnet-vision; novelty + related-work)

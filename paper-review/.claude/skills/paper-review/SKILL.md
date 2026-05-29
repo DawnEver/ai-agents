@@ -15,6 +15,7 @@ You are the orchestrator. Given a PDF path (or a slug already in `ongoing/`), wa
 |------|------|--------------|
 | 1 | `01-ingest.md` | marker-pdf → `1-paper-text/paper.md` + `md/` + `img/sec*` + `INDEX.md` |
 | 2 | `02-consensus.md` | ⭐ Write `2-review/summary.md` — shared truth (+ `Obvious gaps`), user confirms |
+| 2b | `02b-literature.md` | Search top N references (from paper + IEEE Xplore) → `2-review/literature.md` |
 | 3 | `03-angle-gate.md` | ⭐ Propose angles, user confirms |
 | 4 | `04-fanout.md` | Spawn reviewers in parallel (Sonnet + takeover) |
 | 5 | `05-aggregate.md` | Merge into `2-review/critiques.md` |
@@ -39,7 +40,8 @@ Re-invoking `/paper-review:new <slug>` resumes from the latest non-empty artifac
 | `ongoing/<slug>/2-review/critiques/*.md` (all angles present) | 05 |
 | `ongoing/<slug>/2-review/critiques/*.md` (partial — fewer files than angles in `angles.md`) | 04 (incomplete fanout — offer retry/skip/continue) |
 | `ongoing/<slug>/2-review/angles.md` | 04 |
-| `ongoing/<slug>/2-review/summary.md` | 03 |
+| `ongoing/<slug>/2-review/literature.md` (non-empty) | 03 |
+| `ongoing/<slug>/2-review/summary.md` | 02b |
 | `ongoing/<slug>/1-paper-text/paper.md` | 02 |
 | nothing | 01 |
 

@@ -6,3 +6,14 @@ critiques-library/*
 .claude/.review-gate-state.json
 __pycache__/
 .DS_Store
+
+# paper_pdf_ingest — Python project
+.venv*
+*.egg-info
+build/
+dist/
+uv.lock
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+.coverage*

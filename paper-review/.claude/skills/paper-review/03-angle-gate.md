@@ -6,6 +6,7 @@ Pick the 锐评 angles for this paper. **User gate** — iterate until they appr
 - `templates/default-angles.md` — seed angles (now compact: novelty, methodology, experiments, freestyle)
 - `critiques-library/angles.md` — accumulated angle library (hit-counts, samples)
 - `ongoing/<slug>/2-review/summary.md` (especially `Obvious gaps`)
+- `ongoing/<slug>/2-review/literature.md` — landscape context from step 02b
 - Each reviewer agent's frontmatter `router:` (the **default** routing)
 
 ## Output
@@ -14,8 +15,9 @@ Pick the 锐评 angles for this paper. **User gate** — iterate until they appr
 ## Steps
 
 1. Read `templates/default-angles.md`. Read `critiques-library/angles.md` if it exists; rank by hit-count.
-2. Look at `summary.md` (especially `Obvious gaps`) and decide which default/library angles matter most for **this** paper.
-3. Present candidate angles to the user via `AskUserQuestion` (multi-select). Include:
+2. Read `2-review/literature.md` if it exists. Note whether the literature search found any close prior work that suggests strengthening the novelty angle, or identified a missing baseline that implies experiments angle is critical.
+3. Look at `summary.md` (especially `Obvious gaps`) and decide which default/library angles matter most for **this** paper.
+4. Present candidate angles to the user via `AskUserQuestion` (multi-select). Include:
    - All default angles listed in `templates/default-angles.md`
    - Top 2–3 from the library by hit-count, if they're distinct from defaults
 
@@ -30,8 +32,8 @@ Pick the 锐评 angles for this paper. **User gate** — iterate until they appr
    - Description: `Freestyle / wildcard — open-ended critique from any angle not covered above (writing clarity, ethics, significance, missing references, presentation).`
 
    This way the user sees what each angle covers when they make their selection, without needing to flip to another file.
-4. Let the user add / remove / edit. Iterate until they confirm.
-5. Write `angles.md`:
+5. Let the user add / remove / edit. Iterate until they confirm.
+6. Write `angles.md`:
    ```markdown
    # Angles for <slug>
 
@@ -42,7 +44,7 @@ Pick the 锐评 angles for this paper. **User gate** — iterate until they appr
    ## methodology
    ...
    ```
-6. **Routing is read from agent frontmatter by default.** Only fill `Router override` when the user explicitly wants something different for this paper. Step 04 uses: override-if-set, else frontmatter default.
+7. **Routing is read from agent frontmatter by default.** Only fill `Router override` when the user explicitly wants something different for this paper. Step 04 uses: override-if-set, else frontmatter default.
 
 ## Hard rule
 

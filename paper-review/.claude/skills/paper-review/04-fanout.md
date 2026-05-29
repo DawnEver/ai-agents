@@ -4,7 +4,8 @@ Spawn one reviewer per angle **in parallel** (one message, multiple tool calls).
 
 ## Inputs
 - `ongoing/<slug>/2-review/angles.md` (chosen angles + optional router overrides)
-- `ongoing/<slug>/2-review/summary.md`, `1-paper-text/paper.md`, `1-paper-text/md/`, `1-paper-text/img/`, `1-paper-text/INDEX.md`
+- `ongoing/<slug>/2-review/summary.md`, `ongoing/<slug>/2-review/literature.md` (if present)
+- `1-paper-text/paper.md`, `1-paper-text/md/`, `1-paper-text/img/`, `1-paper-text/INDEX.md`
 - Each reviewer agent's frontmatter `router:`
 
 ## Output
@@ -29,9 +30,9 @@ For each angle in `angles.md`:
 ## Prompt contract — Sonnet subagents (Agent call)
 
 Each Agent invocation receives:
-1. Paper slug + absolute paths to `summary.md`, `1-paper-text/paper.md`, `1-paper-text/md/`, `1-paper-text/img/`, `1-paper-text/INDEX.md`.
+1. Paper slug + absolute paths to `summary.md`, `literature.md` (if present), `1-paper-text/paper.md`, `1-paper-text/md/`, `1-paper-text/img/`, `1-paper-text/INDEX.md`.
 2. Angle definition copied verbatim from `angles.md`.
-3. Instruction: read `2-review/summary.md` first; consult `1-paper-text/INDEX.md` to locate figures by number.
+3. Instruction: read `2-review/summary.md` first, then `2-review/literature.md` (if present) for research landscape context; consult `1-paper-text/INDEX.md` to locate figures by number.
 4. Output path: `ongoing/<slug>/2-review/critiques/<angle>.md`.
 5. Output structure per point: `## claim` / `- Evidence:` / `- Severity:` / `- Suggested action:`.
 
@@ -41,11 +42,12 @@ Takeover runs in a separate process and **cannot read this conversation**. File-
 
 The prompt MUST be **fully self-contained**:
 1. **Inline the entire `summary.md`** verbatim into the prompt.
-2. **Inline the angle definition** from `angles.md`.
-3. **Inline relevant section excerpts** the reviewer needs (e.g. for methodology angle: Method + Theory + relevant appendix; copy the actual markdown body into the prompt, do not just give paths).
-4. State the output path explicitly (use forward-slash absolute path), but also instruct the agent to RETURN the critique text in the response, so the orchestrator can write it locally if the agent's file write fails.
-5. Same output structure (`## claim` / `Evidence` / `Severity` / `Suggested action`).
-6. If the included text would exceed ~30k tokens, prioritise: summary + angle + Method section + Theory section + caption text. Drop appendices.
+2. **Inline the entire `literature.md`** verbatim into the prompt (if present; skip if absent).
+3. **Inline the angle definition** from `angles.md`.
+4. **Inline relevant section excerpts** the reviewer needs (e.g. for methodology angle: Method + Theory + relevant appendix; copy the actual markdown body into the prompt, do not just give paths).
+5. State the output path explicitly (use forward-slash absolute path), but also instruct the agent to RETURN the critique text in the response, so the orchestrator can write it locally if the agent's file write fails.
+6. Same output structure (`## claim` / `Evidence` / `Severity` / `Suggested action`).
+7. If the included text would exceed ~30k tokens, prioritise: summary + literature + angle + Method section + Theory section + caption text. Drop appendices.
 
 After takeover returns, the orchestrator writes the returned text to `2-review/critiques/<angle>.md` if the file isn't already there.
 

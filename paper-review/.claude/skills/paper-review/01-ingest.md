@@ -1,6 +1,6 @@
 # Step 01 — Ingest PDF → Markdown
 
-Convert the PDF into a per-section markdown folder with per-section images, using `scripts/ingest.py`.
+Convert the PDF into a per-section markdown folder with per-section images, using `scripts/ingest` (Python package).
 
 ## Inputs
 - `<pdf-path>` — argument to `/paper-review:new`
@@ -37,16 +37,14 @@ ongoing/<slug>/
 
 1. **Derive slug** from the PDF filename (lowercase, non-alphanum → `-`, strip leading/trailing `-`). Create `ongoing/<slug>/`, copy the PDF in as `0-raw.pdf`.
 
-2. **Run `scripts/ingest.py`** — it handles tool selection, splitting, noise filtering, multi-paper separation, image distribution, and index building automatically:
+2. **Run `scripts/ingest`** — it handles tool selection, splitting, noise filtering, multi-paper separation, image distribution, and index building automatically:
    ```bash
-   /Users/linxu/.local/share/paper-review-venv/bin/python3 scripts/ingest.py \
-     "ongoing/<slug>/0-raw.pdf" "ongoing/<slug>"
+   python -m scripts.ingest "ongoing/<slug>/0-raw.pdf" "ongoing/<slug>"
    ```
    Tool selection logic (built into the script):
    - Detects GPU VRAM via `system_profiler` (Metal), `torch.cuda`, or `nvidia-smi`
    - VRAM ≥ 4 GB → **marker-pdf** (best layout fidelity)
    - otherwise → **pymupdf4llm** (fast, rule-based; seconds not minutes)
-   - fallback → **pdfplumber** (plain text, no images)
 
    **Section splitting**: picks the shallowest heading level (fewer `#`) that has ≥3 matches, avoiding over-fragmentation from deep subsection headings. Falls back to all-heading split for poorly-structured PDFs.
 
@@ -81,12 +79,12 @@ ongoing/<slug>/
 
 ## Failure triage
 
-When `scripts/ingest.py` fails, match the error message against this table before asking the user to debug:
+When `scripts/ingest` fails, match the error message against this table before asking the user to debug:
 
 | Error message | Diagnosis | Action |
 |---------------|-----------|--------|
 | `marker_single: command not found` | `marker-pdf` not installed in the venv | Ingest falls back to `pymupdf4llm` automatically. No user action needed — the summary will note "ingested via pymupdf4llm (marker-pdf unavailable)". |
-| `No module named 'pymupdf4llm'` | venv is missing dependencies | Re-create venv: `rm -rf ~/.local/share/paper-review-venv && python3 -m venv ~/.local/share/paper-review-venv && ~/.local/share/paper-review-venv/bin/pip install pymupdf4llm pdfplumber` |
+| `No module named 'pymupdf4llm'` | venv is missing dependencies | Re-create venv: `rm -rf ~/.local/share/paper-review-venv && python3 -m venv ~/.local/share/paper-review-venv && ~/.local/share/paper-review-venv/bin/pip install pymupdf4llm` |
 | `No module named 'torch'` or CUDA/Metal errors | GPU detection failed, but ingest should still work | The script falls back to `pymupdf4llm`. If that also fails, run `~/.local/share/paper-review-venv/bin/pip install pymupdf4llm` manually. |
 | `PDF appears to be scanned (no extractable text)` | The PDF is image-only — OCR needed | Tell the user: "This PDF has no selectable text. Please run OCR (e.g. Adobe Acrobat, ocrmypdf) and re-submit." |
 | `Permission denied` on output path | File locked by sync service (e.g. OneDrive) | Wait a few seconds and retry. If persistent, move the PDF outside the OneDrive folder and re-run. |

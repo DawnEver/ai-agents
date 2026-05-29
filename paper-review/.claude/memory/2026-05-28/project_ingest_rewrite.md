@@ -1,21 +1,39 @@
 ---
 name: project-ingest-rewrite
-description: ingest.py overhauled — section splitting, noise filtering, multi-paper detection, figure rendering, GPU detection
+description: ingest.py split into paper_pdf_ingest package (src layout) with ruff, pytest, 49 tests; pymupdf4llm limitation on 2-column IEEE papers identified
 metadata:
   type: project
 ---
 
-ingest.py was substantially rewritten (2026-05-28) to fix critical bugs and add features.
+ingest.py was refactored from a single 800-line file into a Python package (2026-05-28).
 
-**Why:** The case-study paper (IET EPA + 2 appended IEEE ITEC papers) exposed multiple ingest failures: (1) Section splitter was completely broken in the any-heading fallback mode because regex capture-group count vs iteration stride mismatched; (2) OCR garbage from control-diagram figure fragments was treated as sections; (3) Three independent papers in one PDF were treated as one document; (4) pymupdf4llm's embedded-raster extraction couldn't capture vector figure axes/captions.
+**Why:** Single-file ingest.py was becoming unmaintainable. Needed proper code formatting, linting, and test coverage.
 
-**Changes:**
-- `_split_sections`: Fixed capture-group-mismatch bug; prefer shallowest heading level with ≥3 matches (not level with most matches → over-fragmentation)
-- `_classify_section`: Three-way classifier — 'keep' (normal), 'discard' (OCR garbage: <80 meaningful chars, diagram labels with high pipe-ratio), 'merge-up' (sub-figure labels like (a)/(b) → body merged into parent)
-- `_is_paper_boundary`: Detects appended papers via author-block signals (affiliations+email ≥2), IEEE copyright banners, Roman-numeral section restarts, IEEE Abstract- format
-- `_build_figure_page_map` + `_render_figure_pages`: Uses PyMuPDF (fitz) to render full pages containing figures/tables at ~144 DPI — preserves axis labels, captions, complete sub-figures. marker-pdf installed but not used (too slow on M4 without dedicated GPU)
-- `_detect_gpu_vram_gb`: Added Apple Silicon detection (Chipset Model → sysctl hw.memsize * 0.7)
-- Title extraction: Finds earliest level-1/2/3 heading, skips "Abstract"
-- Python 3.9 compat: Optional[X] instead of X | None
+**Package structure (src layout):**
+```
+paper_pdf_ingest/                  ← Python project root
+  pyproject.toml                   ← ruff, pytest, coverage config
+  Makefile                         ← fmt, lint, test targets
+  .pre-commit-config.yaml
+  src/paper_pdf_ingest/
+    __init__.py                    ← public API re-exports
+    __main__.py                    ← CLI entry point
+    convert.py                     ← GPU detection + PDF converters
+    sections.py                    ← section splitting + cleaning
+    figures.py                     ← figure cropping + rendering
+    output.py                      ← file output + paper.md/index
+    utils.py                       ← slug, strip_formatting
+  tests/                           ← 49 tests across 5 files
+```
 
-**How to apply:** Script auto-detects and auto-cleans. Multi-paper detection output goes to `1-paper-text/appended/`. Figure rendering is a post-processing step after pymupdf4llm conversion.
+**Changes from original:**
+- All `_private` functions made public (package-internal)
+- `paper_pdf_ingest` installed as `paper-pdf-ingest` package
+- `scripts/ingest.py` → thin backward-compat wrapper
+- Cleaned `.gitignore` (removed wdg-lab Rust/Cython entries)
+
+**Validation:** ruff format + lint clean, 49/49 pytest pass.
+
+**Known limitation:** pymupdf4llm produces flat text (no `#` headings) for 2-column IEEE papers. `split_sections` correctly falls back to single-section but title is "Untitled" and abstract is garbled. Two paths: use marker-pdf (GPU ≥4GB) or add plain-text heading heuristics.
+
+**How to apply:** `cd paper_pdf_ingest && make install-dev && make all`. Run pipeline: `uv run python -m paper_pdf_ingest <pdf> <slug-dir>`.
