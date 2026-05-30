@@ -6,7 +6,7 @@ Pick the 锐评 angles for this paper. **User gate** — iterate until they appr
 - `templates/default-angles.md` — seed angles (now compact: novelty, methodology, experiments, freestyle)
 - `critiques-library/angles.md` — accumulated angle library (hit-counts, samples)
 - `ongoing/<slug>/2-review/summary.md` (especially `Obvious gaps`)
-- `ongoing/<slug>/2-review/literature.md` — landscape context from step 02b
+- `ongoing/<slug>/2-review/literature.md` — landscape context from step 02
 - Each reviewer agent's frontmatter `router:` (the **default** routing)
 
 ## Output

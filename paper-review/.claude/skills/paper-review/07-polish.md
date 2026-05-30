@@ -16,6 +16,7 @@ Spawn `polisher-english` to refine the user's edited draft into publishable revi
 1. `Agent(subagent_type: polisher-english)` with a prompt containing:
    - Full paths to `draft.md`, `templates/reviewer-voice.md`, `style/profile.md`, `templates/polish-checklist.md`.
    - Output path `ongoing/<slug>/3-response/final.md`.
+   - **Output language: English**, regardless of the draft's language. If `draft.md` is in Chinese (per `review-config.md`), translate it into natural reviewer English — preserve content faithfully, invent nothing.
    - **Output format: plain text only.** No markdown headings, no bullets with `-` or `*`, no backticks, no bold/italic. Numbered points use `1.` `2.` plain text. Recommendation is a standalone final line.
    - **Structure** (from `templates/reviewer-voice.md`):
      - Opening paragraph (1-2 sentences framing the paper and review focus). Vary naturally — don't reuse the same opener.

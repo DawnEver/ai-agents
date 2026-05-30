@@ -36,10 +36,10 @@ Be specific. "The proof of Theorem 2 is hand-wavy" is useless. "Step from eq. (7
 
 ## Step 3: Write critiques
 
-Output: `ongoing/<slug>/2-review/critiques/methodology.md`.
+Output: `ongoing/<slug>/2-review/critiques/methodology.md`. Number every point sequentially (1, 2, 3, …) in descending severity order (Major → Minor → Nit).
 
 ```
-## <short, sharp claim>
+## <N> · <short, sharp claim>
 - Evidence: <md-file>:<section or eq number>
 - Severity: major | minor | nit
 - Suggested action: <one line>

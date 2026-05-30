@@ -1,36 +1,64 @@
 # Paper-Review
 
-Claude Code agent for reviewing academic papers. Ingest a PDF, generate a shared summary, fan out multi-angle 锐评 across Codex / Claude / vision agents, then polish a user-written draft into publishable English reviewer comments.
+Claude Code agent for reviewing academic papers. Ingest a PDF, profile the literature, build a shared summary (folding in landscape and venue type), fan out 4-angle 锐评 across Sonnet/Codex/DeepSeek, then polish a user-edited draft into publishable plain-text reviewer comments.
 
-Entry point: `/paper-review:new <path-to.pdf>` — see `CLAUDE.md` for the full pipeline.
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/paper-review:new <pdf>` | Main pipeline. Re-invoking with a slug resumes from the latest artifact. |
+| `/paper-review:rerun <step> <slug>` | Re-run any single step. |
+
+## Pipeline
+
+`/paper-review:new <pdf>` walks a 9-step pipeline with progressive disclosure — `SKILL.md` is the map, each sub-file under `.claude/skills/paper-review/` is the playbook:
+
+| Step | File | What happens |
+|------|------|--------------|
+| 0 | `00-language.md` | Pick intermediate-file language (en/zh) |
+| 1 | `01-ingest.md` | PDF → per-section markdown + extracted figures |
+| 2 | `02-literature.md` | Search references + author background → `literature.md` |
+| 2b | `02b-consensus.md` | Write `summary.md` — shared truth (literature + venue + gaps), user confirms |
+| 3 | `03-angle-gate.md` | Propose angles from defaults + library, user confirms |
+| 4 | `04-fanout.md` | Spawn 4 reviewers in parallel (Sonnet vision + Codex/DeepSeek takeover) |
+| 5 | `05-aggregate.md` | Merge, dedupe, rank → `critiques.md`; user picks |
+| 6 | `06-user-draft.md` | Orchestrator generates complete draft; user edits (session boundary) |
+| 7 | `07-polish.md` | `polisher-english` → plain-text `final.md` |
+| 8 | `08-archive.md` | Move to `archived/YYMMDD/<slug>/`, update style + angle library |
+
+**Core principle**: Literature before consensus. Consensus before fanout. Fanout before draft. Draft before polish. No opinion without reading `summary.md`. Polisher never invents.
+
+## Model Routing
+
+| Agent | Default router |
+|-------|---------------|
+| novelty, experiments, freestyle | `sonnet-vision` |
+| methodology | `takeover-codex` (DeepSeek alternative) |
+
+Per-paper overrides in `angles.md`. Takeover prompts are fully self-contained (inline summary + sections).
 
 ## Directory Layout
 
 ```
 .claude/
-  skills/
-    paper-review/       — main pipeline (progressive disclosure SKILL.md + 01–08)
-    paper-rerun/        — re-run any single step
+  skills/paper-review/  — pipeline (SKILL.md + 00–08 sub-files)
+  skills/paper-rerun/   — re-run single step
   agents/               — 4 reviewers + polisher
-ongoing/                — papers currently under review
-  <slug>/
-    0-raw.pdf           — original (gitignored at folder level)
-    1-paper-text/       — step 01: ingested text + images
-      paper.md          — title + abstract + section index (entry point)
-      md/               — per-section markdown
-      img/sec*/         — per-section images + rendered figure/table pages
-      INDEX.md          — figure/table number ↔ file mapping
-      appended/         — if PDF contains multiple papers (e.g. conference versions)
-    2-review/           — steps 02–05: review materials
-      summary.md        — consensus (every agent reads first, incl. Obvious gaps)
-      angles.md         — chosen angles + optional router overrides
-      critiques/        — one .md per reviewer agent
-      critiques.md      — aggregated, deduped, ranked
-    3-response/         — steps 06–07: user draft → publishable response
-      draft.md          — user-written draft
-      final.md          — polished plain-text review
-archived/<slug>/        — completed reviews (mirrors ongoing/ 0-1-2-3 structure)
-style/profile.md        — GLOBAL: synthesised voice + 10-slug rolling samples (gitignored — contains paper samples)
-critiques-library/      — GLOBAL: local-only angle library (gitignored — contains paper samples)
-templates/              — default-angles, polish-checklist, summary-template, reviewer-voice
+ongoing/<slug>/         — papers under review
+  0-raw.pdf             — original (gitignored)
+  1-paper-text/         — ingested text (paper.md, md/, img/, INDEX.md)
+  2-review/             — literature, summary, angles, critiques
+  3-response/           — draft.md → final.md
+archived/YYMMDD/<slug>/ — completed reviews, date-sorted
+style/profile.md        — synthesised voice + 10-sample rolling window (gitignored)
+critiques-library/      — deduped angle library (gitignored)
+templates/              — literature-template, critiques-template, summary-template,
+                          default-angles, reviewer-voice, polish-checklist, ingest-errors
+paper_pdf_ingest/       — Python package: PDF→markdown pipeline (tests, src layout)
 ```
+
+## Design notes
+
+- **Progressive disclosure**: orchestrator reads one sub-step file at a time. Total instruction context per step is ~200 lines.
+- **Venue calibration**: conference vs journal gates the `Obvious gaps` section — EE conference papers are not penalised for missing hardware/code/data.
+- **Intermediate language**: all review prose can switch to Chinese via `review-config.md` `lang: zh`. `final.md` is always plain-text English.

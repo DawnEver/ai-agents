@@ -4,6 +4,7 @@ Merge `critiques/*.md` into a single ranked `critiques.md`, then present a numbe
 
 ## Inputs
 - `ongoing/<slug>/2-review/critiques/*.md`
+- `ongoing/<slug>/review-config.md` — `lang:` (default `en`); write `critiques.md` prose in this language
 
 ## Output
 - `ongoing/<slug>/2-review/critiques.md`
@@ -17,34 +18,20 @@ Merge `critiques/*.md` into a single ranked `critiques.md`, then present a numbe
    - `E` for **experiments**
    - `F` for **freestyle**
    - For custom angles, derive a prefix from the first letter or abbreviation of the angle name (e.g. `S` for soundness, `W` for writing, `R` for reproducibility). If two angles would collide on the same letter, use 2-letter abbreviations (e.g. `So` for soundness, `St` for statistical-rigour).
-3. Within each angle, collect all critique points and number them **1, 2, 3, …** in descending severity order (Major first, then Minor, then Nit).
-4. Dedupe across angles: if two angles raise the same issue, keep it under the primary angle and note the other in `From:`.
-5. **Flag conflicts**: if one angle calls X a strength and another calls X a weakness, mark both points with `⚡ CONFLICT` and cross-reference.
-6. Write `critiques.md` with this structure:
-
-   ```markdown
-   # Critiques — <slug>
-
-   ## N · Novelty
-   ### N1 · <point title>
-   - Severity: Major
-   - From: novelty (+ methodology)
-   - Claim: ...
-   - Evidence: ...
-   - Suggested action: ...
-
-   ### N2 · <point title>
-   ...
-
-   ## M · Methodology
-   ### M1 · ...
-   ...
-
-   ## Conflicts
-   ### ⚡ N3 vs M2 · <topic>
-   - N3 says: ...
-   - M2 says: ...
-   ```
+3. Within each angle, **preserve the source file's sequential numbering** (1, 2, 3, …). Do NOT re-sort or re-number. The source file already orders points by severity (Major → Minor → Nit); keep that order.
+4. **Dedupe across angles — preserve original numbers**:
+   - If two (or more) angles raise the same issue, keep it under the **primary** angle (first one in reading order: novelty → methodology → experiments → freestyle → custom) at its original number.
+   - In the secondary angle(s), mark that number slot as **skipped** with a cross-reference to the primary code.
+   - This preserves a 1:1 mapping between source-file point #N and aggregate code N<N> — no numbers shift, no re-ordering.
+   - Format for a skipped slot:
+     ```markdown
+     ### M5 · ⏭ SKIP — 与 N3 重复
+     <one-line summary. The full critique is under N3.>
+     ```
+5. **Flag conflicts**: if one angle calls X a strength and another calls X a weakness, mark both points with `⚡ CONFLICT` and cross-reference. Conflicts are NOT deduplicated — both sides stay.
+5b. **Preserve image-verify flags**: any critique about *figure rendering* (blurriness, low resolution, truncation — possible extraction artifacts) keeps a `🔍 VERIFY` marker and **retains the image path** in its `Evidence:` line, so the user can open the file and check against the original PDF. Do not silently drop or promote these to firm defects.
+6. Write `critiques.md` following `templates/critiques-template.md`.
+   Key invariant: **N3 in `critiques.md` = point #3 in `critiques/novelty.md`**. No exceptions.
 
 7. After writing the file, display a **compact selection menu** inline to the user:
 
@@ -53,13 +40,18 @@ Merge `critiques/*.md` into a single ranked `critiques.md`, then present a numbe
    N · Novelty
      N1 [Major] <point title>
      N2 [Minor] <point title>
+     N3 [Major] <point title>
+     N4 [Minor] ⏭ SKIP — 与 E2 重复
    M · Methodology
      M1 [Major] <point title>
      ...
    ⚡ Conflicts: N3 vs M2
 
-   Type codes to include in your draft (e.g. N1 M2 E1 F1):
+   Type codes to include (skips are auto-excluded):
+   e.g. N1 N2 E1 F1
    ─────────────────────────────────────────────────
    ```
 
-8. **Wait for the user's selection.** Do not proceed to step 06 until the user responds with selection codes (or `all` / `none`).
+   ⏭ SKIP entries are shown in the menu for transparency but are **auto-excluded** from selection — the user does not need to skip them manually.
+
+8. **Wait for the user's selection.** Do not proceed to step 06 until the user responds with selection codes (or `all` / `none`). `all` includes every non-skip point.

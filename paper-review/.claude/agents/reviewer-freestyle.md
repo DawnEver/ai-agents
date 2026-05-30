@@ -42,10 +42,10 @@ Write to `ongoing/<slug>/2-review/critiques/freestyle.md`.
 ## Chosen angle: <name> — <one-line definition>
 ```
 
-Then critique points in the standard format:
+Then critique points, numbered sequentially (1, 2, 3, …) in descending severity order (Major → Minor → Nit):
 
 ```
-## <short claim>
+## <N> · <short claim>
 - Evidence: <md-file>:<section> or img/<file>
 - Severity: major | minor | nit
 - Suggested action: <one line>

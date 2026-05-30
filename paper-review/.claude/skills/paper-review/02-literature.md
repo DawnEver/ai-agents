@@ -1,14 +1,14 @@
-# Step 02b — Literature context & author background
+# Step 02 — Literature context & author background
 
-Search for the most relevant prior work and profile the authors. Extract key references from the paper itself, search IEEE Xplore for additional context, and look up the authors' research track record. Write a shared landscape summary that all downstream agents read.
+Search for the most relevant prior work and profile the authors. Extract key references from the paper itself, search IEEE Xplore for additional context, and look up the authors' research track record. This runs **before** the consensus summary (step 02b) so the summary can fold this background into the paper's positioning.
 
 ## Inputs
-- `ongoing/<slug>/2-review/summary.md` — consensus (especially `Obvious gaps` and key claims)
-- `ongoing/<slug>/1-paper-text/paper.md` — full paper text (references section + author list)
+- `ongoing/<slug>/1-paper-text/paper.md` — full paper text (title, abstract, references section + author list)
+- `ongoing/<slug>/1-paper-text/md/*.md` — per-section text (related-work / introduction)
 - `ongoing/<slug>/2-review/angles.md` — optional `literature_n:` override (default N = 5)
 
 ## Output
-- `ongoing/<slug>/2-review/literature.md`
+- `ongoing/<slug>/2-review/literature.md` — written in the language from `review-config.md` (`lang:`, default `en`). Reference titles/authors stay verbatim; the prose notes and landscape summary switch language.
 
 ## Steps
 
@@ -17,10 +17,10 @@ Check `ongoing/<slug>/2-review/angles.md` for a line `literature_n: <N>`. If abs
 
 ### 2. Extract references from paper (Source A)
 
-Read `summary.md` and `1-paper-text/paper.md`. Identify up to 15 candidate references using these priority signals (in order):
-1. Cited in the summary's key claims or contribution bullets
-2. Cited in the `Obvious gaps` section of `summary.md`
-3. Appears in the paper's related-work or introduction sections
+Read `1-paper-text/paper.md` (abstract + section index) and the related-work / introduction sections under `1-paper-text/md/`. Identify up to 15 candidate references using these priority signals (in order):
+1. Cited in the abstract or contribution claims
+2. Cited repeatedly across introduction and related-work (anchor references)
+3. Listed as the closest prior systems / baselines the paper compares against
 4. Exclude self-citations (same authors as the paper)
 
 For each candidate extract: **title**, **authors**, **year**, **venue** (if visible in the references list).
@@ -29,8 +29,8 @@ For each candidate extract: **title**, **authors**, **year**, **venue** (if visi
 
 Build 2–3 search queries from:
 - Top 4 content nouns from the paper title
-- Method name (if identifiable from summary)
-- Task/domain keywords from summary
+- Method name (if identifiable from the abstract)
+- Task/domain keywords from the abstract and introduction
 
 Run `WebSearch` for each query:
 ```
@@ -66,38 +66,8 @@ If no profile is found for an author after 2 search attempts, record "profile no
 
 ### 6. Write `literature.md`
 
-```markdown
-## Literature Context
-
-### Paper Positioning
-<2–3 sentences: where this paper sits in the landscape — dominant approach it extends, closest prior systems, what makes its problem setting distinct>
-
-### Key References (from paper)
-1. **[Title]** — [Authors, Year, Venue] — [1-sentence note: what it contributes and why it matters here]
-...
-
-### Related Work (IEEE search)
-1. **[Title]** — [Authors, Year, Venue] — [1-sentence note: how it relates to this paper]
-...
-*(If no IEEE results found: "IEEE search returned no usable results for this query.")*
-
-### Author Background
-
-#### [First Author Name] (first author)
-- Affiliation: [institution / lab]
-- Research focus: [keywords]
-- Relevant prior work:
-  1. [Title, Year, Venue]
-  2. ...
-- Track record note: <1 sentence — e.g. "3 prior papers on X; this submission extends their ICLR 2023 work.">
-
-#### [Corresponding Author Name] (corresponding, if different)
-- ...
-*(Repeat for each searched author. List remaining authors by name only if not searched.)*
-
-### Research Landscape Summary
-<3–5 sentences: current state of the field, dominant approaches, open problems that this paper's venue/reviewers would care about>
-```
+Fill in `templates/literature-template.md`. Respect hard rules below.
+Prose in the language from `review-config.md` (`lang:`, default `en`).
 
 ## Hard rules
 

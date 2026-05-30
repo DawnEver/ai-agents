@@ -8,20 +8,21 @@ Freeze the review, then update global style + angle library, with dedup and roll
 - `critiques-library/angles.md` (may not exist yet)
 
 ## Output
-- `archived/<slug>/` — full move of `ongoing/<slug>/`
+- `archived/YYMMDD/<slug>/` — full move of `ongoing/<slug>/` (date-named parent for chronological sorting)
 - Updated `style/profile.md` (capped growth)
 - Updated `critiques-library/angles.md` (deduped)
-- Optional `archived/<slug>/postmortem.md`
+- Optional `archived/YYMMDD/<slug>/postmortem.md`
 
 ## Steps
 
-1. **Move folder**:
+1. **Move folder** into a date-named parent directory for chronological sorting:
    ```bash
-   mv "ongoing/<slug>" "archived/<slug>"
+   mkdir -p "archived/$(date +%y%m%d)" && mv "ongoing/<slug>" "archived/$(date +%y%m%d)/<slug>"
    ```
+   The archive path is now `archived/YYMMDD/<slug>/` (e.g. `archived/260530/attention-is-all-you-need/`).
 
 2. **Update voice profile** — spawn `polisher-english` with:
-   - Read `archived/<slug>/3-response/final.md`.
+   - Read `archived/YYMMDD/<slug>/3-response/final.md`.
    - Read current `style/profile.md` if it exists.
    - Profile structure has TWO regions:
      ```
@@ -38,7 +39,7 @@ Freeze the review, then update global style + angle library, with dedup and roll
    - Write back to `style/profile.md`.
 
 3. **Update angle library** with dedup and rolling cap:
-   - Read `archived/<slug>/angles.md` and `archived/<slug>/3-response/final.md`.
+   - Read `archived/YYMMDD/<slug>/angles.md` and `archived/YYMMDD/<slug>/3-response/final.md`.
    - For each angle used:
      - If the angle name matches an existing entry exactly, bump `hit-count`.
      - Otherwise, before adding as new, **semantic dedup check**: compare against existing top-10 entries by name + description. If the new angle is essentially the same as an existing one (e.g. "dataset bias" vs "data bias" vs "demographic skew in data"), bump that existing entry's count and add the new wording as an `alias` under it instead of creating a new entry.
@@ -60,7 +61,7 @@ Freeze the review, then update global style + angle library, with dedup and roll
 4. **Postmortem (optional, user-driven)**. After archive, offer the user:
    > Want to score each weakness in `final.md` as `valid` / `partial` / `hallucinated`? This feeds the angle library's quality metadata.
 
-   If yes, create `archived/<slug>/postmortem.md`:
+   If yes, create `archived/YYMMDD/<slug>/postmortem.md`:
    ```markdown
    # Postmortem — <slug>
 
@@ -79,4 +80,4 @@ Freeze the review, then update global style + angle library, with dedup and roll
 
 ## Hard rule
 
-Never modify `archived/<slug>/` files after step 08 except for `postmortem.md`. The frozen snapshot is the source of truth.
+Never modify `archived/YYMMDD/<slug>/` files after step 08 except for `postmortem.md`. The frozen snapshot is the source of truth.

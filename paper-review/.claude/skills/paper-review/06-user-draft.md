@@ -4,6 +4,7 @@ Generate a **complete first draft** of the reviewer response from the user's sel
 
 ## Inputs
 - `ongoing/<slug>/2-review/critiques.md`
+- `ongoing/<slug>/review-config.md` — `lang:` (default `en`); write `draft.md` in this language. Note: `final.md` (step 07) is always plain-text English — if the draft is in Chinese, the polisher renders the English version from it.
 - `templates/reviewer-voice.md` — house style profile
 - `style/profile.md` — if it exists, accumulated voice from past reviews
 - User's selection codes (e.g. `N1 M1 E2 F1`) — parsed from the user's response to step 05
@@ -15,8 +16,9 @@ Generate a **complete first draft** of the reviewer response from the user's sel
 
 1. **Parse the user's selection codes.**
    - `N1 M3 E2` → include only those specific points.
-   - `all N` → include all N-prefixed points. `all M` → all M-prefixed points.
-   - `all` → include every point from `critiques.md`.
+   - `all N` → include all non-skip N-prefixed points. `all M` → all non-skip M-prefixed points.
+   - `all` → include every non-skip point from `critiques.md`.
+   - `⏭ SKIP` codes (e.g. `N4 ⏭ SKIP`) are never valid selections — they are auto-excluded.
    - Codes without a number (e.g. `N`) are invalid unless prefixed with `all` — ask to clarify.
 
 2. **Read `templates/reviewer-voice.md`**. If `style/profile.md` exists, read that too — it may contain the user's accumulated voice from past reviews.
@@ -36,8 +38,11 @@ Generate a **complete first draft** of the reviewer response from the user's sel
    - Evidence woven in naturally ("Table 2 shows 69.3% vs 70.6%..." not a separate Evidence: bullet).
    - Occasional first-person (1-2× max) for humanity.
 
+   - **Image-verify flags (`🔍 VERIFY`)**: do NOT bake figure-rendering critiques into the published review prose as firm defects. Instead, after the draft, list them separately for the user under a `── Verify these figures before sending ──` heading, each with its **image path** and a one-line note (e.g. "Figure 3 text looks unreadable — but this may be an extraction artifact; open `img/sec3/figure3.png` and confirm against the PDF before keeping this point"). The user decides whether the issue is real and whether it belongs in the review.
+
 4. Tell the user, plainly:
    - Complete draft written to `ongoing/<slug>/3-response/draft.md` — edit freely: change wording, add or drop points, reorder.
+   - Any `🔍 VERIFY` figure flags are listed separately with their image paths — check these against the original PDF before keeping them.
    - When ready, re-invoke `/paper-review:new <slug>` to resume at step 07 (polish).
 5. **Stop.** Do not poll. Do not loop. End the turn.
 

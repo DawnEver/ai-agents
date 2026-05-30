@@ -25,31 +25,45 @@ For each angle in `angles.md`:
 
 **Spawn all reviewers in a single message** with multiple tool calls. Do not serialise.
 
+## Venue-type calibration (pass to every reviewer)
+
+Read the **Venue type** field from `summary.md` and inject it into every reviewer prompt. Reviewers must hold critique to the standard of the actual venue:
+- **Electrical-engineering conference paper** (electric machines, power electronics, drives): simulation-only validation is acceptable; do NOT penalise missing hardware experiments, missing public code, or missing public data. Focus on novelty, method soundness, and whether the simulation supports the claims.
+- **Journal paper** (esp. IEEE Transactions): experimental / hardware validation, robustness, and completeness are fair game — absence is a legitimate weakness.
+- The methodology and experiments reviewers in particular must respect this; a missing-code/missing-hardware critique against an EE conference paper is out of scope and should not be raised.
+
 **Before spawning, tell the user**: "Launching <N> reviewers in parallel — results will arrive in ~2–5 minutes. You'll see each critique appear as the reviewers finish."
 
-## Prompt contract — Sonnet subagents (Agent call)
+## Figures are machine-extracted (pass to every reviewer)
 
-Each Agent invocation receives:
-1. Paper slug + absolute paths to `summary.md`, `literature.md` (if present), `1-paper-text/paper.md`, `1-paper-text/md/`, `1-paper-text/img/`, `1-paper-text/INDEX.md`.
-2. Angle definition copied verbatim from `angles.md`.
-3. Instruction: read `2-review/summary.md` first, then `2-review/literature.md` (if present) for research landscape context; consult `1-paper-text/INDEX.md` to locate figures by number.
-4. Output path: `ongoing/<slug>/2-review/critiques/<angle>.md`.
-5. Output structure per point: `## claim` / `- Evidence:` / `- Severity:` / `- Suggested action:`.
+The images in `1-paper-text/img/` are cropped by a local PDF-parsing library and may be mis-cropped, mislabeled, or rendered too small / low-resolution — extraction artifacts, not paper defects. Instruct **every** reviewer that references a figure:
+- Do **not** state image-quality problems (blurriness, low resolution, truncation, unreadable labels) as firm defects — they may be extraction artifacts.
+- Raise such observations only as a **flag for the user to verify against the original PDF**, severity `minor` at most, and **attach the exact image path** used (e.g. `img/sec3-experiments/figure3.png`).
+- Critiques about experimental *content* (missing baselines, table-vs-prose mismatch, etc.) are unaffected and stand on their own.
 
-## Prompt contract — Takeover (Codex / DeepSeek)
+## Prompt contract — all reviewers
 
-Takeover runs in a separate process and **cannot read this conversation**. File-system reads from within Codex/DeepSeek are also unreliable on paths with spaces/OneDrive sync.
+Every reviewer receives the same core brief (common to Sonnet and Takeover):
+1. Read `summary.md` first — calibrate critique to its **Venue type** (see above).
+2. Read `literature.md` (if present) for research landscape context.
+3. Angle definition verbatim from `angles.md`.
+4. Output to `ongoing/<slug>/2-review/critiques/<angle>.md`.
+5. Format: numbered points (1, 2, 3…) descending severity (Major → Minor → Nit). Per point:
+   `## <N> · <claim>` / `- Evidence:` / `- Severity: major|minor|nit` / `- Suggested action:`.
+6. Language: read `lang:` from `review-config.md` (default `en`). Critique prose in that language; quoted paper text stays verbatim.
 
-The prompt MUST be **fully self-contained**:
-1. **Inline the entire `summary.md`** verbatim into the prompt.
-2. **Inline the entire `literature.md`** verbatim into the prompt (if present; skip if absent).
-3. **Inline the angle definition** from `angles.md`.
-4. **Inline relevant section excerpts** the reviewer needs (e.g. for methodology angle: Method + Theory + relevant appendix; copy the actual markdown body into the prompt, do not just give paths).
-5. State the output path explicitly (use forward-slash absolute path), but also instruct the agent to RETURN the critique text in the response, so the orchestrator can write it locally if the agent's file write fails.
-6. Same output structure (`## claim` / `Evidence` / `Severity` / `Suggested action`).
-7. If the included text would exceed ~30k tokens, prioritise: summary + literature + angle + Method section + Theory section + caption text. Drop appendices.
+### Router-specific
 
-After takeover returns, the orchestrator writes the returned text to `2-review/critiques/<angle>.md` if the file isn't already there.
+**Sonnet** (`Agent` call) — pass paths directly; subagent reads files from disk.
+
+**Takeover** (Codex/DeepSeek) — runs in a separate process, cannot read this conversation or OneDrive paths.
+The prompt is fully self-contained — inline **verbatim**:
+- Entire `summary.md` + `literature.md` + angle definition
+- Relevant section excerpts (e.g. Method + Theory; actual markdown body)
+- Restate venue-type calibration rule inline; state target language explicitly
+- If text exceeds ~30k tokens, prioritise: summary + literature + angle + Method + Theory + captions
+
+After takeover returns, orchestrator writes returned text to `critiques/<angle>.md` if not already there.
 
 ## After fanout
 

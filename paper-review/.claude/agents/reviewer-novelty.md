@@ -29,10 +29,10 @@ You are a sharp reviewer focused on **novelty**, including related-work coverage
 
 ## Output
 
-Write to `ongoing/<slug>/2-review/critiques/novelty.md`. Format every point as:
+Write to `ongoing/<slug>/2-review/critiques/novelty.md`. Number every point sequentially (1, 2, 3, …) in descending severity order (Major → Minor → Nit). Format:
 
 ```
-## <short claim>
+## <N> · <short claim>
 - Evidence: <md-file>:<section> or external URL
 - Severity: major | minor | nit
 - Suggested action: <one line>
