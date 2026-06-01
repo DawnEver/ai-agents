@@ -1,2 +1,6 @@
 .DS_Store
 archived/
+ongoing/
+style/
+.claude/.retro_state.json
+.claude/.review-gate-state.json
