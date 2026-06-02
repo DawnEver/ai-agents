@@ -2,6 +2,8 @@
 
 <!-- Sorted by date, newest first. Keep at most 20 entries. -->
 
+- [2026-06-02 paper_pdf_ingest standalone repo](../memory/2026-06-02/paper_pdf_ingest_standalone.md) — extracted to independent git repo at paper-review/paper_pdf_ingest/; hatchling, CI, bug fixes applied
+
 - [2026-05-30 Prompt slimming](../memory/2026-05-30/prompt_slimming.md) — 2-round 锐评 → -90 lines: deduped AGENT.md↔SKILL.md, extracted 3 inline templates, merged prompt contracts
 - [2026-05-30 Pipeline reorder & language step](../memory/2026-05-30/pipeline_reorder_commit.md) — literature before consensus, 00-language en/zh, venue-calibrated gaps, standardized critique format
 - [2026-05-28 E2E tests](../memory/2026-05-28/project_e2e_tests.md) — strict e2e tests against known IEEE PDF with LaTeX ground truth; conftest.py extracted shared fixtures; Pillow corrupted in venv

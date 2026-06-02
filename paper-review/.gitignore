@@ -17,3 +17,4 @@ htmlcov/
 .pytest_cache/
 .ruff_cache/
 .coverage*
+paper_pdf_ingest/

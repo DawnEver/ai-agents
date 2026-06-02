@@ -2,6 +2,23 @@
 
 Claude Code agent for reviewing academic papers. Ingest a PDF, profile the literature, build a shared summary (folding in landscape and venue type), fan out 4-angle 锐评 across Sonnet/Codex/DeepSeek, then polish a user-edited draft into publishable plain-text reviewer comments.
 
+## Setup
+
+```bash
+# 1. Clone this repo
+git clone https://github.com/DawnEver/paper-review.git
+cd paper-review
+
+# 2. Clone the ingest library
+git clone https://github.com/DawnEver/paper_pdf_ingest.git
+
+# 3. Create shared venv and install the library
+python -m venv ~/.local/share/paper-review-venv
+~/.local/share/paper-review-venv/bin/pip install -e paper_pdf_ingest/
+```
+
+The pipeline's ingest step calls `scripts/ingest.py`, which delegates to `paper_pdf_ingest`.
+
 ## Commands
 
 | Command | Description |
@@ -54,7 +71,7 @@ style/profile.md        — synthesised voice + 10-sample rolling window (gitign
 critiques-library/      — deduped angle library (gitignored)
 templates/              — literature-template, critiques-template, summary-template,
                           default-angles, reviewer-voice, polish-checklist, ingest-errors
-paper_pdf_ingest/       — Python package: PDF→markdown pipeline (tests, src layout)
+paper_pdf_ingest/       — standalone git repo: PDF→markdown library (install with pip install -e)
 ```
 
 ## Design notes

@@ -2,6 +2,19 @@
 
 Claude Code agent for reviewing academic papers. Ingest a PDF, profile the literature, build a shared summary (folding in that landscape and the venue type), fan out 4-angle 锐评 across Sonnet subagents and Codex/DeepSeek takeover, then polish an orchestrator-generated draft (user-edited) into publishable **plain-text** reviewer comments.
 
+## Setup
+
+```bash
+# Clone the ingest library alongside this repo
+git clone https://github.com/DawnEver/paper_pdf_ingest.git
+
+# Create shared venv and install it
+python -m venv ~/.local/share/paper-review-venv
+~/.local/share/paper-review-venv/bin/pip install -e paper_pdf_ingest/
+```
+
+The ingest step (`scripts/ingest.py`) delegates to `paper_pdf_ingest.__main__:main`.
+
 ## Architecture
 
 `/paper-review:new <pdf>` walks a 9-step pipeline — see `SKILL.md` for the step table.
@@ -25,6 +38,7 @@ Progressive disclosure: `SKILL.md` is the map; each step's sub-file under `.clau
 ## Directory Layout
 
 ```
+paper_pdf_ingest/       — STANDALONE git repo (not tracked here); PDF→markdown library
 .claude/
   skills/
     paper-review/       — main pipeline (progressive disclosure SKILL.md + 01–08)
