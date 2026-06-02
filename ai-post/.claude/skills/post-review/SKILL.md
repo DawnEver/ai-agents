@@ -5,7 +5,7 @@ argument-hint: <slug> [platform]
 allowed-tools: "Read,Write,Glob,Grep,Agent,Skill"
 ---
 
-# /post:review — 三方会审
+# /post-review — 三方会审
 
 ## 核心设计
 
@@ -23,10 +23,10 @@ allowed-tools: "Read,Write,Glob,Grep,Agent,Skill"
 
 ## 参数解析
 
-- `<slug>` — 文章目录名，对应 `articles/<slug>/`
+- `<slug>` — 文章目录名，对应 `ongoing/<slug>/`
 - `[platform]` — 可选，指定单一平台；不填则审所有已生成平台
 
-检查 `articles/<slug>/` 下有哪些 `.md` 文件已存在（排除 `repo-analysis.md` 和 `meta.md`）。
+检查 `ongoing/<slug>/2-draft/` 下有哪些 `.md` 文件已存在（包括 `images.md`）。
 
 ---
 
@@ -44,6 +44,7 @@ allowed-tools: "Read,Write,Glob,Grep,Agent,Skill"
 - 微幽默：哪里有让你嘴角微扬的细节？哪里完全没有？
 - 最无聊的段落是哪段？为什么？
 - 句子节奏：默读一遍，是否单调？
+- 图片描述（alt text）：是否与文章主题/术语一致？是否过于通用像占位符？是否用了作者不会用的词？
 
 **输出**：
 ```
@@ -65,9 +66,9 @@ AI味逐段:
 
 ### 身份 B：技术核查员
 
-> 你是一名后端工程师，专门验证技术内容的准确性。不在乎文章好不好看，只在乎技术对不对。
+> 你是一名软件工程师，专门验证技术内容的准确性。不在乎文章好不好看，只在乎技术对不对。
 
-**检查项**（对照 `articles/<slug>/repo-analysis.md`）：
+**检查项**（对照 `ongoing/<slug>/1-research/repo-analysis.md`）：
 - 每个代码块：语法正确？能实际运行？
 - 安装步骤：命令准确？顺序正确？
 - 技术术语：是否被正确使用（无误用/夸大）？
@@ -105,7 +106,7 @@ AI味逐段:
   A3: Skill("codex:rescue", prompt=身份A prompt)           ← Codex
 
 身份B 技术核查员 × 3 模型:
-  B1: Agent(fork, prompt=身份B prompt + 文章内容 + repo-analysis)
+  B1: Agent(fork, prompt=身份B prompt + 文章内容 + repo-analysis.md)
   B2: Skill("take-over:continue", prompt=身份B prompt)
   B3: Skill("codex:rescue", prompt=身份B prompt)
 ```
@@ -185,8 +186,23 @@ AI味逐段:
 | Twitter |  ✅   |  —    |  ✅   |   0    |
 
 建议操作：
-- 小红书：`/post:regenerate <slug> xiaohongshu`
-- 微信：手动处理分歧后 `/post:publish wechat <slug>`
-- 知乎：确认技术问题后 `/post:publish zhihu <slug>`
-- Twitter：`/post:publish twitter <slug>`
+- 小红书：`/post-regenerate <slug> xiaohongshu`
+- 微信：手动处理分歧后 `/post-publish wechat <slug>`
+- 知乎：确认技术问题后 `/post-publish zhihu <slug>`
+- Twitter：`/post-publish twitter <slug>`
 ```
+
+### Phase 6：图片提示词会审（Image Prompt Review）
+
+文章正文审完后，对 `2-draft/images.md` 做独立审查，输出 `3-final/images.md`。
+
+**审查依据**：对照 `3-final/<platform>.md` 终稿，检查 images.md 中的图片描述和 AI prompt 是否与终稿一致。
+
+**检查项**：
+- 术语一致性：图片 alt 文本中的概念名称是否与终稿一致？（如终稿用"奴隶主视角"，图片描述不应写"编排者视角"）
+- 残留引用：是否提到已删除的概念？（如终稿去掉了 GPT，图片 prompt 不应再提 GPT）
+- 封面标题匹配：封面图的 hook text / title 是否与终稿标题一致？
+- 过时描述：图片的 Scene/描述是否反映终稿的实际内容？
+- 比例正确：封面图 aspect ratio 是否匹配平台要求？
+
+**输出**：修复后的 `ongoing/<slug>/3-final/images.md`，格式与 2-draft 版相同，但所有 prompt 经过终稿对齐。如有无法确定的项，标注 `⚠️ 需人工确认`。

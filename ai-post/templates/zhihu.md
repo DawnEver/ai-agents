@@ -170,6 +170,26 @@ Every paragraph needs connective tissue — both within sentences and between pa
 - ❌ AI pattern:每段开头都是主语+动词 ("A项目提供了...", "B功能支持了...", "C场景下...")
 - ✅ Human pattern: "这带来了另一个问题..." / "但真正麻烦的地方在这里..." / "相比之下..." / "用下来，最意外的其实是..."
 
+**动机段衔接（关键规则）** — 当描述完工作流紧接着引出痛点时，必须用桥接词：
+- ❌ ...Claude 做 plan，deepseek-v4-pro 做实现，Codex 来锐评。\n\nChrome MCP 远端控制...
+- ✅ ...Claude 做 plan，deepseek-v4-pro 做实现，Codex 来锐评。\n\n但这个工作流还卡在一个地方：Chrome MCP 远端控制...
+- 桥接词库: "但这个分工还有个前提" / "问题是" / "麻烦出在" / "这就碰到一个硬限制"
+
+**段落首句回扣** — 新段落的开头必须与上一段有语义连接，不能凭空另起：
+- ❌ ## 它到底是什么\n\ntakeover 是一个 Claude Code 插件...
+- ✅ ## 所以我写了 takeover\n\n所以我写了 takeover 这个插件，核心三个命令...
+- 回扣模式: "所以" / "这就引出了" / "但真正麻烦的是" / "用了之后我发现" / "相比之下"
+
+**场景链式衔接** — 多个使用场景之间不能裸跳：
+- ❌ 写完一个 PR，顺手让 DeepSeek review。\n\n有个工程细节我自己挺满意...
+- ✅ 写完一个 PR，顺手让 DeepSeek review。\n\n还有个工程细节我自己挺满意：...（"还有"作为桥接）
+
+**段落拆分节奏** — 有力的短句独立成段：
+- ❌ ...都得交一笔复制粘贴税。这笔税，我交了很多次。
+- ✅ ...都得交一笔**复制粘贴税**——丢掉上下文，丢掉手头的文件状态，丢掉正在进行的任务。\n\n这笔税，我交了很多次。
+
+**身份一致性** — 全文"我"，永远不用"作者"或"笔者"
+
 **句首不重复**: Never start 3+ consecutive sentences with the same structure. Mix: 主语开头 / 状语开头 / 连词开头 / 短句.
 
 ### 降AI味自查 (Anti-AI Check)

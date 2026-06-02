@@ -1,6 +1,6 @@
-# Step 1-3: Clone & Metadata
+# Step 01 — Clone & Metadata
 
-## Step 1: Parse & Validate
+## Parse & Validate
 
 Extract `owner/repo` from the URL. Supported formats:
 - `https://github.com/owner/repo`
@@ -10,11 +10,16 @@ Extract `owner/repo` from the URL. Supported formats:
 Derive the slug: lowercased, `--` replacing `/` (e.g., `facebook--react`).
 If the URL is invalid, tell the user and stop.
 
+Create the working directory:
+```bash
+mkdir -p "ongoing/<slug>/1-research" "ongoing/<slug>/2-draft" "ongoing/<slug>/3-final"
+```
+
 Determine target platforms:
 - If user specifies one: `xiaohongshu`, `wechat`, `zhihu`, or `twitter` → generate for that only
 - If no platform specified → generate for ALL four
 
-## Step 2: Clone or Update the Repo
+## Clone or Update the Repo
 
 ```bash
 # If NOT exists:
@@ -26,7 +31,7 @@ cd repos/<slug> && git pull --depth 50 origin $(git branch --show-current) 2>&1
 # If pull FAILS (conflicts, detached HEAD): warn user, proceed with existing copy.
 ```
 
-## Step 3: Quick Metadata (gh)
+## Quick Metadata (gh)
 
 ```bash
 gh repo view owner/repo --json name,description,url,stargazerCount,primaryLanguage,topics,forkCount,createdAt,pushedAt 2>&1

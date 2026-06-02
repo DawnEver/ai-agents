@@ -1,5 +1,6 @@
 repos/
+ongoing/
+archived/
 .DS_Store
-articles/
 .retro_*
 .review-gate-state.json

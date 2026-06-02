@@ -21,3 +21,7 @@ metadata:
 **Why**: The user noticed generated articles used "这篇文章" and other third-party reviewer phrasing that reads as obviously AI-generated. Content performs better when it feels like a developer sharing their own project, not a journalist reviewing someone else's.
 
 **How to apply**: Templates are the single source of truth. All 4 templates updated with author-voice rules and banned-phrase lists. Agents load templates so they inherit automatically.
+
+## GitHub Identity
+
+**https://github.com/DawnEver is the user's personal GitHub account.** Any repo under this account is authored by the user — write as the creator, not a reviewer. This applies at the brief-gate stage too: adjust angles and titles to reflect first-person ownership before presenting them.

@@ -1,21 +1,24 @@
 ---
-updated: 2026-05-26
-articles: 4
+updated: 2026-06-02
+articles: 5
 ---
 
 ## Openings I Use
 
 ### 小红书
 - "🔥 Copilot 越更新我越想卸载——Cmd+I 那个框现在要加载半天，还跳出一堆我根本不需要的按钮。我受不了了，自己写了个插件。"
+- "🔥 自从给 Claude Code 装了这个插件，我在终端里同时使唤三个 AI 给我打工，上头到停不下来。"
 
 ### 微信公众号
 - "有一天我按下 Cmd+I，等了三秒，出来的不是 diff，是一个"正在思考..."的 spinner，背后带着一个全屏的侧边栏面板。可是我只是想把一个函数名改短一点。"
+- "我的工作流很简单：Claude Code 负责复杂推理和 plan，便宜量大的 DeepSeek 负责实现，Codex 来锐评和做有难度的修改。"
 
 ### 知乎
 - "先说结论：如果你已经在用 Claude Code 或 Codex CLI，[quick-inline-suggestion] 值得装。它不是 Copilot 替代品，也不跟 Cursor 竞争。它只做一件事——把你已有的 CLI 工具接进 Cmd+I。完。"
 
 ### Twitter/X
 - "VS Code's AI kept getting heavier. More panels, more subscriptions, more things fighting for Cmd+I. I missed the old flow: select code, describe change, see diff, keep or revert. So I built it back."
+- "Every Claude Code user eventually hits the wall: Claude nails tool use but flubs hard math. DeepSeek reasons better but has no agent loop. So I stopped choosing. I built takeover."
 
 ---
 
@@ -23,15 +26,19 @@ articles: 4
 
 ### 小红书
 - "👇 插件 ID：quick-inline-suggestion，扩展市场直接搜，或者去 GitHub 找 DawnEver/quick-inline-suggestion～"
+- "👇 GitHub 搜 DawnEver/cc-market，takeover 就在里面，把连接交给你的 claude code 就行。想要直链评论区戳我～"
 
 ### 微信公众号
 - "代码在 GitHub，没有加密，没有遥测，没有 telemetry 上报。你改什么代码、用什么提示词，只在你和你的 CLI 工具之间。"
+- "代码在 GitHub，三百行，零依赖，连 heredoc 那行的来历都写在 commit 里，你可以自己翻。"
 
 ### 知乎
 - "如果以上都不沾，而且你已经装着 claude 或 codex 在用，那装一个试试，反正免费。"
+- "说到底，多模型分工有没有用，取决于你是不是真的遇到过"这个活该换个模型"的时刻。如果你遇到过，而且已经在用 Claude Code，那装一个试试，反正零依赖、免费。"
 
 ### Twitter/X
 - "Star it if you're tired of bloated AI editors. PRs welcome. 如果你也觉得 VS Code AI 越来越重，试试这个。⭐"
+- "别再二选一，当那个发号施令的人。试试就 Star 一下～"
 
 ---
 
@@ -44,3 +51,7 @@ articles: 4
 - 比喻："就像你去便利店买瓶水，结账时店员问你要不要办会员、填问卷、加 APP、开通 Plus" — 日常场景类比技术臃肿
 - "反正免费" — 在结尾用轻描淡写的口吻降低读者决策成本
 - EN+CN 双语交替 (Twitter) — 先英文陈述，后中文提炼同义金句，节奏上有呼应感
+- "复制粘贴税" — 自创概念词命名痛点，让读者瞬间理解并记住核心问题
+- "把整个公司的人全开了" — 用荒诞比喻解释抽象技术概念（会话级 vs 任务级切换）
+- "star 还是 0，你自己掂量" — 坦率自黑降低读者戒备，反营销建立信任
+- "坐在一把椅子上，不丢上下文，不交复制粘贴税" — 三连排比回收核心隐喻，结尾闭合完整

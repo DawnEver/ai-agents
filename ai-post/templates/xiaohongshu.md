@@ -156,6 +156,19 @@ At least 1 moment that makes the reader smile. Small, real, specific:
 - ❌ 3句以上连续同一句式开头 (如每句都是 "它支持…"/"可以…"/"功能包括…")
 - ✅ 打断: 插一个短句。问句。感叹。然后继续。
 
+**动机段衔接**：当"工作流"后紧接"痛点"时，必须桥接，不能裸跳。
+- ❌ ...DeepSeek 拿来实现，再让 Codex 来锐评。\n\n另一个卡点是 Chrome MCP...
+- ✅ ...DeepSeek 拿来实现，再让 Codex 来锐评。但这个工作流有个绕不开的坎：Chrome MCP...
+- 桥接词: "但问题是" / "不过有个坎" / "这就碰到" / "麻烦的是"
+
+**拆分大段**：动机段包含多个不同性质的信息（工作流 + 卡点）时，拆成独立段落：
+- ❌ 💡 起因很具体：Claude Code 拿来 plan，DeepSeek 实现，Codex 锐评。另一个卡点是 Chrome MCP...
+- ✅ 💡 起因很具体：我想要在我的工作流里实现让 Claude 拿来 plan，DeepSeek 实现，Codex 锐评。\n\n当然，Claude Code 使用中还有别的卡点，比如我很喜欢的 Chrome MCP...
+
+**身份一致性** — 全文"我"，不出现"作者"：
+- ❌ takeover 的作者用 heredoc / 作者自己也在用多模型编排
+- ✅ 我用 heredoc / 我自己也在用多模型编排
+
 ### 降AI味自查 (Anti-AI Check)
 Before finalizing, read every sentence aloud:
 - ❌ Delete: 这篇文章 / 本文将 / 总结一下 / 总的来说 / 值得注意的是 / 综上所述

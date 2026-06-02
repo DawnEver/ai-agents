@@ -18,16 +18,17 @@ if platform not in ("wechat", "zhihu"):
     print("platform must be 'wechat' or 'zhihu'")
     sys.exit(1)
 
-ARTICLES = Path(__file__).parent.parent.parent.parent / "articles"
-BASE = ARTICLES / slug
+ARTICLES = Path(__file__).parent.parent.parent.parent / "ongoing"
+BASE = ARTICLES / slug / "3-final"
 MD_FILE = BASE / f"{platform}.md"
+IMG_BASE = ARTICLES / slug / "images"
 
 text = MD_FILE.read_text(encoding="utf-8")
 
 _title_match = re.search(r"^#{1,2}\s+(.+)$", text, re.MULTILINE)
 _title = _title_match.group(1).strip() if _title_match else slug
 _safe_title = re.sub(r'[\\/*?:"<>|]', "_", _title)
-OUT_FILE = BASE / f"{_safe_title}.docx"
+OUT_FILE = ARTICLES / slug / f"{_safe_title}.docx"
 
 doc = Document()
 
@@ -160,7 +161,7 @@ while i < len(lines):
 
     img_match = re.match(r"!\[([^\]]*)\]\(([^)]+)\)", line)
     if img_match:
-        add_image(doc, BASE / img_match.group(2))
+        add_image(doc, IMG_BASE / img_match.group(2).split("/")[-1])
         i += 1
         continue
 

@@ -1,4 +1,4 @@
-# Step 5.5: ⭐ Brief Review Gate — 选题确认 (Angles + Titles)
+# Step 05 — Brief Review Gate: 选题确认 (Angles + Titles)
 
 **Stop here. Do NOT spawn agents yet. Do NOT generate drafts.**
 
@@ -10,11 +10,37 @@ This is an **iterative discussion gate**. The user may question angles, ask for 
 → 用户可以在这里提问、质疑、调整任意多轮
 ```
 
-This gate has two phases: angle confirmation, then title selection.
+This gate has two phases: angle confirmation, then title selection. **Both phases write to `ongoing/<slug>/1-research/brief.md`** so the session can resume correctly after interruption.
+
+## Persistence File: `brief.md`
+
+`ongoing/<slug>/1-research/brief.md` is the gate's single source of truth. Write it after each confirmed state:
+
+```markdown
+# Brief: <slug>
+
+## Confirmed Angles
+- **小红书**: <angle>
+- **微信公众号**: <angle>
+- **知乎**: <angle>
+- **Twitter/X**: <angle>
+
+## Selected Titles
+- **小红书**: <title>          ← added after Phase 2
+- **微信公众号**: <title>
+- **知乎**: <title>
+
+## Status
+angles_confirmed: true         ← set after Phase 1 approved
+titles_confirmed: true         ← set after Phase 2 approved
+platforms: xiaohongshu,wechat,zhihu,twitter   ← active platform list
+```
+
+**Resume logic**: if `brief.md` exists with `angles_confirmed: true` but no `titles_confirmed`, skip Phase 1 and go straight to Phase 2. If both are true, skip this step entirely.
 
 ## Phase 1: Angle Confirmation
 
-Present a brief summary to the user for confirmation:
+Present a brief summary to the user for confirmation. Include market research signals:
 
 ```
 📋 调研完成，准备写作
@@ -27,6 +53,8 @@ Present a brief summary to the user for confirmation:
 - 知乎：<angle>
 - Twitter/X：<angle>
 
+**市场信号**：<key finding from market-research.md — trending demand, content gap>
+
 **需要调整什么吗？** 确认后进入标题选择。
 （如只需某平台，请指定。）
 ```
@@ -37,11 +65,11 @@ Wait for the user to reply. The user may:
 - Request alternative angles ("小红书有没有更偏情绪的方向？")
 - Adjust scope ("只做微信和知乎")
 
-**This is iterative** — go back and forth until the user is satisfied with all angles. Update `repo-analysis.md` after each adjustment, re-present if needed.
+**This is iterative** — go back and forth until the user is satisfied with all angles. Update `ongoing/<slug>/1-research/repo-analysis.md` after each adjustment, re-present if needed.
 
 - **If user adjusts angles** → update `repo-analysis.md` Article Angles section, re-present, wait again (loop).
 - **If user specifies a single platform** → update target platforms list, re-present for that platform only.
-- **If user signals they're done with angles** ("可以了" / "进入标题" / "next") → proceed to Phase 2.
+- **If user signals they're done with angles** ("可以了" / "进入标题" / "next") → write `brief.md` with confirmed angles and `angles_confirmed: true`, then proceed to Phase 2.
 
 ## Phase 2: Title Selection (Chinese platforms only)
 
@@ -49,7 +77,7 @@ After angles are confirmed, generate titles for each Chinese platform being gene
 
 **Title generation rules:**
 - Author is the subject, tool is the instrument. ✅ "我用它3分钟搞定" not ❌ "被它3分钟搞定"
-- No banned opening formulas (see CLAUDE.md Quality Standards)
+- No banned opening formulas (see AGENT.md § Quality Standards for full banned-phrase list and banned section headers)
 
 **Round A — Hook titles (3 per platform)**. Use varied elements across the 3 options:
 - 💰 Specific numbers (time saved, speed multiplier, star count)
@@ -96,17 +124,12 @@ B轮 (自然型):
 
 **This is iterative** — the user may ask for different title styles, request alternatives for a specific platform, or go back to adjust angles. Loop until satisfied.
 
-- **If user selects titles for all platforms** → confirm final selection, then write selected titles into `repo-analysis.md` as a `## Selected Titles` section:
-  ```markdown
-  ## Selected Titles
-  - **小红书**: <selected title>
-  - **微信公众号**: <selected title>
-  - **知乎**: <selected title>
-  ```
+- **If user selects titles for all platforms** → write selected titles into `brief.md` (add `## Selected Titles` + `titles_confirmed: true`), then confirm:
+  > "角度 + 标题已确认，开始生成初稿？"
 - **If user wants adjustments** → regenerate titles for that platform, re-present that platform's options (loop).
-- **If user wants to revisit angles** → go back to Phase 1.
-- **If user says "skip"** → proceed without pre-selected titles (writers will derive their own).
+- **If user wants to revisit angles** → go back to Phase 1, update `brief.md` accordingly.
+- **If user says "skip"** → proceed without pre-selected titles (writers will derive their own); write `brief.md` with `titles_confirmed: skipped`.
 
-> 🛑 **Final gate**: After titles are selected, briefly confirm "角度 + 标题已确认，开始生成初稿？" before proceeding to Step 6. Only start writing when the user explicitly says yes.
+> 🛑 **Final gate**: Only start writing when the user explicitly says yes to "开始生成初稿？"
 
-If only Twitter is being generated, skip Phase 2 and proceed directly to Step 6.
+If only Twitter is being generated, skip Phase 2 and proceed directly to Step 06.

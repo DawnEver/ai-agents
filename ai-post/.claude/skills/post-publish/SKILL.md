@@ -5,7 +5,7 @@ argument-hint: <platform> [project-slug]
 allowed-tools: "Read,Write,Bash,Glob"
 ---
 
-# /post:publish — Platform Publishing
+# /post-publish — Platform Publishing
 
 You handle the mechanics of getting content onto the platform. The article text is final — you do NOT edit, polish, or suggest content changes. All quality assurance (三遍审校, 三方会审, user review) has already happened upstream.
 
@@ -20,14 +20,14 @@ You handle the mechanics of getting content onto the platform. The article text 
 
 ### Step 1: Identify the Article
 
-If `project-slug` is provided, load `articles/<slug>/<platform>.md`.
+If `project-slug` is provided, load `ongoing/<slug>/3-final/<platform>.md`. If it does not exist, abort: "No review-passed article found. Run `/post-review <slug>` first." Never fall back to 2-draft/ — that bypasses the mandatory 三方会审 gate.
 
 If not provided:
-1. List recent projects by scanning `articles/` directories for existing article files
+1. List recent projects by scanning `ongoing/` directories for existing article files
 2. Present a numbered list: "Recent articles — which one to publish?"
 3. Read the user's choice
 
-If no articles exist yet: "No articles found. Run `/post:new <github-url>` first."
+If no articles exist yet: "No articles found. Run `/post-new <github-url>` first."
 
 If the platform is not supported: "Supported platforms: xiaohongshu, wechat, zhihu, twitter."
 
@@ -35,9 +35,9 @@ If the platform is not supported: "Supported platforms: xiaohongshu, wechat, zhi
 
 **Do NOT proceed past this step until all images are present.**
 
-1. Read `articles/<slug>/<platform>.md` and parse all `![alt](images/<filename>)` markdown image references.
-2. For each reference, check that `articles/<slug>/images/<filename>` exists on disk (use Glob).
-3. Also read `articles/<slug>/images.md` for context on what each image should be.
+1. Read `ongoing/<slug>/3-final/<platform>.md` and parse all `![alt](../images/<filename>)` markdown image references.
+2. For each reference, check that `ongoing/<slug>/images/<filename>` exists on disk (use Glob).
+3. Also read `ongoing/<slug>/3-final/images.md` for context on what each image should be.
 
 **If any images are missing:**
 ```
@@ -50,14 +50,12 @@ If the platform is not supported: "Supported platforms: xiaohongshu, wechat, zhi
 请补全后再发布。
 ```
 - If `images.md` lists AI prompts for the missing images, suggest: "可运行图片生成来补全这些图片。"
-- If they are real screenshots, tell the user: "请将对应截图下载到 `articles/<slug>/images/` 目录。"
+- If they are real screenshots, tell the user: "请将对应截图下载到 `ongoing/<slug>/images/` 目录。"
 - **Loop here** — re-check after user provides images. Do not move on.
 
 **Only when all images exist:**
 ```
 ✅ 配图已齐全 (<N> 张)
-
-<文章内容展示>
 
 准备发布到 <platform>？
 ```
@@ -70,7 +68,7 @@ Format the article for the target platform's editor. Do NOT modify the article f
 
 - **Publish URL**: `https://creator.xiaohongshu.com/publish/publish?target=image`
 - **Clipboard format**: Plain Chinese text with emoji preserved. Hashtags on a separate line at end. Image references replaced with `[此处上传配图]`.
-- **Cover image**: `articles/<slug>/images/xhs-cover.png` (3:4). Hook text should already be overlaid on the image.
+- **Cover image**: `ongoing/<slug>/images/xhs-cover.png` (3:4). Hook text should already be overlaid on the image.
 - **Image upload order**: Cover first, then body images in order.
 - **Restrictions**: No external links in body — use "评论区/主页自取" CTA (should already be in article).
 - **Hashtags**: Remind user to add 3-5 hashtags if the article has them.
@@ -78,21 +76,21 @@ Format the article for the target platform's editor. Do NOT modify the article f
 #### 微信公众号
 
 - **Publish URL**: `https://mp.weixin.qq.com/cgi-bin/home?t=home/index&token=` (requires login — open URL, user navigates after auth)
-- **Word export**: Run `python .claude/skills/post-publish/export_article.py <slug> wechat` to generate `articles/<slug>/<title>.docx`. This embeds all images and formats code blocks — easier to import than plain text paste.
+- **Word export**: Run `python .claude/skills/post-publish/export_article.py <slug> wechat` to generate `ongoing/<slug>/<title>.docx`. This embeds all images and formats code blocks — easier to import than plain text paste.
 - **Clipboard format**: Full text as plain text. Code blocks annotated with `[代码：<language>]` above each block (WeChat editor needs manual code block insertion via its toolbar). Image references become `[此处插入配图]`.
 - **Title**: Paste title separately in the title field at top of editor.
-- **Cover image**: `articles/<slug>/img/img-wechat-cover.png` (16:9). Note: WeChat overlays title text at bottom of cover — title-safe zone in upper portion.
+- **Cover image**: `ongoing/<slug>/images/wechat-cover.png` (16:9). Note: WeChat overlays title text at bottom of cover — title-safe zone in upper portion.
 - **Code blocks**: WeChat does not support markdown fences. User must select code text and apply the editor's code block tool.
 - **"阅读原文" link**: Should point to the GitHub repo URL.
 - **Process**: Generate Word → import or paste → format code blocks → preview on mobile → publish.
 
 #### 知乎
 
-- **Word export**: Run `python .claude/skills/post-publish/export_article.py <slug> zhihu` to generate `articles/<slug>/<title>.docx`. Handles markdown tables (renders as Word table with blue header row).
+- **Word export**: Run `python .claude/skills/post-publish/export_article.py <slug> zhihu` to generate `ongoing/<slug>/<title>.docx`. Handles markdown tables (renders as Word table with blue header row).
 - **Publish URL**: `https://zhuanlan.zhihu.com/write`
 - **Clipboard format**: Full markdown preserved. Comparison tables kept as markdown table syntax (知乎 editor renders markdown tables). Image references become `[此处插入图片]`.
 - **Title**: Paste separately in title field.
-- **Cover image**: `articles/<slug>/images/zhihu-cover.png` (16:9, professional/academic style). Upload via editor UI.
+- **Cover image**: `ongoing/<slug>/images/zhihu-cover.png` (16:9, professional/academic style). Upload via editor UI.
 - **Comparison table**: Markdown tables should render correctly — verify after pasting.
 - **Sources**: Remind user to add sources for any performance claims if not already cited.
 - **原创**: Remind user to check "原创" checkbox before publishing.
@@ -114,7 +112,7 @@ Format the article for the target platform's editor. Do NOT modify the article f
   2. Compose Tweet 1, paste content, attach image if any
   3. Click "+" to add each subsequent tweet
 - **Character count**: Each tweet verified against 280-char limit. Flag any over limit.
-- **Image**: Attach to Tweet 1 (the hook visual). `articles/<slug>/images/twitter-cover.png` if available.
+- **Image**: Attach to Tweet 1 (the hook visual). `ongoing/<slug>/images/twitter-cover.png` if available.
 - **Thread verify**: After composing, read top-to-bottom to verify flow.
 
 ### Step 4: Copy to Clipboard + Open Browser
@@ -157,16 +155,4 @@ Present a platform-specific pre-publish checklist:
 **X/Twitter**: [ ] 每条推文 ≤280 字符 / [ ] Tweet 1 以 🧵👇 结尾 / [ ] 配图已附加 / [ ] GitHub 链接仅在最后推文
 
 After checklist, suggest:
-- "发布后，归档到个人风格库：`/post:archive <platform> <slug>`"
-- "发布其他平台：`/post:publish <other-platform> <slug>`"
-
----
-
-## Extension Automation (Future)
-
-When a Chrome extension is available:
-- Detect the active platform editor page
-- Auto-fill title, body, cover image fields
-- Insert code blocks and tables with correct formatting
-- Verify character counts and platform constraints pre-submit
-- The clipboard + browser-open flow above provides the same data in a structured format an extension can capture and inject.
+- "发布后，归档到个人风格库：`/post-archive <slug>`"

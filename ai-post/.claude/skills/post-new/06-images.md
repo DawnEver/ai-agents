@@ -1,14 +1,14 @@
-# Step 6-6.5: Image Manifest
+# Step 06 — Image Manifest
 
-## Step 6: Ensure Output Dirs Exist
+## Ensure Output Dirs Exist
 
 ```bash
-mkdir -p "articles/<slug>/images"
+mkdir -p "ongoing/<slug>/images"
 ```
 
-## Step 6.5: Generate Image Manifest
+## Generate Image Manifest
 
-Before spawning writers, create `articles/<slug>/images.md` — the single source of truth for all images across all platforms. Agents will reference image paths from this manifest.
+Before spawning writers, create `ongoing/<slug>/2-draft/images.md` — the single source of truth for all images across all platforms. Agents will reference image paths from this manifest.
 
 **How to build the manifest:**
 
@@ -21,12 +21,14 @@ Before spawning writers, create `articles/<slug>/images.md` — the single sourc
 3. **Plan cross-platform reuse** — the same visual concept often works for multiple platforms (different aspect ratios). List each logical image once, mark which platforms use it.
 4. **Platform-specific images** — covers and any platform-only needs (小红书 cover must be 3:4, 微信/知乎/Twitter covers are 16:9).
 
-**Manifest format** (`articles/<slug>/images.md`):
+**Path convention**: Image files are stored at `ongoing/<slug>/images/`. The manifest lives at `ongoing/<slug>/2-draft/images.md`. Writers in `2-draft/` reference images as `../images/<filename>`.
+
+**Manifest format** (`ongoing/<slug>/2-draft/images.md`):
 
 ```markdown
 # Image Manifest: <repo-name>
 
-> Single source of truth for all article images. Writers reference `images/<filename>` paths.
+> Single source of truth for all article images. Writers reference `../images/<filename>` paths.
 > Real screenshots take priority over AI-generated images.
 
 ## Real Visual Assets from Repo
@@ -40,42 +42,42 @@ _(If no real visuals exist, mark: "CLI/text only — all images AI-generated")_
 
 ## Shared AI-Generated Images (cross-platform reusable)
 
-### `img-product-shot`
+### `product-shot`
 - **描述**: <中文描述，1句>
 - **Scene**: <what to depict — project dashboard / terminal output / key feature in action>
 - **AI Prompt** (English): <detailed prompt>
 - **Used by**: 小红书 (content), 微信公众号 (content), 知乎 (content)
 - **Aspect ratios**: 3:4 for 小红书 · 16:9 for 微信/知乎 (generate both or crop)
-- **Path**: `images/product-shot.png`
+- **Path**: `../images/product-shot.png`
 
-### `img-comparison`
+### `comparison`
 - **描述**: <中文描述>
 - **Scene**: Before/after or side-by-side comparison showing the problem being solved
 - **AI Prompt**: <prompt>
 - **Used by**: 小红书 (content), 知乎 (content)
 - **Aspect ratios**: 3:4 · 16:9
-- **Path**: `images/comparison.png`
+- **Path**: `../images/comparison.png`
 
 _(Add more shared images as needed)_
 
 ## Platform-Specific Images
 
-### 小红书 Cover (`img-xhs-cover`)
+### 小红书 Cover (`xhs-cover`)
 - **Hook text on image**: "<直接来自文章钩子句>"
 - **AI Prompt**: <prompt> --ar 3:4
-- **Path**: `images/xhs-cover.png`
+- **Path**: `../images/xhs-cover.png`
 
-### 微信公众号 Cover (`img-wechat-cover`)
+### 微信公众号 Cover (`wechat-cover`)
 - **AI Prompt**: <prompt> --ar 16:9
-- **Path**: `images/wechat-cover.png`
+- **Path**: `../images/wechat-cover.png`
 
-### 知乎 Cover (`img-zhihu-cover`)
+### 知乎 Cover (`zhihu-cover`)
 - **AI Prompt**: <prompt> --ar 16:9
-- **Path**: `images/zhihu-cover.png`
+- **Path**: `../images/zhihu-cover.png`
 
-### Twitter Cover (`img-twitter-cover`)
+### Twitter Cover (`twitter-cover`)
 - **AI Prompt**: <prompt> --ar 16:9
-- **Path**: `images/twitter-cover.png`
+- **Path**: `../images/twitter-cover.png`
 
 ## Summary
 

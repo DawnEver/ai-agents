@@ -1,56 +1,62 @@
 ---
 name: post-archive
-description: Archive a finalized article and accumulate personal style fingerprints — writes to style/published/ and updates style/profile.md
-argument-hint: <platform> [project-slug]
-allowed-tools: "Read,Write,Glob"
+description: Archive a finalized article and accumulate personal style fingerprints — moves to archived/YYMMDD/, updates style/profile.md
+argument-hint: <slug>
+allowed-tools: "Read,Write,Bash,Glob"
 ---
 
-# /post:archive — Archive & Style Accumulation
+# /post-archive — Archive & Style Accumulation
 
-Archive a final published article to the personal style library. Extracts style fingerprints (openings, closings, voice markers) and incrementally updates `style/profile.md`. No editing — the article text is final.
-
-## Supported Platforms
-
-- `xiaohongshu` — 小红书
-- `wechat` — 微信公众号
-- `zhihu` — 知乎
-- `twitter` — Twitter/X
+Archive a completed article slug. Moves the entire `ongoing/<slug>/` to a frozen archive at `archived/YYMMDD/<slug>/`, extracts style fingerprints, and updates `style/profile.md`. No editing — the article text is final.
 
 ## Workflow
 
-### Step 1: Identify the Article
+### Step 1: Identify the Slug
 
-If `project-slug` is provided, load `articles/<slug>/<platform>.md`.
+If `slug` is provided:
+1. Verify `ongoing/<slug>/` exists.
+2. Verify `3-final/` exists and contains at least one file — if empty or missing, abort: "No review-passed articles found. Run `/post-review <slug>` first."
+3. For every platform file in `2-draft/`, a corresponding file must exist in `3-final/`. If any draft lacks a final, abort: "Not all platforms have passed review. Missing from 3-final/: <list>. Run `/post-review <slug>` first." If a platform was intentionally dropped, delete its draft from `2-draft/` first.
+
+Never archive incomplete work — unreviewed drafts must not be frozen.
 
 If not provided:
-1. List recent projects by scanning `articles/` directories for existing article files
-2. Present a numbered list: "Recent articles — which one to archive?"
+1. List slugs by scanning `ongoing/` directories with files in `3-final/`
+2. Present a numbered list: "Ready to archive — which one?"
 3. Read the user's choice
 
-If no articles exist yet: "No articles found. Run `/post:new <github-url>` first."
+If no slugs found: "No articles ready for archive. Run `/post-new <url>` first."
 
-If the platform is not supported: "Supported platforms: xiaohongshu, wechat, zhihu, twitter."
+### Step 2: Verify Articles are Final
 
-### Step 2: Verify Article is Final
+Present a summary of what will be archived:
 
-Read the article file.
-
-Check if it has already been archived — scan `style/published/<platform>/` for files matching `*-<slug>.md`. If found, warn:
-"⚠️ 已归档过此文章：`style/published/<platform>/<existing-file>`。覆盖归档？"
-
-Present the article briefly for confirmation:
 ```
 📦 准备归档
 
-**平台**：<platform>
 **项目**：<slug>
-**标题**：<extracted title>
-**字符数**：<count>
+**平台**：
+  - 小红书：<char_count> chars
+  - 微信公众号：<char_count> chars
+  - 知乎：<char_count> chars
+  - Twitter/X：<tweet_count> tweets
 
-归档到 style/published/<platform>/<YYYY-MM-DD>-<slug>.md？
+归档到 archived/<YYMMDD>/<slug>/？
 ```
 
-### Step 3: Create Archive File
+### Step 3: Move to Archive
+
+Instead of deleting working files, move the entire slug directory to a date-prefixed archive:
+
+```bash
+mkdir -p "archived/$(date +%y%m%d)" && mv "ongoing/<slug>" "archived/$(date +%y%m%d)/<slug>"
+```
+
+The archive path is now `archived/YYMMDD/<slug>/` (e.g. `archived/260602/dawnever--cc-market/`). The internal structure (`1-research/`, `2-draft/`, `3-final/`) is preserved as a frozen snapshot.
+
+### Step 4: Write Text-Only Archive to style/published/
+
+For each platform with a file in `archived/YYMMDD/<slug>/3-final/`:
 
 Write `style/published/<platform>/<YYYY-MM-DD>-<slug>.md` with YAML frontmatter:
 
@@ -65,9 +71,9 @@ title: <first heading or first line of article>
 
 Followed by the full article body with **image references stripped** — remove all `![alt](...)` lines. Style archives are text-only; images are transient working files.
 
-### Step 4: Extract Style Fingerprints
+### Step 5: Extract Style Fingerprints
 
-From the article body, extract:
+From each platform's article body, extract:
 
 - **Opening**: The first 1-2 substantive sentences. Skip frontmatter, image references, and heading lines — find the first actual prose the reader encounters.
 - **Closing**: The last 1-2 substantive sentences before any signature, hashtags, or CTA lines.
@@ -75,7 +81,7 @@ From the article body, extract:
 
 Each fingerprint must be a direct quote, trimmed to reasonable length.
 
-### Step 5: Update `style/profile.md`
+### Step 6: Update `style/profile.md`
 
 If `style/profile.md` does NOT exist, create it:
 
@@ -107,30 +113,47 @@ If `style/profile.md` exists:
    - Voice Markers: keep max 8 total, remove least distinctive when over cap
 4. Write updated file
 
-### Step 6: Clean Up Working Files
-
-After archiving, delete all working files for the slug — both the cloned repo and the articles directory:
+### Step 7: Clean Up Cached Repo
 
 ```bash
 rm -rf repos/<slug>
-rm -rf articles/<slug>
 ```
 
-Both are transient working space. The final text lives in `style/published/`, style fingerprints in `style/profile.md`.
+The cached clone is no longer needed. The frozen archive at `archived/YYMMDD/<slug>/` is never deleted.
 
-If either directory does not exist, skip silently.
+### Step 8: Offer Postmortem (Optional)
 
-### Step 7: Report
+> Want to score each article's AI味 and reader reception? This helps calibrate future generation.
+
+If yes, create `archived/YYMMDD/<slug>/postmortem.md`:
+```markdown
+# Postmortem — <slug>
+
+## Per-Platform Scores
+- 小红书: AI味 🟢/🟡/🔴 | 读者反馈: <notes>
+- 微信公众号: AI味 🟢/🟡/🔴 | 读者反馈: <notes>
+- 知乎: AI味 🟢/🟡/🔴 | 读者反馈: <notes>
+- Twitter/X: AI味 🟢/🟡/🔴 | 读者反馈: <notes>
+
+## Lessons
+- <what worked, what didn't, what to try next time>
+```
+
+### Step 9: Report
 
 ```
-📦 已归档 — style/published/<platform>/<YYYY-MM-DD>-<slug>.md
+📦 已归档 — archived/<YYMMDD>/<slug>/
 
 🎨 风格积累：
   - 开头: <added or "已存在，跳过">
   - 结尾: <added or "已存在，跳过">
   - 语气标记: <N added, M skipped>
 
-🗑️ 已清理：repos/<slug>、articles/<slug>
+🗑️ 已清理：repos/<slug>
 
 📊 Style profile — <N> articles accumulated.
 ```
+
+## Hard Rule
+
+Never modify files under `archived/YYMMDD/<slug>/` except for `postmortem.md`. The frozen snapshot is the source of truth.
