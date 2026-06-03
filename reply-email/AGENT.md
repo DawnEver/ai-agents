@@ -49,3 +49,17 @@ These are generic defaults. The authoritative style source is `style/profile.md`
 - `archived/` — completed email threads (local only, gitignored)
 - `AGENT.md` — this file; authoritative instructions (generic, no personal data)
 - `CLAUDE.md` — thin wrapper that sources this file
+- `.claude/commands/reply-email.md` — slash command definition; committed, must be desensitized
+
+## Desensitization
+
+All committed files (AGENT.md, CLAUDE.md, `.claude/commands/*.md`) are public-facing. They must never contain:
+
+- Real names, email addresses, or sender/recipient identities
+- Reference numbers (application IDs, invoice numbers, ticket IDs)
+- Specific institutional details that identify the user's university, department, or colleagues
+- Verbatim email content from actual correspondence
+
+Examples, directory listings, and inline comments must use generic placeholders: `conference-invitation`, `prof.smith@example.com`, `[Your Name]`, `project-proposal`.
+
+Real data lives exclusively in gitignored files — `ongoing/`, `archived/`, `style/profile.md`. Before committing any change to a tracked file, verify it contains no PII.
