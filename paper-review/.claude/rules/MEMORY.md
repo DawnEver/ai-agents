@@ -2,6 +2,8 @@
 
 <!-- Sorted by date, newest first. Keep at most 20 entries. -->
 
+- [2026-06-03 Workflow integration](../memory/2026-06-03/workflow_integration.md) — steps 02 + 04 to Workflow; MCP takeover enables multi-provider fanout; prompt injection guards + schema validation
+
 - [2026-06-02 paper_pdf_ingest standalone repo](../memory/2026-06-02/paper_pdf_ingest_standalone.md) — extracted to independent git repo at paper-review/paper_pdf_ingest/; hatchling, CI, bug fixes applied
 
 - [2026-05-30 Prompt slimming](../memory/2026-05-30/prompt_slimming.md) — 2-round 锐评 → -90 lines: deduped AGENT.md↔SKILL.md, extracted 3 inline templates, merged prompt contracts

@@ -76,5 +76,5 @@ templates/              — default-angles, polish-checklist, summary-template
 | novelty, experiments, freestyle | `sonnet-vision` |
 | methodology | `takeover-codex` (deep reasoning; DeepSeek as alternative) |
 
-Per-paper overrides in `angles.md`; step 04 reads: override > frontmatter default.
-Takeover prompts are fully self-contained (inline summary + literature + sections — paths unreachable from codex/deepseek process).
+Per-paper overrides in `angles.md`; step 04 invokes the `paper-review-fanout` workflow which resolves routing: `angles.md` override > agent frontmatter default.
+Sonnet reviewers run directly; Codex/DeepSeek reviewers use MCP-takeover relay (inlines summary + literature + sections via `call_model`).

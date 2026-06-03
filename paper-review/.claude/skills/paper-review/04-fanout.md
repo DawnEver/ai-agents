@@ -1,12 +1,12 @@
 # Step 04 — Fanout 锐评
 
-Spawn one reviewer per angle **in parallel** (one message, multiple tool calls).
+Spawn one reviewer per angle **in parallel** via the `paper-review-fanout` workflow.
 
 ## Inputs
 - `ongoing/<slug>/2-review/angles.md` (chosen angles + optional router overrides)
 - `ongoing/<slug>/2-review/summary.md`, `ongoing/<slug>/2-review/literature.md` (if present)
 - `1-paper-text/paper.md`, `1-paper-text/md/`, `1-paper-text/img/`, `1-paper-text/INDEX.md`
-- Each reviewer agent's frontmatter `router:`
+- `ongoing/<slug>/review-config.md` (for `lang:`)
 
 ## Output
 - `ongoing/<slug>/2-review/critiques/<angle>.md` — one per angle
@@ -17,62 +17,52 @@ For each angle in `angles.md`:
 1. If `Router override:` is non-empty, use it.
 2. Else use the agent's frontmatter `router:` field.
 
-| Router value | How to invoke | Typical for |
-|--------------|---------------|-------------|
-| `sonnet-vision` | `Agent(subagent_type: reviewer-<angle>)` — Sonnet, vision-capable | novelty, experiments, freestyle |
-| `takeover-codex` | `Skill(takeover:continue)` with model=codex | methodology / heavy reasoning |
-| `takeover-deepseek` | `Skill(takeover:continue)` with model=deepseek | second opinion, dense technical reasoning |
+| Router value | Provider | How invoked |
+|--------------|----------|-------------|
+| `sonnet-vision` | claude (Sonnet) | Direct via `agentType: reviewer-<angle>` inside the workflow |
+| `takeover-codex` | codex | Workflow agent → `mcp__plugin_takeover_takeover__call_model` |
+| `takeover-deepseek` | deepseek | Workflow agent → `mcp__plugin_takeover_takeover__call_model` |
 
-**Spawn all reviewers in a single message** with multiple tool calls. Do not serialise.
+## Execution
 
-## Venue-type calibration (pass to every reviewer)
+Read `angles.md` and build the args:
 
-Read the **Venue type** field from `summary.md` and inject it into every reviewer prompt. Reviewers must hold critique to the standard of the actual venue:
-- **Electrical-engineering conference paper** (electric machines, power electronics, drives): simulation-only validation is acceptable; do NOT penalise missing hardware experiments, missing public code, or missing public data. Focus on novelty, method soundness, and whether the simulation supports the claims.
-- **Journal paper** (esp. IEEE Transactions): experimental / hardware validation, robustness, and completeness are fair game — absence is a legitimate weakness.
-- The methodology and experiments reviewers in particular must respect this; a missing-code/missing-hardware critique against an EE conference paper is out of scope and should not be raised.
+```json
+{
+  "slug": "<slug>",
+  "lang": "<en|zh from review-config.md>",
+  "angles": [
+    { "name": "novelty", "definition": "...", "provider": "claude", "model": "" },
+    { "name": "methodology", "definition": "...", "provider": "deepseek", "model": "deepseek-v4-pro" }
+  ]
+}
+```
 
-**Before spawning, tell the user**: "Launching <N> reviewers in parallel — results will arrive in ~2–5 minutes. You'll see each critique appear as the reviewers finish."
+Map router → provider: `sonnet-vision` → `claude`, `takeover-codex` → `codex`, `takeover-deepseek` → `deepseek`.
 
-## Figures are machine-extracted (pass to every reviewer)
+**Before spawning, tell the user**: "Launching <N> reviewers in parallel via workflow — results will arrive in ~2–5 minutes."
 
-The images in `1-paper-text/img/` are cropped by a local PDF-parsing library and may be mis-cropped, mislabeled, or rendered too small / low-resolution — extraction artifacts, not paper defects. Instruct **every** reviewer that references a figure:
-- Do **not** state image-quality problems (blurriness, low resolution, truncation, unreadable labels) as firm defects — they may be extraction artifacts.
-- Raise such observations only as a **flag for the user to verify against the original PDF**, severity `minor` at most, and **attach the exact image path** used (e.g. `img/sec3-experiments/figure3.png`).
-- Critiques about experimental *content* (missing baselines, table-vs-prose mismatch, etc.) are unaffected and stand on their own.
+Then invoke the workflow:
 
-## Prompt contract — all reviewers
+```
+Workflow({ name: "paper-review-fanout", args: { slug, lang, angles } })
+```
 
-Every reviewer receives the same core brief (common to Sonnet and Takeover):
-1. Read `summary.md` first — calibrate critique to its **Venue type** (see above).
-2. Read `literature.md` (if present) for research landscape context.
-3. Angle definition verbatim from `angles.md`.
-4. Output to `ongoing/<slug>/2-review/critiques/<angle>.md`.
-5. Format: numbered points (1, 2, 3…) descending severity (Major → Minor → Nit). Per point:
-   `## <N> · <claim>` / `- Evidence:` / `- Severity: major|minor|nit` / `- Suggested action:`.
-6. Language: read `lang:` from `review-config.md` (default `en`). Critique prose in that language; quoted paper text stays verbatim.
-
-### Router-specific
-
-**Sonnet** (`Agent` call) — pass paths directly; subagent reads files from disk.
-
-**Takeover** (Codex/DeepSeek) — runs in a separate process, cannot read this conversation or OneDrive paths.
-The prompt is fully self-contained — inline **verbatim**:
-- Entire `summary.md` + `literature.md` + angle definition
-- Relevant section excerpts (e.g. Method + Theory; actual markdown body)
-- Restate venue-type calibration rule inline; state target language explicitly
-- If text exceeds ~30k tokens, prioritise: summary + literature + angle + Method + Theory + captions
-
-After takeover returns, orchestrator writes returned text to `critiques/<angle>.md` if not already there.
+The workflow handles:
+- Parallel execution of all reviewers via `parallel()`
+- Direct Sonnet reviewers via `agentType: reviewer-<angle>` (reads files from disk)
+- MCP-takeover reviewers via relay agent → `call_model` (inlines paper content)
+- Structured output validation via schema
+- Writing critiques to `critiques/<angle>.md`
 
 ## After fanout
 
-Wait for all reviewers to complete. Check every expected `2-review/critiques/<angle>.md` exists and is non-empty (one file per angle in `angles.md`).
+Wait for the workflow to complete. Check every expected `2-review/critiques/<angle>.md` exists and is non-empty.
 
-**Partial-recovery protocol**: if one or more critique files are missing, empty, or truncated after a reasonable wait, present the user with a choice:
+**Partial-recovery protocol**: if the workflow returns fewer results than angles, or critique files are missing:
 
-1. **Retry missing reviewers** — re-spawn only the agents that failed (recommended). The orchestrator re-reads `angles.md` and re-launches only the missing-angle agents with the same prompt contract.
+1. **Retry missing reviewers** — re-invoke the workflow with only the failed angles (recommended).
 2. **Skip missing angles** — proceed to step 05 with only the available critiques. Note in `critiques.md` which angles were skipped.
-3. **Continue with partial (re-try later)** — write a placeholder file (e.g. `critiques/<angle>.md` containing `# <angle> — PENDING`) and proceed to step 05. The user can fill it in or re-run via `/paper-review:rerun 04 <slug>`.
+3. **Continue with partial (re-try later)** — write a placeholder file (e.g. `critiques/<angle>.md` containing `# <angle> — PENDING`) and proceed to step 05. The user can re-run via `/paper-review:rerun 04 <slug>`.
 
 Do not silently enter step 05 with a partial set.

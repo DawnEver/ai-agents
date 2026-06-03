@@ -2,7 +2,7 @@
 name: paper-review
 description: Review an academic paper PDF — ingest, summarise, fan out multi-angle 锐评, polish user draft into publishable English reviewer comments, archive.
 argument-hint: <path-to.pdf-or-slug>
-allowed-tools: "Read,Write,Bash,Glob,Grep,Agent,Skill,WebFetch,WebSearch"
+allowed-tools: "Read,Write,Bash,Glob,Grep,Agent,Skill,WebFetch,WebSearch,Workflow"
 ---
 
 # /paper-review:new — Review a paper
@@ -15,10 +15,10 @@ You are the orchestrator. Given a PDF path (or a slug already in `ongoing/`), wa
 |------|------|--------------|
 | 0 | `00-language.md` | ⭐ Pick intermediate-file language (default English, switchable to Chinese) → `review-config.md` |
 | 1 | `01-ingest.md` | marker-pdf → `1-paper-text/paper.md` + `md/` + `img/sec*` + `INDEX.md` |
-| 2 | `02-literature.md` | Search top N references (from paper + IEEE Xplore) + author background → `2-review/literature.md` |
+| 2 | `02-literature.md` | Invoke workflow `paper-review-literature` — parallel extraction + IEEE search + author profiling |
 | 2b | `02b-consensus.md` | ⭐ Write `2-review/summary.md` — shared truth (folds in literature, + venue type + `Obvious gaps`), user confirms |
 | 3 | `03-angle-gate.md` | ⭐ Propose angles, user confirms |
-| 4 | `04-fanout.md` | Spawn reviewers in parallel (Sonnet + takeover) |
+| 4 | `04-fanout.md` | Invoke workflow `paper-review-fanout` — parallel reviewers (Sonnet agents + MCP-takeover for Codex/DeepSeek) |
 | 5 | `05-aggregate.md` | Merge into `2-review/critiques.md` |
 | 6 | `06-user-draft.md` | ⭐ Orchestrator generates complete draft, user edits (hard gate, session boundary) |
 | 7 | `07-polish.md` | `polisher-english` → `3-response/final.md` (plain text) |
@@ -57,7 +57,7 @@ Re-invoking `/paper-review:new <slug>` resumes from the latest non-empty artifac
 - **Intermediate-file language**: steps writing prose read `lang:` from `review-config.md` (default `en`). `final.md` is always plain-text English.
 - **User gates**: steps 03 (angles) and 06 (draft) — iterate until approved; never skip.
 - **Session boundary at 06**: pipeline yields control; resume by re-invoking with the slug.
-- **Fanout is parallel**: one message, multiple calls; routing: `angles.md` override > agent frontmatter default.
+- **Fanout is parallel via workflow**: `paper-review-fanout` handles `parallel()` + schema validation; routing: `angles.md` override > agent frontmatter default. Sonnet reviewers run as direct agents, Codex/DeepSeek via MCP-takeover relay.
 - **Archive always updates** `style/profile.md` and `critiques-library/angles.md`, with dedup + rolling caps.
 
 ## Slug
