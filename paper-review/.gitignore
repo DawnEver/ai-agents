@@ -2,8 +2,13 @@ ongoing/*
 archived/*
 style/*
 critiques-library/*
-.claude/.*state.json
-.claude/.review-gate-state.json
+.claude/*
+!.claude/agents/
+!.claude/rules/
+!.claude/memory/
+!.claude/skills/
+!.claude/workflows/
+!.claude/settings.json
 __pycache__/
 .DS_Store
 

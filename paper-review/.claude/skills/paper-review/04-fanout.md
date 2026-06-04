@@ -40,12 +40,22 @@ Read `angles.md` and build the args:
 
 Map router → provider: `sonnet-vision` → `claude`, `takeover-codex` → `codex`, `takeover-deepseek` → `deepseek`.
 
+**If any angle uses MCP takeover (codex/deepseek)**, pre-read the paper text to pass as `paperSections` in args. This prevents the relay agent from reading paper files directly, closing a prompt-injection vector where paper content could influence relay behavior before it builds the downstream prompt (H2).
+
+Pre-read steps:
+1. Read `ongoing/<slug>/1-paper-text/paper.md` for title + abstract.
+2. Read `ongoing/<slug>/1-paper-text/md/` — prioritize Method, Theory, Experimental Setup / Results sections. Skip appendices unless an angle specifically needs them.
+3. Concatenate into a single string `paperSections`. Cap at ~50K words; note truncation if applied.
+4. Add `paperSections` to the workflow args object.
+
+If all angles use direct Sonnet (`provider: "claude"`), `paperSections` can be omitted — the reviewer agents read files from disk directly.
+
 **Before spawning, tell the user**: "Launching <N> reviewers in parallel via workflow — results will arrive in ~2–5 minutes."
 
 Then invoke the workflow:
 
 ```
-Workflow({ name: "paper-review-fanout", args: { slug, lang, angles } })
+Workflow({ name: "paper-review-fanout", args: { slug, lang, angles, paperSections } })
 ```
 
 The workflow handles:
