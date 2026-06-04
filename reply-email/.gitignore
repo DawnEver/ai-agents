@@ -2,5 +2,7 @@
 archived/
 ongoing/
 style/
-.claude/.retro_state.json
-.claude/.review-gate-state.json
+.claude/*
+!.claude/commands/
+!.claude/rules/
+!.claude/memory/
