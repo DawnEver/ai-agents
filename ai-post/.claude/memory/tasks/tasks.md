@@ -1,0 +1,14 @@
+---
+name: active-tasks
+description: Active task list. Managed by sync-tasks.js. Load on demand via MEMORY.md.
+metadata:
+  type: project
+created: 2026-06-06
+accessed: 2026-06-08
+tier: short
+---
+
+# Active Tasks
+> 0 open · last sync: 2026-06-08 (sharp-review pass)
+
+_(no open tasks)_

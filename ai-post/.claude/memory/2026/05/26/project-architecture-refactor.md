@@ -1,10 +1,11 @@
 ---
 name: project-architecture-refactor
 description: AI-Post 架构重整计划 — post-new 渐进式披露拆分 + 整体管线层级重构
-metadata: 
-  node_type: memory
+metadata:
   type: project
-  originSessionId: a7702495-e64e-4699-9397-9f381555f652
+created: 2026-05-26
+accessed: 2026-05-26
+tier: short
 ---
 
 # AI-Post 架构重整

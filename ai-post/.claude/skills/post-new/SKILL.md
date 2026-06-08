@@ -18,7 +18,7 @@ You are the orchestrator. Given a GitHub repo URL, clone and deeply explore the 
 | 03 | `03-market-research.md` | WebSearch: similar repos, trending, content gap → `1-research/market-research.md` | — |
 | 04 | `04-analysis.md` | Consolidated analysis (folds in market research) + article angles → `1-research/repo-analysis.md` | — |
 | 05 | `05-brief-gate.md` | ⭐ 选题确认 — angles + titles, iterate until approved | **User** |
-| 06 | `06-images.md` | Image manifest → `2-draft/images.md`; image files → `images/` | — |
+| 06 | `06-images.md` | Image manifest + user-confirmed generation via `takeover-image` (covers → content, parallel) | **User** |
 | 07 | `07-spawn.md` | Spawn platform writer agents in parallel → `2-draft/<platform>.md` | — |
 | 08 | `08-user-review.md` | ⭐ Mandatory user read-through before review | **User** |
 | 09 | `09-review.md` | 🔒 三方会审 — MANDATORY, cannot skip. Also reviews `2-draft/images.md` → produces `3-final/images.md` | — |

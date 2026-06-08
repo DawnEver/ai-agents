@@ -3,6 +3,9 @@ name: transition-patterns-from-final-drafts
 description: Connective/transition patterns extracted from diffing 2-draft vs 3-final edits — systematically missing in generated drafts
 metadata:
   type: feedback
+created: 2026-06-02
+accessed: 2026-06-02
+tier: short
 ---
 
 # Transition Patterns — What 3-final fixes that 2-draft misses

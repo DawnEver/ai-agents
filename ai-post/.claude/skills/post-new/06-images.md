@@ -88,3 +88,80 @@ _(Add more shared images as needed)_
 | 知乎 | `zhihu-cover.png` (16:9) | `comparison.png`, `product-shot.png` |
 | Twitter/X | `twitter-cover.png` (16:9) | (optional) `product-shot.png` |
 ```
+
+---
+
+## Phase 2: Generate Images (user confirms)
+
+Image generation consumes ~30K+ tokens per image plus Codex API quota. Always present a summary and ask before generating.
+
+After the manifest is written, count planned AI-generated images (exclude real screenshots). Present:
+
+```
+🖼️ 图片生成计划
+
+封面图：X 张（<platforms>）
+内容配图：Y 张（<image-ids>）
+预估消耗：~Z K tokens + Codex 图片额度
+
+生成？选项：all / covers-only / skip
+```
+
+- **all** → generate covers then content images (two parallel batches)
+- **covers-only** → generate only platform covers; writers use placeholder refs for content images
+- **skip** → no generation now; writers use placeholder refs; post-publish will catch missing images later
+
+If user chooses `skip` or `covers-only`, note it in the manifest: `generated: covers-only` or `generated: false`. Post-publish will use this to know whether to auto-offer generation.
+
+### Pre-Check: Codex CLI
+
+Before spawning any image agents, verify Codex CLI is installed:
+```bash
+codex --version
+```
+If `codex` is not found, report: "Codex CLI 未安装。请先 `npm install -g @openai/codex && codex login`，然后重新运行此步骤。" Do not proceed until Codex is available.
+
+### Batch 1: Cover Images
+
+Generate covers for all target platforms in parallel. Covers derive from angles/titles confirmed in step 05 — they don't depend on draft content.
+
+For EACH cover entry in the manifest (`xhs-cover`, `wechat-cover`, `zhihu-cover`, `twitter-cover`), spawn a takeover-image agent:
+
+```
+Agent({
+  subagent_type: "takeover-image",
+  description: "Generate <cover-id>",
+  prompt: "Generate: <AI Prompt from manifest>, save to ongoing/<slug>/images/<filename>.png at <WxH>"
+})
+```
+
+Spawn ALL cover agents in ONE message for parallel execution.
+
+### Batch 2: Content Images (generate if no real screenshots)
+
+After covers complete, generate content images (product-shot, comparison, architecture diagram, etc.). Skip entries where the repo already provides real screenshots.
+
+Same parallel spawn pattern per image.
+
+### Batch Requests (multiple variations)
+
+To request N variations in one agent call, append to the prompt:
+```
+"...at <WxH>. Generate 5 variations."
+```
+This costs a single agent turn instead of N. Token cost varies with prompt length and image resolution; ~30K+ tokens per turn is a rough baseline — measure actuals to calibrate.
+
+### Error Handling
+
+If an agent fails:
+1. Retry once with the same prompt.
+2. If retry also fails, note: `⚠️ <image-id> generation failed — needs manual creation`.
+3. Do NOT block the pipeline — writers reference image paths as markdown; missing files don't break drafting.
+
+### Cost Estimate (rough baseline — measure to calibrate)
+
+| Batch | Images | Est. tokens |
+|-------|--------|-------------|
+| Covers (4 platforms) | 4 | ~120K+ |
+| Content (3-4 shared) | 3-4 | ~90-120K+ |
+| **Total** | 7-8 | ~210-240K+ |

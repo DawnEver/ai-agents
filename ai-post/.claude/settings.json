@@ -20,7 +20,13 @@
       "Write(*/ai-post/templates/**)",
       "Write(*/ai-post/CLAUDE.md)",
       "Glob(*/ai-post/**)",
-      "Grep(*/ai-post/**)"
+      "Grep(*/ai-post/**)",
+      "Skill(codex-image:generate)",
+      "Skill(codex-image:edit)",
+      "Skill(codex-image:status)"
     ]
+  },
+  "enabledPlugins": {
+    "codex-image@codex-image-in-cc": true
   }
 }

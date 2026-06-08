@@ -46,11 +46,13 @@ If the platform is not supported: "Supported platforms: xiaohongshu, wechat, zhi
 以下图片文件不存在：
   - images/xxx.png — <description from images.md>
   - images/yyy.png — <description from images.md>
-
-请补全后再发布。
 ```
-- If `images.md` lists AI prompts for the missing images, suggest: "可运行图片生成来补全这些图片。"
-- If they are real screenshots, tell the user: "请将对应截图下载到 `ongoing/<slug>/images/` 目录。"
+
+- If `images.md` lists AI prompts for the missing images, auto-offer generation:
+  > "X 张配图缺失。images.md 中有对应 AI prompt，是否通过 takeover-image 生成？"
+  - Spawn takeover-image agents in parallel for each missing image with an AI prompt.
+  - Re-verify after generation. If generation fails, fall back to manual prompt.
+- If they are real screenshots (no AI prompt in manifest), tell the user: "请将对应截图下载到 `ongoing/<slug>/images/` 目录。"
 - **Loop here** — re-check after user provides images. Do not move on.
 
 **Only when all images exist:**

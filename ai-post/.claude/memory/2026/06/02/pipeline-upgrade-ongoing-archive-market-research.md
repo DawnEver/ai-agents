@@ -3,6 +3,9 @@ name: pipeline-upgrade-ongoing-archive-market-research
 description: ai-post pipeline upgraded with paper-review patterns — market research step, ongoing/archive dirs, resume table
 metadata:
   type: project
+created: 2026-06-02
+accessed: 2026-06-02
+tier: short
 ---
 
 # Pipeline Upgrade: Market Research + Persistent Workspaces

@@ -1,10 +1,11 @@
 ---
 name: feedback-author-voice
 description: "Articles must be written in the repo author's voice, never third-party reviewer; banned AI-tell phrases"
-metadata: 
-  node_type: memory
+metadata:
   type: feedback
-  originSessionId: fc72ba7f-22a1-435a-86c4-93b3de18ece8
+created: 2026-05-27
+accessed: 2026-05-27
+tier: short
 ---
 
 # Write as Repo Author, Not Reviewer

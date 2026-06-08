@@ -9,7 +9,7 @@ Generate platform-adapted social media content from GitHub repositories. Clones 
   ├── 01-clone → 02-explore → 03-market-research
   ├── 04-analysis (folds in market research)
   ├── ⭐ 05-brief-gate (选题确认: angles + titles, 多轮迭代)
-  ├── 06-images → 07-spawn (并行 agents)
+  ├── 🔵 06-images → 07-spawn (图片清单 + 用户确认生成 → 并行 agents)
   ├── ⭐ 08-user-review (强制用户阅读初稿)
   ├── 09-review → 10-summary
   └── 下游工具:
@@ -22,7 +22,7 @@ Generate platform-adapted social media content from GitHub repositories. Clones 
 
 | Command | Description |
 |---------|-------------|
-| `/post-new <github-url> [platform]` | 主线 — clone → explore → market research → gate → spawn → review → publish |
+| `/post-new <github-url> [platform]` | 主线 — clone → explore → market research → gate → spawn → review → 3-final |
 | `/post-publish <platform> [slug]` | 发布出口 — image verification + clipboard export + platform publishing guidance |
 | `/post-archive <slug>` | 归档 — move to `archived/YYMMDD/`, update style/profile.md, optional postmortem |
 | `/post-regenerate <slug> <platform>` | Redo one platform's article from existing analysis (no re-clone) |
@@ -38,9 +38,9 @@ Generate platform-adapted social media content from GitHub repositories. Clones 
   → write repo-analysis.md (folds in market research)
   → ⭐ BRIEF REVIEW GATE: 选题确认 (angles + titles, iterate until user approves)
   → user confirms angles, selects titles (multi-round discussion OK)
-  → write images.md (image manifest: real screenshots + AI prompts, cross-platform reuse)
+  → write images.md + user-confirmed image generation via takeover-image (covers first, then content, parallel batches)
   → spawn writers in parallel (创意排水 → draft → 三遍审校)
-    writers use markdown image refs ![alt](../1-research/images/<file>) from images.md
+    writers use markdown image refs ![alt](../images/<file>) from images.md
   → ⭐ USER DRAFT REVIEW: mandatory read-through before review
   → user reads drafts, requests changes (iterate until approved)
   → 三方会审 (3-model fanout per identity)
@@ -75,13 +75,13 @@ ongoing/            — articles currently in progress (gitignored)
       repo-exploration.md  — step 02: deep code exploration notes
       market-research.md   — step 03: similar repos, trending, content gap
       repo-analysis.md     — step 04: consolidated analysis + article angles
-      images.md            — step 06: image manifest
-      images/              — step 06: image files (screenshots, AI-generated)
     2-draft/
+      images.md            — step 06: image manifest
       xiaohongshu.md       — step 07: generated articles
       wechat.md
       zhihu.md
       twitter.md
+    images/               — step 06: image files (screenshots, AI-generated)
     3-final/
       xiaohongshu.md       — step 10: review-passed, ready-to-publish
       wechat.md
@@ -105,6 +105,7 @@ Each platform has a thin agent that loads the template (single source of truth) 
 | `wechat-writer` | 微信公众号 | 2000-5000 chars, 2-3+ code blocks, 三遍审校 |
 | `zhihu-writer` | 知乎 | 1500-4000 chars, comparison table REQUIRED, no hype words |
 | `twitter-writer` | Twitter/X | 4-6 tweets, each <280 chars, EN+CN bilingual |
+| `takeover-image` | — | Dispatch image generation to Codex imagegen (gpt-image-2) |
 
 Chinese platform agents (xiaohongshu/wechat/zhihu) are written in Chinese and execute 创意排水 + 三遍审校 as part of their generation workflow.
 

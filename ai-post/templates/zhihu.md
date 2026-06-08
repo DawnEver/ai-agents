@@ -125,7 +125,7 @@ emoji_density: minimal
 
 ## 正文配图 (Content Images)
 
-**核心原则**：图片路径来自 `articles/<slug>/images.md`，不要自行发明路径。优先使用项目真实截图，AI 生成图作为补充。
+**核心原则**：图片路径来自 `ongoing/<slug>/2-draft/images.md`，不要自行发明路径。优先使用项目真实截图，AI 生成图作为补充。
 
 - **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](images/<filename>)`
 - **Aspect ratio**: `--ar 16:9`
