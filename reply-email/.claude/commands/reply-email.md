@@ -1,202 +1,28 @@
 ---
 name: reply-email
-description: Generate natural, conversational English email replies, then archive the thread. Provide the received email and your draft/key points to get a polished reply.
+description: Generate natural, conversational English email replies, then archive the thread.
 disable-model-invocation: true
 allowed-tools: "Read,Write,Bash"
 ---
 
 # Email Reply Generator
 
-Generate natural, fluent, conversational English email replies, then archive the original and reply for future reference.
-
 ## Workflow
 
-1. **Gather input** — ask the user to paste the received email if not already provided, plus their reply draft or key points (Chinese or English accepted). Also check whether the user is referencing an existing archive (e.g. `@archived/2026-06-01` or "接着之前的继续") — if so, this is a thread continuation. See Continue Thread section below.
-2. **Identify** — sender, subject, date, language, tone, and derive a kebab-case topic slug from the subject. For thread continuations, reuse the existing topic slug from the referenced archive.
-3. **Learn existing style** — read `style/profile.md` first (authoritative). If it doesn't exist, infer patterns from up to 5 recent `reply.txt` files in `archived/`. See Style Learning section below.
-4. **Load thread history (if continuation)** — when continuing a thread, read ALL previous `original.txt` and `reply.txt` files for the same topic slug across all archive dates. The full thread context informs the new reply. See Continue Thread section below.
-5. **Create or resume ongoing directory** — if `ongoing/<topic>/` doesn't exist, create it and write `original.txt` + initial `draft.md`. If it already exists, read the existing `draft.md` and jump to step 7 (iteration).
-6. **Draft the reply** — write the initial draft into `draft.md`. Use the learned style from step 3. If this is a thread continuation, the full history from step 4 should inform tone, context, and references. If step 3 found no patterns (first use, no profile, no archive), use the Reply Style fallback section below.
-7. **Iterate** — tell the user the draft is ready at `ongoing/<topic>/draft.md`. The user reviews and gives feedback; you edit `draft.md` directly. Repeat until approved. Every revision round starts by re-reading `draft.md`.
-8. **Archive** — move `ongoing/<topic>/` to `archived/<YYYY-MM-DD>/<topic>/`, rename `draft.md` → `reply.txt`, add `meta.md` with thread fields (see meta.md format below), then update `style/profile.md`. All files are local only — never commit, never store in memory.
+1. **Gather input** — ask for the received email + reply requirements/draft (Chinese or English). Check for thread continuation (e.g. `@archived/2026/06/01` or "接着之前的继续").
+2. **Identify** — sender, subject, date, language, tone. Derive kebab-case topic slug. For continuations, reuse existing slug.
+3. **Learn style** — read `style/profile.md` (authoritative). If missing, infer from archives. → `.claude/commands/reply-email/style-learning.md`
+4. **Thread history** — if continuation, load all prior `original.txt` + `reply.md` for the topic slug. → `.claude/commands/reply-email/continue-thread.md`
+5. **Create ongoing** — `ongoing/<topic>/`: write `original.txt` (raw email) + `draft.md` (AI draft) + `final.md` (copy of draft). If dir exists: read existing files, jump to step 7 (user edits).
+6. **Draft** — write reply into `draft.md`, copy to `final.md`. If no profile and no archives exist, → `.claude/commands/reply-email/reply-style.md`
+7. **User edits** — tell user `final.md` is ready. User edits `final.md` directly. Never touch `draft.md` after creation.
+8. **Optional polish** — only if user explicitly asks, edit `final.md`. Keep `draft.md` untouched.
+9. **Archive** — move to `archived/<YYYY>/<MM>/<DD>/<topic>/`, diff `draft.md` vs `final.md`, rename `final.md` → `reply.md`, add `meta.md`. → `.claude/commands/reply-email/archive.md`
 
-## Continue Thread
+## Key rules
 
-When the user references a previous archive or asks to continue a conversation:
-
-1. **Locate the thread** — find all archived directories matching the topic slug (e.g. `archived/*/<topic>/`). Read every `original.txt` and `reply.txt` in date order to reconstruct the full conversation.
-2. **Identify position** — count existing messages in the thread. The new reply is position N+1 (e.g. if 2 messages exist, this is position 3).
-3. **Draft with full context** — the new reply should be aware of everything said before: previous asks, answers received, tone established. Don't re-ask questions that were already answered. Reference prior messages naturally when helpful.
-4. **Same topic slug** — always reuse the original topic slug across the entire thread, regardless of how many rounds it spans. The slug binds the thread together.
-
-## Reply Style (fallback)
-
-Only used when neither `style/profile.md` nor archived replies exist. Once a profile is established, this section is ignored.
-
-- Conversational but professional — real conversation tone, not stiff corporate speak
-- Fluent and natural — no awkward translation feel
-- Concise and clear — no filler phrases ("I hope this email finds you well")
-- Friendly and positive
-- Reply in the same language as the incoming email
-
-## Reply Structure
-
-```
-Subject: Re: [Original subject]
-
-Hi [Name],
-
-[Body]
-
-Best,
-[Your Name]
-```
-
-## Usage Example
-
-**Received email:**
-```
-From: prof.smith@example.com
-Subject: Meeting about research project
-
-Dear [Name],
-
-I'd like to discuss your research project progress. Are you free this Friday afternoon?
-
-Best,
-Prof. Smith
-```
-
-**User draft:** "Okay, Friday 3pm works, please let me know the meeting room location"
-
-**Output:**
-```
-Subject: Re: Meeting about research project
-
-Hi Prof. Smith,
-
-Thanks for reaching out! Friday afternoon at 3pm works perfectly for me. Could you let me know which meeting room we'll be in?
-
-Looking forward to our discussion.
-
-Best,
-[Your Name]
-```
-
-## Style Learning (step 3)
-
-`style/profile.md` is the authoritative style source. Archived replies are only scanned when the profile doesn't exist yet — to bootstrap it.
-
-**How to learn:**
-
-1. Read `style/profile.md`. If it exists, apply its rules directly — skip archived replies.
-2. If `style/profile.md` doesn't exist yet, infer patterns from archived replies:
-   - List `archived/` subdirectories sorted by date (descending).
-   - Read `reply.txt` from the most recent threads (up to 5; fewer is fine).
-   - Note patterns: greeting, closing, signature, tone, paragraph style, contractions, scenario handling (scheduling, declining, asking questions, thanking).
-3. If neither exists (first use), rely on the Reply Style fallback below.
-
-## Ongoing (step 4–6)
-
-The `ongoing/` directory holds in-progress drafts. Every reply is drafted here first, then moved to `archived/` on approval.
-
-```
-ongoing/<topic>/
-  original.txt   — raw incoming email (written once)
-  draft.md       — working reply draft (read + written every iteration)
-```
-
-Conversation between you and the user revolves around `draft.md`:
-- You write the initial draft into it.
-- The user reads it and gives feedback.
-- You re-read `draft.md`, apply the feedback, and write it back.
-- Repeat until approved.
-
-## Archive (step 7)
-
-After approval:
-
-1. Move `ongoing/<topic>/` → `archived/<YYYY-MM-DD>/<topic>/` (use `mv` — the ongoing directory is gone after this).
-2. Rename `draft.md` → `reply.txt`.
-3. Create `meta.md`.
-
-Final archived structure:
-```
-archived/<YYYY-MM-DD>/<topic>/
-  original.txt   — raw incoming email
-  reply.txt      — approved reply
-  meta.md        — structured metadata
-```
-
-### meta.md format
-
-```markdown
----
-subject: <email subject>
-sender: <sender name / address>
-date: <original email date, normalized to YYYY-MM-DD>
-thread: <topic-slug>
-position: <N> / <total known so far>
----
-
-<1-2 sentence summary of this message in the thread>
-```
-
-- `thread` — the kebab-case topic slug, same across all messages in the thread.
-- `position` — this message's position in the thread (1-indexed). Write as `<N>` if the total is unknown (ongoing thread), or `<N>/<M>` once you know the final count.
-- When archiving a continuation, also update the `position` field of the previous message's `meta.md` if it was previously `<N>` without a total — set it to `<N>/<M>` now that the next message exists.
-
-### Thread example
-
-```
-archived/2026-05-20/conference-invitation/
-  original.txt    — initial invitation email
-  reply.txt       — accepting the invitation
-  meta.md         — thread: conference-invitation, position: 1/2
-
-archived/2026-05-25/conference-invitation/
-  original.txt    — reply with logistics details
-  reply.txt       — confirming travel arrangements
-  meta.md         — thread: conference-invitation, position: 2/2
-```
-
-Messages in the same thread share a topic slug and appear across multiple archive dates. When reading thread history, sort by date to reconstruct chronological order.
-
-Archived and ongoing files are local only — both are gitignored. Never commit them and never write email content into the memory system.
-
-### After archiving: update style profile
-
-After each archive, check whether the just-archived reply reveals new style patterns. Only update `style/profile.md` when a pattern appears in **at least 2 archived replies** — a one-off choice shouldn't get baked into the profile. When creating the profile for the first time, bootstrap it from the first reply but mark uncertain entries with `(tentative)`.
-
-The profile should record:
-
-```markdown
-# Email Style Profile
-
-## Signature
-[Your Name]
-
-## Greeting
-- Default: Hi [Name],
-- Formal recipients: Dear [Title] [Surname],
-
-## Closing
-- Default: Best,
-
-## Tone
-- Conversational but professional
-- [add other persistent patterns]
-```
-
-If `style/profile.md` already exists, read it first, merge in new observations, and write it back. This profile accumulates knowledge — it should only grow more accurate over time.
-
-## Style Profile (`style/`)
-
-```
-style/
-  profile.md    — accumulated style data (signature, greeting, tone, etc.)
-```
-
-- `style/` is local only, gitignored — same as `archived/` and `ongoing/`.
-- `profile.md` is the authoritative style source for step 3. Updated when patterns appear in ≥2 archived replies.
-- Contains no raw email content — only distilled style patterns.
+- `draft.md` = AI's raw output, preserved untouched for diff learning. `final.md` = user's version.
+- `original.txt` = raw email (plain text). `.md` files = structured reply content.
+- Thread linkage via slug-based lookup. Try both globs: `archived/*/*/*/<topic>/` (nested) and `archived/*/<topic>/` (flat, legacy). `prev:` in meta.md is cosmetic.
+- All data in `ongoing/`, `archived/`, `style/` is local only, gitignored — never commit, never store in memory.
+- `AGENT.md` is the authoritative reference for directory structure, file conventions, and desensitization rules.

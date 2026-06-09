@@ -6,3 +6,4 @@ style/
 !.claude/commands/
 !.claude/rules/
 !.claude/memory/
+!.claude/settings.json

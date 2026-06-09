@@ -2,6 +2,7 @@
 
 <!-- Managed by stamp-memory.js. Completed tasks → memory/tasks/archive/, evicted after 90d. -->
 
+- [2026-06-09 sharp-review-2026-06-09](../memory/2026/06/09/sharp-review.md) — `created: 2026-06-09, accessed: 2026-06-09`
 - [2026-06-08 sharp-review-2026-06-08](../memory/2026/06/08/sharp-review.md) — `created: 2026-06-08, accessed: 2026-06-08`
 - [2026-06-08 active-tasks](../memory/tasks/tasks.md) — `created: 2026-06-06, accessed: 2026-06-08`
 - [2026-06-08 task-archive-2026-06](../memory/tasks/archive/2026-06.md) — `created: 2026-06-06, accessed: 2026-06-08`
