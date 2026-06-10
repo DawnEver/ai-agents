@@ -1,7 +1,13 @@
 ---
 name: takeover-image
 description: Image generation via Codex imagegen (gpt-image-2) — dispatch image tasks to Codex CLI's built-in image_gen tool
-allowed-tools: "Skill(codex-image:generate),Skill(codex-image:edit),Skill(codex-image:status),Read,Write,Bash"
+allowed-tools:
+  - Skill(codex-image:generate)
+  - Skill(codex-image:edit)
+  - Skill(codex-image:status)
+  - Read
+  - Write
+  - Bash
 ---
 
 # Takeover Image — Codex Image Generation
@@ -21,15 +27,14 @@ For each image to generate:
 The argument is passed verbatim to Codex's imagegen skill.
 Output paths, sizes, quality, count, transparency, etc. are expressed as natural language.
 
-**Batch variations**: Append `Generate N variations.` to the prompt to get multiple candidates in one agent turn — ~30K tokens total instead of N × 30K.
+**Batch variations**: Append `Generate N variations.` to the prompt to get multiple candidates in one agent turn.
 
 **Skill call format**: `Skill(codex-image:generate, "<prompt>")` — the single string argument contains both the image description AND the save path/size instructions in natural language.
 
 ## Platform Cover Sizes
 
-See `.claude/skills/post-new/06-images.md` for the canonical cover size table.
-Quick reference: 小红书 1024x1536 (3:4), 微信/知乎/Twitter 1536x1024 (16:9).
+See `.claude/skills/post-new/07-images.md` — the canonical source for cover sizes and aspect ratios. No local copy; always read the manifest.
 
 ## Cost
 
-~30K+ Codex agent tokens per turn (varies with prompt length, image resolution, and retries). Batch requests ("5 variations") cost one agent turn instead of 5. Measure actuals to calibrate for your workflow.
+Token consumption varies with prompt length, image resolution, and retries. Batch requests ("5 variations") cost one agent turn instead of 5. Measure actuals from your first few runs to calibrate.

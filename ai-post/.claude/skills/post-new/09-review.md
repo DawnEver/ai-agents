@@ -2,9 +2,33 @@
 
 **This step is NOT optional. Do NOT skip. Do NOT let the user talk you out of it.**
 
-Every generated article MUST pass 三方会审 before publishing. There is no path from draft to publish that bypasses review.
+Every article must pass 三方会审 at least once before publishing. There is no path to publish that bypasses review. The image plan (`images.md`) is also reviewed.
 
-After user approves drafts in Step 08, immediately invoke the `/post-review` skill:
+## Pre-Review: Version Diff Chain
+
+Before invoking review, collect the full revision history:
+
+1. Walk `2-draft/v1/` through `2-draft/v<N>/` (current). For each platform, find every version that changed it.
+2. Build a diff chain: `diff v1/<platform>.md v<N>/<platform>.md` for each platform
+3. Also diff consecutive versions to show what the user changed each round
+4. Package into context for the review skill:
+
+```
+## Revision History for <platform>
+v1 → v2: user adjusted tone, added Workflow motivation story
+v2 → v3: user restructured argument flow
+...
+Current version: v<N>
+
+## Full diff from baseline
+<diff v1 → vN>
+```
+
+5. Pass this context: `Skill("post-review", args="<slug> --version-history")`
+
+The review reads the diff chain and focuses on what hasn't been addressed — it won't re-flag things the user already fixed in later versions.
+
+After collecting version context, invoke the review:
 
 ```
 Skill("post-review", args="<slug>")
@@ -12,14 +36,26 @@ Skill("post-review", args="<slug>")
 
 If the user says "skip review" or "直接发布" → refuse: "三方会审是强制步骤，不能跳过。审完再发。"
 
-See `post-review/SKILL.md` for the full review design — two identities (A: 读者代理人, B: 技术核查员), each independently run by 3 models (Claude Sonnet + DeepSeek + Codex). Verdicts consolidated into unified ruling with prioritized fix list. Twitter/X skips identity B (no code to verify).
+See `post-review/SKILL.md` for the full review design — two identities (A: 读者代理人, B: 技术核查员), each independently run by 3 models (Claude Sonnet + DeepSeek + Codex). Twitter/X skips identity B (no code to verify).
+
+## Image Plan Review
+
+Also reviews `images.md`:
+- Do the images match the article content?
+- Are any key images missing?
+- Does each image's AI prompt accurately describe the requirement?
+- Does the cover image hook text match each platform's style?
 
 ## After Review
 
-For each platform that passes (✅ or ⚠️ after fixes):
-1. Apply any review fixes to `ongoing/<slug>/2-draft/<platform>.md`
-2. Copy to `ongoing/<slug>/3-final/<platform>.md` as the review-passed version
+1. Create `2-draft/v<N+1>/` directory
+2. For each platform that passes (✅ or ⚠️ after fixes):
+   - Apply review fixes to the current version's file → write to `2-draft/v<N+1>/<platform>.md`
+   - Only write files that actually changed
+3. Apply image plan fixes to `images.md`
+4. Update `brief.md`: `review_completed: true`, `current_version: v<N+1>`
+5. Return to step 08 — user may do light edits, re-review, or confirm final
 
 For any platform that fails (❌):
 - Auto-offer `/post-regenerate <slug> <platform>`
-- Only platforms in `3-final/` can proceed to `/post-publish`
+- Regenerated article goes into a new version

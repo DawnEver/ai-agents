@@ -1,23 +1,34 @@
----
+﻿---
 name: post-review
-description: 三方会审 — each reviewer identity is run independently by Claude Sonnet, DeepSeek (take-over), and Codex. Disagreements between models surface genuine issues.
+description: 三方会审 — each reviewer identity is run independently by Claude Sonnet and DeepSeek via sharp-review workflow engine. Disagreements between models surface genuine issues.
 argument-hint: <slug> [platform]
-allowed-tools: "Read,Write,Glob,Grep,Agent,Skill"
+allowed-tools:
+  - Read
+  - Write
+  - Glob
+  - Grep
+  - Agent
+  - Skill
+  - Workflow
 ---
 
 # /post-review — 三方会审
 
 ## 核心设计
 
-**每个审稿身份 = 三个模型独立跑同一角色**
+Two independent reviewer identities, each run by 2 models via sharp-review's generalized workflow engine. The engine handles parallel fanout, JSON Schema enforcement, dedup merge, and confidence tagging. post-review handles identity-specific configuration and pipeline integration.
 
 ```
-身份A 读者代理人:  [Claude Sonnet] [DeepSeek V4 Pro] [Codex]
-身份B 技术核查员:  [Claude Sonnet] [DeepSeek V4 Pro] [Codex]
+身份A 读者代理人:  [Claude Sonnet] [DeepSeek V4 Pro]  → sharp-review workflow → merged findings
+身份B 技术核查员:  [Claude Sonnet] [DeepSeek V4 Pro]  → sharp-review workflow → merged findings
+                              ↓
+                    Cross-identity synthesis
+                    (post-review SKILL.md)
 ```
 
-三个模型用同一份审稿 prompt，独立给出判词。
-**三者一致 → 结论可信；三者分歧 → 该处需要人工判断。**
+Two models independently review with the same prompt. **Both agree → confident. They disagree → needs human judgment.**
+
+> **`--full-review` 模式**：追加 Codex reviewer (`{ provider: "codex" }`) 到每个身份的 `reviewers` 数组。
 
 ---
 
@@ -26,17 +37,18 @@ allowed-tools: "Read,Write,Glob,Grep,Agent,Skill"
 - `<slug>` — 文章目录名，对应 `ongoing/<slug>/`
 - `[platform]` — 可选，指定单一平台；不填则审所有已生成平台
 
-检查 `ongoing/<slug>/2-draft/` 下有哪些 `.md` 文件已存在（包括 `images.md`）。
+Walk `ongoing/<slug>/2-draft/` to find the latest version number (highest N). For each platform, walk back through versions to find the latest copy. Also check for `images.md` in the version chain.
 
 ---
 
-## 两个审稿身份 & 对应 Prompt
+## 审稿身份 & Finding Schema
 
 ### 身份 A：读者代理人
 
-> 你是一名对 AI 生成内容极度敏感的挑剔读者。不懂平台规则，只在乎"这篇文章好不好看"。你每天被 AI 内容轰炸，能瞬间识别 AI 腔。
+```
+你是一名对 AI 生成内容极度敏感的挑剔读者。不懂平台规则，只在乎"这篇文章好不好看"。你每天被 AI 内容轰炸，能瞬间识别 AI 腔。
 
-**检查项**：
+检查项：
 - 开头前 3 句：是否抓住你？还是让你想划走？（1-5分）
 - 逐段 AI 味打分：🟢 人味 / 🟡 轻微AI / 🔴 明显AI，每段说明原因
   - 🔴 标准：套话堆砌、无个人立场、像新闻稿
@@ -44,103 +56,178 @@ allowed-tools: "Read,Write,Glob,Grep,Agent,Skill"
 - 微幽默：哪里有让你嘴角微扬的细节？哪里完全没有？
 - 最无聊的段落是哪段？为什么？
 - 句子节奏：默读一遍，是否单调？
-- 图片描述（alt text）：是否与文章主题/术语一致？是否过于通用像占位符？是否用了作者不会用的词？
-
-**输出**：
-```
-[模型名] 身份A 读者代理人 — <platform>
-
-开头钩子: <分>/5 — <理由>
-AI味逐段:
-  第1段: 🟢/🟡/🔴 — <原因>
-  第2段: ...
-微幽默: <有/无/稀少> — <位置或建议>
-最无聊段: 第X段 — <原因>
-节奏感: <流畅/单调/局部单调>
-
-判决: PASS ✅ / FAIL ❌
-问题列表: <每条问题一行>
+- 图片描述（alt text）：是否与文章主题/术语一致？是否过于通用像占位符？
 ```
 
----
+**身份 A finding schema:**
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "location": { "description": "段落 N / 开头 / 全文 / 图片alt", "type": "string" },
+    "dimension": { "description": "Check dimension", "enum": ["hook", "ai_taste", "humor", "rhythm", "boredom", "alt_text"] },
+    "rating": { "description": "Rating (1-5 for hook, 🟢🟡🔴 for ai_taste, etc.)", "type": "string" },
+    "issue": { "description": "Specific issue found", "type": "string" },
+    "suggestion": { "description": "Fix suggestion", "type": "string" }
+  },
+  "required": ["location", "dimension", "rating", "issue"]
+}
+```
 
 ### 身份 B：技术核查员
 
-> 你是一名软件工程师，专门验证技术内容的准确性。不在乎文章好不好看，只在乎技术对不对。
+```
+你是一名软件工程师，专门验证技术内容的准确性。不在乎文章好不好看，只在乎技术对不对。
 
-**检查项**（对照 `ongoing/<slug>/1-research/repo-analysis.md`）：
+检查项（对照 repo-analysis.md）：
 - 每个代码块：语法正确？能实际运行？
 - 安装步骤：命令准确？顺序正确？
 - 技术术语：是否被正确使用（无误用/夸大）？
 - 架构描述：与 repo-analysis 中实际代码发现一致？
 - 性能声明、数据：有无编造或夸大？
 - 依赖包名、版本：是否真实存在？
-
-**输出**：
 ```
-[模型名] 身份B 技术核查员 — <platform>
 
-代码块 #1: ✅/⚠️/❌ — <说明>
-代码块 #2: ...
-安装步骤: ✅/⚠️/❌ — <说明>
-技术术语: ✅/⚠️/❌ — <说明>
-架构描述: ✅/⚠️/❌ — <说明>
-数据声明: ✅/⚠️/❌ — <说明>
+**身份 B finding schema:**
 
-判决: PASS ✅ / FAIL ❌
-问题列表: <每条问题一行，附正确内容>
+```json
+{
+  "type": "object",
+  "properties": {
+    "location": { "description": "代码块 #N / 安装步骤 / 术语 / 架构描述 / 数据声明 / 依赖", "type": "string" },
+    "dimension": { "description": "Check dimension", "enum": ["syntax", "runnable", "terminology", "architecture", "data_claims", "dependencies"] },
+    "rating": { "description": "Accuracy rating", "enum": ["✅", "⚠️", "❌"] },
+    "issue": { "description": "Specific issue found", "type": "string" },
+    "correction": { "description": "Correct content", "type": "string" }
+  },
+  "required": ["location", "dimension", "rating", "issue"]
+}
+```
+
+---
+
+## 审稿 Reviewer 配置
+
+### 身份 A — 读者代理人
+
+```json
+[
+  { "key": "A", "name": "读者代理人 (Claude)", "provider": "claude", "model": "sonnet" },
+  { "key": "B", "name": "读者代理人 (DeepSeek)", "provider": "deepseek" }
+]
+```
+
+### 身份 B — 技术核查员
+
+```json
+[
+  { "key": "A", "name": "技术核查员 (Claude)", "provider": "claude", "model": "sonnet" },
+  { "key": "B", "name": "技术核查员 (DeepSeek)", "provider": "deepseek" }
+]
+```
+
+> `--full-review`：每个身份追加 `{ "key": "C", "name": "... (Codex)", "provider": "codex" }`
+
+---
+
+## Sharp-Review Workflow 路径
+
+```
+C:\Users\linxu\OneDrive - The University of Nottingham\Sync\claude\cc-market\sharp-review\scripts\sharp-review-workflow.js
 ```
 
 ---
 
 ## 执行流程
 
-### Phase 1：并行分发 9 个子 agent
+### Phase 1：并行运行两个 Workflow
 
-对每个目标平台，一次性并行启动 6 个子 agent：
+对每个目标平台，并行调用 sharp-review workflow 两次（一次 per 身份）：
 
+**Workflow 调用 — 身份 A（读者代理人）：**
+
+```js
+Workflow({
+  scriptPath: "<sharp-review-workflow.js>",
+  args: {
+    date: "<today YYYY-MM-DD>",
+    contentType: "content",
+    content: "<article full text>",
+    reviewScope: "开头钩子吸引度(1-5分), 逐段AI味(🟢人味/🟡轻微AI/🔴明显AI), 微幽默密度与位置, 最无聊段落, 句子节奏, 图片alt text与主题一致性",
+    findingSchema: <身份A finding schema>,
+    reviewers: <身份A reviewers>,
+    pickStrategy: "all",
+    dedupKeyFields: ["location", "dimension"],
+    idPrefix: "CR-A"
+  }
+})
 ```
-身份A 读者代理人 × 3 模型:
-  A1: Agent(fork, prompt=身份A prompt + 文章内容)          ← Claude Sonnet
-  A2: Skill("take-over:continue", prompt=身份A prompt)     ← DeepSeek V4 Pro
-  A3: Skill("codex:rescue", prompt=身份A prompt)           ← Codex
 
-身份B 技术核查员 × 3 模型:
-  B1: Agent(fork, prompt=身份B prompt + 文章内容 + repo-analysis.md)
-  B2: Skill("take-over:continue", prompt=身份B prompt)
-  B3: Skill("codex:rescue", prompt=身份B prompt)
+**Workflow 调用 — 身份 B（技术核查员）：**
+
+```js
+Workflow({
+  scriptPath: "<sharp-review-workflow.js>",
+  args: {
+    date: "<today YYYY-MM-DD>",
+    contentType: "content",
+    content: "<article full text>\n\n---\n\n## Repo Analysis Reference\n\n<repo-analysis.md content>",
+    reviewScope: "代码块语法与可运行性, 安装步骤准确性, 技术术语正确使用, 架构描述与repo-analysis一致性, 性能数据真实性, 依赖包名版本真实性",
+    findingSchema: <身份B finding schema>,
+    reviewers: <身份B reviewers>,
+    pickStrategy: "all",
+    dedupKeyFields: ["location", "dimension"],
+    idPrefix: "CR-B"
+  }
+})
 ```
 
-> Twitter/X 为纯文字平台，跳过身份B（技术核查），只跑身份A 共 3 个 agent。
+> **Twitter/X 跳过身份 B**（纯文字平台，无代码需验证）。只跑身份 A。每个 workflow 内 2 个 reviewer agent 并行运行，全部受 JSON Schema 约束。
 
-### Phase 2：收集 6 份判词
+### Phase 2：收集结果
 
-等待所有 agent 返回结果。如某个 agent 调用失败，记录原因并标注该格为 `⚠️ 未响应`，不影响其他评审。
+Each workflow returns:
+```json
+{
+  "merged": [
+    {
+      "id": "CR-A-20260610-001",
+      "location": "开头",
+      "dimension": "hook",
+      "rating": "2/5",
+      "issue": "第1句是套话",
+      "suggestion": "换具体事件开头",
+      "confidence": "high-confidence (≥2 reviewers)"
+    }
+  ],
+  "summary": "5 issues (3 high-confidence) → .claude/memory/..."
+}
+```
+
+If a workflow or individual reviewer fails — log the failure, mark that identity as `⚠️ 未响应`. Don't block the other identity.
 
 ### Phase 3：分身份合议
 
-对每个身份的三份判词做对比分析：
+Use the `confidence` field from the workflow output:
 
 ```
 ═══ 身份A 读者代理人 合议 ═══
 
-         Claude   DeepSeek   Codex
-开头钩子   4/5      3/5        4/5   → 基本一致，尚可
-第3段AI味  🟡       🔴         🟢   → 🔀 分歧：DeepSeek认为明显AI腔
-微幽默     有        稀少       有    → 🟡 DeepSeek认为密度不足
-...
+High-confidence findings (≥2 reviewers):
+  [CR-A-001] 开头 — hook: 2/5 — 第1句是套话，换具体事件
+  [CR-A-002] 第3段 — ai_taste: 🔴 — 套话堆砌，无个人立场
 
-身份A 合议判决: ⚠️ 有条件（存在分歧需人工判断）
+Single-reviewer findings:
+  [CR-A-005] 第5段 — humor: 稀少 — DeepSeek认为微幽默密度不足
 
-═══ 身份B 技术核查员 合议 ═══
-...
+身份A 合议判决: ✅ PASS / ⚠️ CONDITIONAL / ❌ FAIL
 ```
 
 **合议规则**：
-- 3/3 一致 → 结论可信，直接采纳
-- 2/3 同意 → 多数判决，附少数意见
-- 1/3（只有一个模型发现）→ 标注 `⚠️ 存疑`，列出但不强制修改
-- 分歧点 → 高亮为 `🔀 模型分歧`，需用户人工判断
+- `high-confidence (≥2 reviewers)` → `🔴 必须修改`（阻断发布）
+- `single-reviewer` → `🟡 建议修改`（单一模型发现）
+- 如果同一 location+dimension 上两个 reviewer 都返回 finding 但 rating 不同 → `🔀 模型分歧`（需人工判断）
 
 ### Phase 4：综合裁决
 
@@ -159,19 +246,24 @@ AI味逐段:
 
 📋 问题汇总（按优先级）
 
-🔴 必须修改（2-3模型一致，阻断发布）：
-  [身份A] 开头2/3 — 第1句是套话，换具体事件开头
+🔴 必须修改（high-confidence，阻断发布）：
+  [身份A] 开头 hook 1/5 — 第1句是套话，换具体事件开头
 
-🟡 建议修改（2模型一致或单模型高置信）：
+🟡 建议修改（single-reviewer，高置信）：
   [身份B] 代码块#2 pip install 命令可能缺少版本锁定
 
 🔀 模型分歧（需人工判断）：
-  [身份A] 第3段 AI味：Claude🟡 / DeepSeek🔴 / Codex🟢
-    → DeepSeek认为明显AI腔，Claude和Codex认为尚可，建议你自己判断
+  [身份A] 第3段 AI味：Claude🟡 / DeepSeek🔴
+    → DeepSeek认为明显AI腔，Claude认为尚可，建议你自己判断
 
 🟢 可选优化：
   [身份A] 微幽默密度可再提高
 ```
+
+**裁决逻辑**：
+- `❌ 不可发布`：存在 high-confidence finding with 严重问题（hook ≤2/5、code syntax ❌、data claims ❌）
+- `⚠️ 有条件`：存在 high-confidence findings 但可修复，或仅有 single-reviewer findings
+- `✅ 可发布`：无 high-confidence findings 且无严重 single-reviewer findings
 
 ### Phase 5：全平台总览
 
@@ -181,7 +273,7 @@ AI味逐段:
 | 平台    | A读者 | B技术 | 综合  | 分歧数 |
 |---------|-------|-------|-------|--------|
 | 小红书  |  ❌   |  —    |  ❌   |   1    |
-| 微信    |  🟡  |  ✅   |  ⚠️   |   2    |
+| 微信    |  ⚠️  |  ✅   |  ⚠️   |   2    |
 | 知乎    |  ✅   |  ⚠️  |  ⚠️   |   0    |
 | Twitter |  ✅   |  —    |  ✅   |   0    |
 
@@ -194,15 +286,8 @@ AI味逐段:
 
 ### Phase 6：图片提示词会审（Image Prompt Review）
 
-文章正文审完后，对 `2-draft/images.md` 做独立审查，输出 `3-final/images.md`。
+文章正文审完后，从最新版本的 `images.md`（walk back through versions to find it）做独立审查。
 
-**审查依据**：对照 `3-final/<platform>.md` 终稿，检查 images.md 中的图片描述和 AI prompt 是否与终稿一致。
+**检查项**：术语一致性 / 残留引用 / 封面标题匹配 / 过时描述 / 比例正确
 
-**检查项**：
-- 术语一致性：图片 alt 文本中的概念名称是否与终稿一致？（如终稿用"奴隶主视角"，图片描述不应写"编排者视角"）
-- 残留引用：是否提到已删除的概念？（如终稿去掉了 GPT，图片 prompt 不应再提 GPT）
-- 封面标题匹配：封面图的 hook text / title 是否与终稿标题一致？
-- 过时描述：图片的 Scene/描述是否反映终稿的实际内容？
-- 比例正确：封面图 aspect ratio 是否匹配平台要求？
-
-**输出**：修复后的 `ongoing/<slug>/3-final/images.md`，格式与 2-draft 版相同，但所有 prompt 经过终稿对齐。如有无法确定的项，标注 `⚠️ 需人工确认`。
+**输出**：修复后的 `images.md` 写入 `2-draft/v<N+1>/images.md`。如有无法确定的项，标注 `⚠️ 需人工确认`。

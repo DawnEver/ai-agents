@@ -23,7 +23,7 @@ tier: short
 
 - **Category:** Bug
 - **Module:** memory-system
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Move the three-tier memory documentation comment into .claude/rules/MEMORY.md or a dedicated docs file; remove the nested .claude/memory/.claude/ path
 
@@ -31,11 +31,11 @@ File creates path .claude/memory/.claude/rules/MEMORY.md containing only HTML co
 
 ---
 
-### [SR-20260609-002] [MEDIUM] README.md — Pipeline flow and command table disagree on whether publish + archive are part of /post-new
+### [SR-20260609-002] [MEDIUM] ~~README.md~~ AGENT.md — Pipeline flow and command table disagree on whether publish + archive are part of /post-new
 
 - **Category:** Bug
 - **Module:** docs
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Align README command table with AGENT.md: change 'clone through archive' to 'clone through 3-final' and clarify that publish + archive are /post-publish and /post-archive respectively
 
@@ -47,7 +47,7 @@ The README pipeline diagram shows /post-new ending with '→ publish → archive
 
 - **Category:** Bug
 - **Module:** post-new
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Replace Agent({subagent_type: ...}) with actual TaskCreate tool invocation format or a natural-language instruction like 'Spawn a takeover-image subagent with...'
 
@@ -59,7 +59,7 @@ The Phase 2 Batch 1 instructions use Agent({subagent_type: "takeover-image", des
 
 - **Category:** Bug
 - **Module:** agents
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Change to YAML list format: allowed-tools: [Skill(codex-image:generate), Skill(codex-image:edit), Skill(codex-image:status), Read, Write, Bash]
 
@@ -71,7 +71,7 @@ The current value is a single quoted string 'Skill(codex-image:generate),Skill(c
 
 - **Category:** Bug
 - **Module:** settings
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Verify whether Skill(takeover-image) or an Agent permission is needed for the orchestrator to spawn takeover-image subagents; if so, add it alongside the codex-image Skill permissions
 
@@ -83,7 +83,7 @@ settings.json adds Skill(codex-image:generate/edit/status) for the takeover-imag
 
 - **Category:** Feature
 - **Module:** post-new
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Add a one-liner on how to check actual token usage (e.g., 'check Codex CLI logs or app-server telemetry after each batch')
 
@@ -95,7 +95,7 @@ The document repeats 'measure actuals to calibrate' in three places without tell
 
 - **Category:** Bug
 - **Module:** memory system
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Either commit the referenced scripts or remove the comment block describing an unimplemented tier system
 
@@ -107,7 +107,7 @@ The HTML comment block describes a three-tier memory system with promotion, demo
 
 - **Category:** Bug
 - **Module:** image generation
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Replace with the actual subagent spawn mechanism for the target platform, or document that this is pseudocode awaiting implementation
 
@@ -119,7 +119,7 @@ The sharp-review memory (SR-009, SR-004) claims Agent() pseudo-syntax was 'fixed
 
 - **Category:** Bug
 - **Module:** memory system
-- **Status:** OPEN
+- **Status:** WONTFIX
 - **Confidence:** single-reviewer
 - **Suggestion:** Correct dates: either the review happened on 06-06 (update sharp-review.md) or the fixes happened on 06-08 (update archive dates)
 
@@ -131,7 +131,7 @@ The archive claims bulk resolution on 2026-06-06. The sharp-review.md that catal
 
 - **Category:** Bug
 - **Module:** memory system
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Add stamp-memory.js to the repo or remove the comment claiming the index is auto-managed
 
@@ -143,7 +143,7 @@ The comment 'Managed by stamp-memory.js' claims automation, but the script is ab
 
 - **Category:** Performance
 - **Module:** memory system
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Drop the inline timestamps; the index should only contain date, name, and one-line description — timestamps live in the files
 
@@ -155,7 +155,7 @@ Entries like '2026-06-08 sharp-review-2026-06-08 — created: 2026-06-08, access
 
 - **Category:** Feature
 - **Module:** image generation
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Either remove specific numbers until measured, or label them explicitly as '[UNTESTED ESTIMATE]' with a TODO to replace after a real run
 
@@ -167,7 +167,7 @@ The same vague '~30K+' appears in takeover-image.md and 06-images.md. Multiplyin
 
 - **Category:** Bug
 - **Module:** memory system
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Rename one: the memory-tier documentation should be MEMORY-TIERS.md or live in memory/README.md, not masquerade as another MEMORY.md in a nested .claude/rules/ path
 
@@ -179,7 +179,7 @@ One is an index of memories (.claude/rules/MEMORY.md), the other is documentatio
 
 - **Category:** Feature
 - **Module:** task tracking
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Generate tasks.md on-demand from the archive rather than committing an empty stub; or auto-hide when count is 0
 
@@ -191,7 +191,7 @@ The file exists to be loaded 'on demand via MEMORY.md' but contains zero actiona
 
 - **Category:** Feature
 - **Module:** image generation
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Extract Phase 2 into a separate skill file (e.g. 06b-image-generation.md) following the progressive disclosure pattern the project claims to use
 
@@ -203,7 +203,7 @@ At ~168 lines the file is under 400, but the content split is wrong: manifest sp
 
 - **Category:** Bug
 - **Module:** documentation
-- **Status:** OPEN
+- **Status:** WONTFIX
 - **Confidence:** single-reviewer
 - **Suggestion:** Verify the actual plugin installation command for the target Claude Code version and update, or link to the plugin's own install docs
 
@@ -215,7 +215,7 @@ The syntax 'claude plugin install codex-image@codex-image-in-cc --scope project'
 
 - **Category:** Bug
 - **Module:** task tracking
-- **Status:** OPEN
+- **Status:** WONTFIX
 - **Confidence:** single-reviewer
 - **Suggestion:** Merge or cross-reference duplicate findings; the archive note '(same as 005)' on SR-010 and '(same root cause as 001)' on SR-013 are honest but should have been deduplicated before archiving
 
@@ -227,7 +227,7 @@ Four pairs of effectively duplicate findings (005/010/016, 001/013, 007/017, 004
 
 - **Category:** Feature
 - **Module:** configuration
-- **Status:** OPEN
+- **Status:** WONTFIX
 - **Confidence:** single-reviewer
 - **Suggestion:** Use a standard format like {'name': 'codex-image', 'source': 'codex-image-in-cc'} or follow whatever schema the actual plugin system expects
 
@@ -239,7 +239,7 @@ The @-separated format is ambiguous: is 'codex-image-in-cc' a scope, a registry,
 
 - **Category:** Bug
 - **Module:** memory system
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Delete this file. Claude Code only auto-injects .claude/rules/MEMORY.md at the project root. This deeply nested copy serves no purpose and creates ambiguity about which MEMORY.md is authoritative.
 
@@ -251,7 +251,7 @@ The file documents the three-tier memory system mechanics (promotion/demotion/pr
 
 - **Category:** Feature
 - **Module:** memory system
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Restore one-line semantic summaries. Example: "— 6 systemic transition gaps found by diffing 2-draft vs 3-final edits; all 3 CN templates updated" instead of "— created: X, accessed: Y"
 
@@ -263,7 +263,7 @@ Old format: `[2026-06-02 transition-patterns] — 6 systemic transition gaps fou
 
 - **Category:** Bug
 - **Module:** post-new pipeline
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Replace Agent({}) with actual Claude Code agent spawning syntax: either TaskCreate tool calls or Skill-based sub-agent dispatch with the correct parameter schema.
 
@@ -275,7 +275,7 @@ The Phase 2 section instructs orchestrators to write `Agent({ subagent_type: "ta
 
 - **Category:** Performance
 - **Module:** post-new pipeline
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Either measure actual token counts from a real run and publish those numbers, or drop the cost table entirely. The hedging ('rough baseline — measure to calibrate') acknowledges the data is unreliable while presenting it anyway.
 
@@ -287,7 +287,7 @@ The table claims ~120K tokens for 4 covers, ~90-120K for 3-4 content images, tot
 
 - **Category:** Bug
 - **Module:** image generation
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Remove the 'Quick reference' line. If there's a canonical source, don't create a secondary reference — codebases don't sync natural language.
 
@@ -299,7 +299,7 @@ The agent says 'See 06-images.md for the canonical cover size table' then immedi
 
 - **Category:** Bug
 - **Module:** post-new pipeline
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Define where failure notes are stored (e.g., append to images.md manifest with a generated: failed flag per image) so post-publish can read them.
 
@@ -311,7 +311,7 @@ Error handling says 'note: ⚠️ <image-id> generation failed — needs manual 
 
 - **Category:** Bug
 - **Module:** documentation
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Change '→ publish → archive' to '→ /post-publish → /post-archive' to make it clear these are separate slash commands, not steps within /post-new.
 
@@ -323,7 +323,7 @@ The README shows a single continuous pipeline ending in '→ publish → archive
 
 - **Category:** Bug
 - **Module:** post-new pipeline
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Use a fenced code block (```bash) for the codex --version command, or inline code if it's just a single line for the orchestrator to execute.
 

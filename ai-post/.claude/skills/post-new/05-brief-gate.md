@@ -26,15 +26,18 @@ This gate has two phases: angle confirmation, then title selection. **Both phase
 - **Twitter/X**: <angle>
 
 ## Selected Titles
-- **小红书**: <title>          ← added after Phase 2
+- **小红书**: <title>          ← added after Phase 2; may be revised in step 08
 - **微信公众号**: <title>
 - **知乎**: <title>
 
 ## Status
 angles_confirmed: true         ← set after Phase 1 approved
 titles_confirmed: true         ← set after Phase 2 approved
+titles_reviewed: true          ← set after step 08 user approves drafts (may include title changes)
 platforms: xiaohongshu,wechat,zhihu,twitter   ← active platform list
 ```
+
+**Title lifecycle**: Phase 2 selects initial titles → step 06 writers use them → step 08 user may revise them → step 10 final confirmation. The title in the latest `2-draft/v<N>/<platform>.md` is the definitive published title.
 
 **Resume logic**: if `brief.md` exists with `angles_confirmed: true` but no `titles_confirmed`, skip Phase 1 and go straight to Phase 2. If both are true, skip this step entirely.
 

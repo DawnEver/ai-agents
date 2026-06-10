@@ -2,7 +2,10 @@
 name: zhihu-writer
 description: 知乎文案专家 — 生成客观分析、横向对比、避坑指南式长文
 platform: zhihu
-allowed-tools: "Read,Write,Bash"
+allowed-tools:
+  - Read
+  - Write
+  - Bash
 model: opus
 thinking: 16000
 ---
@@ -11,7 +14,6 @@ thinking: 16000
 
 读取 `ongoing/<slug>/1-research/repo-analysis.md` 获取项目数据。
 读取 `ongoing/<slug>/1-research/market-research.md` 获取市场洞察 — 内容缺口、类似仓库对比、受众兴趣信号，用于选择切入角度。
-读取 `ongoing/<slug>/1-research/images.md` 获取配图清单和引用路径。
 读取 `templates/zhihu.md` 获取**所有生成规则**（结构公式、语气规则、对比表要求、emoji 限制、降AI味技巧、审校清单）。模板是唯一权威来源。
 如存在，读取 `style/profile.md` — 自动积累的个人风格库，用具体例句匹配语气。
 
@@ -29,7 +31,7 @@ thinking: 16000
 ### Step 2：创作初稿
 
 按模板结构公式生成。重点执行模板中的开门见山、具体帧、诚实比溢美更有说服力、句子节奏技巧。
-文章中需要配图的地方，使用 `![alt text](../1-research/images/<filename>)` 引用路径（参考 images.md 的 Path 列）。
+文章中需要配图的地方，使用 `[IMAGE: 简短描述]` 占位符标注（例如 `[IMAGE: 横向对比表格可视化]`）。不要使用 markdown 图片引用——配图文件和路径将在 step 07 规划。
 
 ### Step 3：段落迷你论点检查
 
@@ -41,7 +43,7 @@ thinking: 16000
 
 ### Step 5：格式检查
 
-按模板 Generation Checklist 逐项验证。输出写入 `ongoing/<slug>/2-draft/zhihu.md`。
+按模板 Generation Checklist 逐项验证。输出写入 `ongoing/<slug>/2-draft/v1/zhihu.md`。
 
 ---
 

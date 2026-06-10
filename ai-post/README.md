@@ -6,22 +6,28 @@ Generate platform-adapted social media content from GitHub repositories. Clones 
 
 ```
 /post-new <github-url> [platform]
-  → clone → explore → market research → analysis
-  → brief gate (angles + titles, user confirms)
-  → image manifest + user-confirmed gen via takeover-image (covers → content)
-  → parallel writer agents → user review → 三方会审 → publish → archive
+  → clone → explore + market research (parallel)
+  → analysis → brief gate (angles + titles, user confirms)
+  → parallel writer agents → image manifest
+  → user review → 三方会审 (powered by sharp-review engine) → final confirm → generate images
+/post-publish <platform> → clipboard + browser (separate cmd)
+/post-archive <slug> → archive + style update (separate cmd)
 ```
+
+## Dependencies
+
+- [sharp-review](https://github.com/anthropics/claude-code) (cc-market plugin) — generalized multi-model review engine. post-review configures it for content review with custom reviewer identities and finding schemas.
 
 ## Prerequisites
 
 - [Codex CLI](https://github.com/openai/codex) v0.124.0+ with `codex login` (for image generation)
-- Install the image plugin: `claude plugin install codex-image@codex-image-in-cc --scope project`
+- Install the Codex image plugin (`codex-image-in-cc`) — see plugin repo for install instructions
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/post-new <url>` | Full pipeline — clone through archive |
+| `/post-new <url>` | Full pipeline — clone through final confirmation + image generation |
 | `/post-publish <platform>` | Export for publishing (clipboard + guidance) |
 | `/post-archive <slug>` | Archive completed article, update style profile |
 | `/post-regenerate <slug> <platform>` | Redo one platform from existing analysis |

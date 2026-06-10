@@ -9,7 +9,7 @@ Generate platform-adapted social media content from GitHub repositories. Clones 
   ├── 01-clone → 02-explore → 03-market-research
   ├── 04-analysis (folds in market research)
   ├── ⭐ 05-brief-gate (选题确认: angles + titles, 多轮迭代)
-  ├── 🔵 06-images → 07-spawn (图片清单 + 用户确认生成 → 并行 agents)
+  ├── 🔵 06-spawn → 07-images (并行 agents 生成初稿 → 图片清单)
   ├── ⭐ 08-user-review (强制用户阅读初稿)
   ├── 09-review → 10-summary
   └── 下游工具:
@@ -22,11 +22,11 @@ Generate platform-adapted social media content from GitHub repositories. Clones 
 
 | Command | Description |
 |---------|-------------|
-| `/post-new <github-url> [platform]` | 主线 — clone → explore → market research → gate → spawn → review → 3-final |
+| `/post-new <github-url> [platform]` | 主线 — clone → explore → market research → gate → spawn → review → final |
 | `/post-publish <platform> [slug]` | 发布出口 — image verification + clipboard export + platform publishing guidance |
 | `/post-archive <slug>` | 归档 — move to `archived/YYMMDD/`, update style/profile.md, optional postmortem |
 | `/post-regenerate <slug> <platform>` | Redo one platform's article from existing analysis (no re-clone) |
-| `/post-review <slug> [platform]` | 三方会审 — 2-reviewer 3-model fanout quality review |
+| `/post-review <slug> [platform]` | 三方会审 — powered by sharp-review workflow engine, 2 identities × 2 models each |
 
 
 ## Pipeline Flow
@@ -38,14 +38,13 @@ Generate platform-adapted social media content from GitHub repositories. Clones 
   → write repo-analysis.md (folds in market research)
   → ⭐ BRIEF REVIEW GATE: 选题确认 (angles + titles, iterate until user approves)
   → user confirms angles, selects titles (multi-round discussion OK)
-  → write images.md + user-confirmed image generation via takeover-image (covers first, then content, parallel batches)
-  → spawn writers in parallel (创意排水 → draft → 三遍审校)
-    writers use markdown image refs ![alt](../images/<file>) from images.md
-  → ⭐ USER DRAFT REVIEW: mandatory read-through before review
-  → user reads drafts, requests changes (iterate until approved)
-  → 三方会审 (3-model fanout per identity)
+  → spawn writers in parallel (创意排水 → draft → 三遍审校, place [IMAGE: ...] placeholders)
+  → plan image manifest from v1 drafts → images.md
+  → ⭐ USER REVIEW: read-through + edits → new 2-draft/vN (changed files only, missing inherit)
+  → user iterates (light edits, annotations, or 三方会审 — mandatory at least once)
+  → 三方会审 (via sharp-review workflow engine: 2 identities × 2 models, JSON Schema enforced)
   → fix (auto-offer /post-regenerate on ❌)
-  → copy passed drafts to 3-final/
+  → assemble full set from version chain → latest version = final
   → /post-publish (图片校验 → 剪贴板导出 + 平台发布指引)
   → /post-archive (移动到 archived/YYMMDD/ → 更新 style/profile.md)
 ```
@@ -53,7 +52,7 @@ Generate platform-adapted social media content from GitHub repositories. Clones 
 **Core principle**: Market research before analysis. Research and brief ALWAYS come before writing. Never skip the user confirmation gates.
 
 post-new uses **progressive disclosure** — SKILL.md is the map, each step's sub-file is the detailed playbook:
-`.claude/skills/post-new/{01-clone,02-explore,03-market-research,04-analysis,05-brief-gate,06-images,07-spawn,08-user-review,09-review,10-summary}.md`
+`.claude/skills/post-new/{01-clone,02-explore,03-market-research,04-analysis,05-brief-gate,06-spawn,07-images,08-user-review,09-review,10-summary}.md`
 
 ## Directory Layout
 
@@ -76,17 +75,11 @@ ongoing/            — articles currently in progress (gitignored)
       market-research.md   — step 03: similar repos, trending, content gap
       repo-analysis.md     — step 04: consolidated analysis + article angles
     2-draft/
-      images.md            — step 06: image manifest
-      xiaohongshu.md       — step 07: generated articles
-      wechat.md
-      zhihu.md
-      twitter.md
-    images/               — step 06: image files (screenshots, AI-generated)
-    3-final/
-      xiaohongshu.md       — step 10: review-passed, ready-to-publish
-      wechat.md
-      zhihu.md
-      twitter.md
+      v1/<platform>.md     — step 06: AI-generated originals (baseline, all platforms + images.md)
+      v2/<platform>.md     — step 08: user edits (changed files only, missing = inherit)
+      v3/<platform>.md     — step 09: 三方会审 fixes (changed files only)
+      ...                  — missing files inherit from previous version
+    images/                — generated image files (screenshots, AI-generated)
 archived/YYMMDD/<slug>/ — completed articles, frozen snapshot (gitignored)
   postmortem.md         — optional: per-platform AI味 scores + notes
 repos/              — cached git clones (gitignored)
@@ -121,14 +114,16 @@ Chinese platform agents (xiaohongshu/wechat/zhihu) are written in Chinese and ex
 ## Quality Standards — 三方会审 🔄 审查中
 
 Every generated article goes through `/post-review` (三方会审) before publishing.
-Two reviewer identities, each independently run by 3 models. No cross-contamination, verdicts consolidated by orchestrator:
+Powered by the sharp-review workflow engine (cc-market) for parallel multi-model fanout with JSON Schema enforcement and deterministic merge.
 
-| 身份 | 工具（×3并行）| 审什么 |
+Two reviewer identities, each independently run by 2 models (default) or 3 models (`--full-review`). No cross-contamination, findings deduplicated and confidence-tagged by the engine, verdicts synthesized by post-review:
+
+| 身份 | 工具（×2 默认 / ×3 --full-review）| 审什么 |
 |------|--------------|--------|
-| A 读者代理人 | Claude Sonnet + DeepSeek + Codex | AI味/开头钩子/微幽默/情感共鸣 |
-| B 技术核查员 | Claude Sonnet + DeepSeek + Codex | 代码正确性/技术事实/安装步骤 |
+| A 读者代理人 | Claude Sonnet + DeepSeek (+ Codex) | AI味/开头钩子/微幽默/情感共鸣 |
+| B 技术核查员 | Claude Sonnet + DeepSeek (+ Codex) | 代码正确性/技术事实/安装步骤 |
 
-> **审查中**：3-model fanout per identity 的性价比待验证。全平台一次 review 会产生 18+ agent 调用。当前保留此设计，后续可能简化为默认 2-model（Claude + DeepSeek），Codex 仅 `--full-review` 触发。
+> **默认 2-model**：全平台一次 review 运行 2 个 sharp-review workflow（身份 A + 身份 B），每个 workflow 内 2 个 reviewer agent 并行。Twitter 只跑身份 A。`--full-review` 每个身份追加 Codex reviewer。
 
 AI味 grades: 🟢 人味足 | 🟡 轻微AI腔 | 🔴 明显AI腔 (must rewrite before publish)
 

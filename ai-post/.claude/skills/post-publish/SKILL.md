@@ -1,8 +1,12 @@
----
+﻿---
 name: post-publish
 description: Export a finalized article for publishing — image verification, clipboard export, platform-specific publishing guidance. Does NOT edit content.
 argument-hint: <platform> [project-slug]
-allowed-tools: "Read,Write,Bash,Glob"
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+  - Glob
 ---
 
 # /post-publish — Platform Publishing
@@ -20,7 +24,7 @@ You handle the mechanics of getting content onto the platform. The article text 
 
 ### Step 1: Identify the Article
 
-If `project-slug` is provided, load `ongoing/<slug>/3-final/<platform>.md`. If it does not exist, abort: "No review-passed article found. Run `/post-review <slug>` first." Never fall back to 2-draft/ — that bypasses the mandatory 三方会审 gate.
+If `project-slug` is provided, load `ongoing/<slug>/2-draft/v<N>/<platform>.md` from the latest version (highest N). If no versions exist or `brief.md` does not have `finalized: true`, abort: "No finalized article found. Run `/post-review <slug>` first and confirm final in step 10."
 
 If not provided:
 1. List recent projects by scanning `ongoing/` directories for existing article files
@@ -35,9 +39,9 @@ If the platform is not supported: "Supported platforms: xiaohongshu, wechat, zhi
 
 **Do NOT proceed past this step until all images are present.**
 
-1. Read `ongoing/<slug>/3-final/<platform>.md` and parse all `![alt](../images/<filename>)` markdown image references.
+1. Read the latest `ongoing/<slug>/2-draft/v<N>/<platform>.md` and parse all `![alt](../images/<filename>)` markdown image references.
 2. For each reference, check that `ongoing/<slug>/images/<filename>` exists on disk (use Glob).
-3. Also read `ongoing/<slug>/3-final/images.md` for context on what each image should be.
+3. Walk `ongoing/<slug>/2-draft/` version chain to find the latest `images.md` for context on what each image should be.
 
 **If any images are missing:**
 ```
@@ -120,6 +124,14 @@ Format the article for the target platform's editor. Do NOT modify the article f
 ### Step 4: Copy to Clipboard + Open Browser
 
 **微信公众号 / 知乎 — generate Word first:**
+
+Pre-check Python dependency:
+```bash
+python -c "import docx; print('ok')" 2>&1
+```
+If `ModuleNotFoundError: No module named 'docx'`: warn "`python-docx` not installed. Run `pip install python-docx`. Proceeding with clipboard export only."
+
+If dependency OK:
 ```bash
 python .claude/skills/post-publish/export_article.py <slug> wechat
 python .claude/skills/post-publish/export_article.py <slug> zhihu

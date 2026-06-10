@@ -23,7 +23,8 @@
       "Grep(*/ai-post/**)",
       "Skill(codex-image:generate)",
       "Skill(codex-image:edit)",
-      "Skill(codex-image:status)"
+      "Skill(codex-image:status)",
+      "Agent(takeover-image)"
     ]
   },
   "enabledPlugins": {

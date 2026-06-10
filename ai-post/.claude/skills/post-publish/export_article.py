@@ -19,8 +19,30 @@ if platform not in ("wechat", "zhihu"):
     sys.exit(1)
 
 ARTICLES = Path(__file__).parent.parent.parent.parent / "ongoing"
-BASE = ARTICLES / slug / "3-final"
-MD_FILE = BASE / f"{platform}.md"
+# Find latest version directory
+versions_dir = ARTICLES / slug / "2-draft"
+if not versions_dir.exists():
+    print(f"No versions found for {slug}", file=sys.stderr)
+    sys.exit(1)
+v_dirs = sorted([d for d in versions_dir.iterdir() if d.is_dir() and d.name.startswith("v")],
+                key=lambda d: int(d.name[1:]) if d.name[1:].isdigit() else 0)
+if not v_dirs:
+    print(f"No version directories found for {slug}", file=sys.stderr)
+    sys.exit(1)
+latest_v = v_dirs[-1]
+
+# Walk back versions to find platform file (inherit rule)
+def find_in_versions(filename):
+    for vd in reversed(v_dirs):
+        f = vd / filename
+        if f.exists():
+            return f
+    return None
+
+MD_FILE = find_in_versions(f"{platform}.md")
+if not MD_FILE:
+    print(f"Platform file {platform}.md not found in any version", file=sys.stderr)
+    sys.exit(1)
 IMG_BASE = ARTICLES / slug / "images"
 
 text = MD_FILE.read_text(encoding="utf-8")

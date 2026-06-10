@@ -12,7 +12,7 @@ If the URL is invalid, tell the user and stop.
 
 Create the working directory:
 ```bash
-mkdir -p "ongoing/<slug>/1-research" "ongoing/<slug>/2-draft" "ongoing/<slug>/3-final"
+mkdir -p "ongoing/<slug>/1-research" "ongoing/<slug>/2-draft/v1"
 ```
 
 Determine target platforms:

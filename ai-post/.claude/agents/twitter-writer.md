@@ -2,7 +2,10 @@
 name: twitter-writer
 description: Twitter/X thread specialist — bilingual EN+CN threads, high-density info, structured tweet arc
 platform: twitter
-allowed-tools: "Read,Write,Bash"
+allowed-tools:
+  - Read
+  - Write
+  - Bash
 model: opus
 thinking: 16000
 ---
@@ -11,7 +14,6 @@ thinking: 16000
 
 Read `ongoing/<slug>/1-research/repo-analysis.md` for repo data.
 Read `ongoing/<slug>/1-research/market-research.md` for market context — trending discussions, audience interest signals, content gaps.
-Read `ongoing/<slug>/1-research/images.md` for image manifest and reference paths.
 Read `templates/twitter.md` for **ALL generation rules** (structure, voice, character limits, bilingual rules, emoji, quality rules, checklist). The template is the single source of truth.
 Read `style/profile.md` if it exists — auto-accumulated personal style with concrete excerpts to match tone.
 
@@ -30,7 +32,7 @@ Draft the thread slot-by-slot before writing full tweets (hook → features → 
 ### Step 3: Write Tweets
 
 Write each tweet. Count characters as you go — display count in brackets (e.g., `[243 chars]`). Apply bilingual pattern from template consistently.
-If using images, reference them as `![alt](../1-research/images/<filename>)` (see images.md Path column).
+If a visual would strengthen a tweet, use `[IMAGE: brief description]` placeholder (e.g., `[IMAGE: project demo GIF]`). Do not use markdown image refs — image files and paths will be planned in step 07.
 
 ### Step 4: Self-Check
 
@@ -38,7 +40,7 @@ Read the thread as a cold reader. Does Tweet 1 earn the read? Does each tweet st
 
 ### Step 5: Write Output
 
-Write the final thread to `ongoing/<slug>/2-draft/twitter.md`.
+Write the final thread to `ongoing/<slug>/2-draft/v1/twitter.md`.
 
 ---
 

@@ -1,8 +1,12 @@
----
+﻿---
 name: post-archive
 description: Archive a finalized article and accumulate personal style fingerprints — moves to archived/YYMMDD/, updates style/profile.md
 argument-hint: <slug>
-allowed-tools: "Read,Write,Bash,Glob"
+allowed-tools:
+  - Read
+  - Write
+  - Bash
+  - Glob
 ---
 
 # /post-archive — Archive & Style Accumulation
@@ -15,13 +19,13 @@ Archive a completed article slug. Moves the entire `ongoing/<slug>/` to a frozen
 
 If `slug` is provided:
 1. Verify `ongoing/<slug>/` exists.
-2. Verify `3-final/` exists and contains at least one file — if empty or missing, abort: "No review-passed articles found. Run `/post-review <slug>` first."
-3. For every platform file in `2-draft/`, a corresponding file must exist in `3-final/`. If any draft lacks a final, abort: "Not all platforms have passed review. Missing from 3-final/: <list>. Run `/post-review <slug>` first." If a platform was intentionally dropped, delete its draft from `2-draft/` first.
+2. Verify `2-draft/` exists and `brief.md` has `finalized: true` — if not, abort: "No finalized articles found. Complete review and step 10 final confirmation first."
+3. Assemble the full version set by walking back through versions for each platform. Verify at least one platform file exists.
 
 Never archive incomplete work — unreviewed drafts must not be frozen.
 
 If not provided:
-1. List slugs by scanning `ongoing/` directories with files in `3-final/`
+1. List slugs by scanning `ongoing/` directories where `brief.md` has `finalized: true`
 2. Present a numbered list: "Ready to archive — which one?"
 3. Read the user's choice
 
@@ -35,30 +39,50 @@ Present a summary of what will be archived:
 📦 准备归档
 
 **项目**：<slug>
+**版本链**：v1 → v2 → ... → v<N> (final)
 **平台**：
-  - 小红书：<char_count> chars
-  - 微信公众号：<char_count> chars
-  - 知乎：<char_count> chars
-  - Twitter/X：<tweet_count> tweets
+  - 小红书：v<N> — <char_count> chars
+  - 微信公众号：v<N> — <char_count> chars
+  - 知乎：v<N> — <char_count> chars
+  - Twitter/X：v<N> — <tweet_count> tweets
 
 归档到 archived/<YYMMDD>/<slug>/？
 ```
 
-### Step 3: Move to Archive
+### Step 3: Assemble Final & Move to Archive
 
-Instead of deleting working files, move the entire slug directory to a date-prefixed archive:
+First, assemble the final version set by walking the version chain for each platform and images.md. Then create a clean archive with only the final output:
 
-```bash
-mkdir -p "archived/$(date +%y%m%d)" && mv "ongoing/<slug>" "archived/$(date +%y%m%d)/<slug>"
+```
+archived/YYMMDD/<slug>/
+  1-research/          ← preserved from ongoing (analysis, brief, market research)
+  xiaohongshu.md       ← final assembled version
+  wechat.md            ← final assembled version
+  zhihu.md             ← final assembled version
+  twitter.md           ← final assembled version
+  images.md            ← final assembled version
+  images/              ← preserved from ongoing (generated image files)
 ```
 
-The archive path is now `archived/YYMMDD/<slug>/` (e.g. `archived/260602/dawnever--cc-market/`). The internal structure (`1-research/`, `2-draft/`, `3-final/`) is preserved as a frozen snapshot.
+Archive structure is flat with `1-research/` for reference and the final articles at root level. The raw `2-draft/` chain is NOT preserved — only the assembled final output matters.
+
+```bash
+mkdir -p "archived/$(date +%y%m%d)/<slug>/1-research" "archived/$(date +%y%m%d)/<slug>/images"
+# Copy research notes
+cp -r "ongoing/<slug>/1-research/"* "archived/$(date +%y%m%d)/<slug>/1-research/"
+# Copy assembled final articles (one per platform, walk version chain)
+cp "<assembled final>" "archived/$(date +%y%m%d)/<slug>/<platform>.md"
+# Copy images
+cp -r "ongoing/<slug>/images/"* "archived/$(date +%y%m%d)/<slug>/images/"
+# Clean up ongoing
+rm -rf "ongoing/<slug>"
+```
 
 ### Step 4: Write Text-Only Archive to style/published/
 
-For each platform with a file in `archived/YYMMDD/<slug>/3-final/`:
+Assemble the full set from the version chain: for each platform, walk back `2-draft/v<N>/` → `v1/` to find the latest copy.
 
-Write `style/published/<platform>/<YYYY-MM-DD>-<slug>.md` with YAML frontmatter:
+For each platform found, write `style/published/<platform>/<YYYY-MM-DD>-<slug>.md` with YAML frontmatter:
 
 ```yaml
 ---
