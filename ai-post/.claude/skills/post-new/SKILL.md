@@ -27,6 +27,7 @@ You are the orchestrator. Given a GitHub repo URL, clone and deeply explore the 
 | 03 | `03-market-research.md` | WebSearch: similar repos, trending, content gap → `1-research/market-research.md` | — |
 
 > Steps 02 and 03 have no dependency on each other — run them in parallel (fork for explore + inline market research, or vice versa) to cut research phase latency by ~40%.
+
 | 04 | `04-analysis.md` | Consolidated analysis (folds in market research) + article angles → `1-research/repo-analysis.md` | — |
 | 05 | `05-brief-gate.md` | ⭐ 选题确认 — angles + titles, iterate until approved | **User** |
 | 06 | `06-spawn.md` | Spawn platform writers in parallel → `2-draft/v1/` (all platforms, baseline). Writers use `[IMAGE: ...]` placeholders | — |

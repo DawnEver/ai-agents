@@ -24,9 +24,7 @@ Current version: v<N>
 <diff v1 → vN>
 ```
 
-5. Pass this context: `Skill("post-review", args="<slug> --version-history")`
-
-The review reads the diff chain and focuses on what hasn't been addressed — it won't re-flag things the user already fixed in later versions.
+5. Pass this context: prepend the version history to the article content before passing to the sharp-review workflow, so reviewers can see what changed and won't re-flag already-fixed issues.
 
 After collecting version context, invoke the review:
 
@@ -34,9 +32,11 @@ After collecting version context, invoke the review:
 Skill("post-review", args="<slug>")
 ```
 
+The review reads the diff chain from the version history prepended to content.
+
 If the user says "skip review" or "直接发布" → refuse: "三方会审是强制步骤，不能跳过。审完再发。"
 
-See `post-review/SKILL.md` for the full review design — two identities (A: 读者代理人, B: 技术核查员), each independently run by 3 models (Claude Sonnet + DeepSeek + Codex). Twitter/X skips identity B (no code to verify).
+See `post-review/SKILL.md` for the full review design — two identities (A: 读者代理人, B: 技术核查员), each independently run by 2 models (Claude Sonnet + DeepSeek; 3 with --full-review adding Codex). Twitter/X skips identity B (no code to verify).
 
 ## Image Plan Review
 

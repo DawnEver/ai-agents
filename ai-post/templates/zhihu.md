@@ -127,7 +127,7 @@ emoji_density: minimal
 
 **核心原则**：图片路径来自 `ongoing/<slug>/2-draft/v1/images.md`，不要自行发明路径。优先使用项目真实截图，AI 生成图作为补充。
 
-- **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](images/<filename>)`
+- **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](../../images/<filename>)`（从 `2-draft/vN/<platform>.md` 的相对路径）
 - **Aspect ratio**: `--ar 16:9`
 - **Number**: 2-3 张正文配图（知乎读者重视数据可视化）
 - **Image types for 知乎**:

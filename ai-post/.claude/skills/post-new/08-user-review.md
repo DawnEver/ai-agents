@@ -29,7 +29,7 @@ After step 07 completes, present the generated articles AND image plan:
 - 知乎：`<title>` — ongoing/<slug>/2-draft/v1/zhihu.md (<char_count> chars)
 - Twitter/X：`<title>` — ongoing/<slug>/2-draft/v1/twitter.md (<tweet_count> tweets)
 
-**图片计划**：ongoing/<slug>/images.md (N 张图)
+**图片计划**：ongoing/<slug>/2-draft/v1/images.md (N 张图)
 
 **请逐篇阅读，提出你的看法：**
 - 标题是否合适？

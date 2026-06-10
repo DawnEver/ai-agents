@@ -122,7 +122,7 @@ emoji_density: moderate
 
 **核心原则**：图片路径来自 `ongoing/<slug>/2-draft/v1/images.md`，不要自行发明路径。优先使用项目真实截图（操作截图、终端输出等），AI 生成图作为补充。
 
-- **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](images/<filename>)`
+- **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](../../images/<filename>)`（从 `2-draft/vN/<platform>.md` 的相对路径）
 - **Aspect ratio**: `--ar 16:9` (微信公众号横版)
 - **Number**: 3-5 张正文配图（长文需要视觉断点）
 - **Image types for 微信公众号**:

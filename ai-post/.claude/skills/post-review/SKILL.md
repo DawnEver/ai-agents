@@ -1,4 +1,4 @@
-﻿---
+---
 name: post-review
 description: 三方会审 — each reviewer identity is run independently by Claude Sonnet and DeepSeek via sharp-review workflow engine. Disagreements between models surface genuine issues.
 argument-hint: <slug> [platform]
@@ -133,9 +133,10 @@ Walk `ongoing/<slug>/2-draft/` to find the latest version number (highest N). Fo
 
 ## Sharp-Review Workflow 路径
 
-```
-C:\Users\linxu\OneDrive - The University of Nottingham\Sync\claude\cc-market\sharp-review\scripts\sharp-review-workflow.js
-```
+The workflow script ships with the sharp-review plugin. Resolve at runtime:
+
+1. If `$env:CLAUDE_PLUGIN_ROOT` is set (inside sharp-review's own skill), use `${CLAUDE_PLUGIN_ROOT}/scripts/sharp-review-workflow.js`
+2. Otherwise, find the latest installed version under `~/.claude/plugins/cache/cc-market/sharp-review/` and use its `scripts/sharp-review-workflow.js`
 
 ---
 

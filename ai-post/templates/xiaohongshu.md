@@ -121,7 +121,7 @@ This is a product spec sheet, not a 小红书 post. It screams AI. Instead, ment
 
 **核心原则**：图片路径来自 `ongoing/<slug>/2-draft/v1/images.md`，不要自行发明路径。优先使用项目真实截图（GIF、操作截图等），AI 生成图作为补充。
 
-- **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](images/<filename>)`
+- **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](../../images/<filename>)`（从 `2-draft/vN/<platform>.md` 的相对路径）
 - **Aspect ratio**: `--ar 3:4` (小红书竖屏图表现最好)
 - **Number**: 2-3 张正文配图（小红书是视觉平台，图片必不可少）。封面不计入。
 - **Image types for 小红书**:
