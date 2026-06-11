@@ -23,13 +23,11 @@
 
 ## 第二遍：风格审校（降AI味）
 
+See `templates/_writing-craft.md` for the full banned phrases list, replacement table, and anti-AI check rules.
+
 ### 删套话
-- [ ] 在当今时代
-- [ ] 综上所述
-- [ ] 值得注意的是
-- [ ] 需要强调的是
-- [ ] 总而言之
-- [ ] 其他套话：___
+- [ ] Banned phrases cleared (see `_writing-craft.md` Anti-AI Check section)
+- [ ] Other 套话：___
 
 ### 拆AI句式
 - [ ] "不是A而是B" 是否重复出现
@@ -37,19 +35,12 @@
 - [ ] 三段对称结构是否过于工整
 
 ### 替换书面词汇
-- [ ] 显著提升 → 具体数字
-- [ ] 充分利用 → 用好
-- [ ] 进行操作 → 直接动词
-- [ ] 相关工作 → 具体说什么
-- [ ] 有效提升 → 具体效果
+- [ ] Vague/formal words → natural (see `_writing-craft.md` Replacement Table)
 
-### 口语化
+### 口语化 + 个人态度
 - [ ] "通过XX方式进行XX" → 直接说怎么做
-- [ ] 过于正式表达 → 像说话一样写
-
-### 加入个人态度
 - [ ] 中立客观处 → 加明确观点
-- [ ] "可能会" → "我觉得"
+- [ ] 「我」主语覆盖：每段至少一句以"我"作主语 (see `_writing-craft.md` Identity Consistency)
 
 ### AI味逐段检测
 | 段落 | AI味 | 问题 | 修改 |

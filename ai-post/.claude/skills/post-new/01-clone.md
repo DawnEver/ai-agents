@@ -17,7 +17,7 @@ mkdir -p "ongoing/<slug>/1-research" "ongoing/<slug>/2-draft/v1"
 
 Determine target platforms:
 - If user specifies one: `xiaohongshu`, `wechat`, `zhihu`, or `twitter` → generate for that only
-- If no platform specified → generate for ALL four
+- If no platform specified → generate for ALL four (see `templates/_platform-registry.md` for full platform list)
 
 ## Clone or Update the Repo
 

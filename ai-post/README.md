@@ -18,6 +18,10 @@ Generate platform-adapted social media content from GitHub repositories. Clones 
 
 - [sharp-review](https://github.com/anthropics/claude-code) (cc-market plugin) — generalized multi-model review engine. post-review configures it for content review with custom reviewer identities and finding schemas.
 
+## Shared Reference Files
+
+Platform rules are centralized in `templates/_platform-registry.md` (metadata: aspect ratios, char limits, agent mapping) and `templates/_writing-craft.md` (universal writing techniques: anti-AI, connectives, rhythm). These are the single source of truth — all pipeline steps, agents, and templates reference them instead of copying rules.
+
 ## Prerequisites
 
 - [Codex CLI](https://github.com/openai/codex) v0.124.0+ with `codex login` (for image generation)
@@ -30,7 +34,6 @@ Generate platform-adapted social media content from GitHub repositories. Clones 
 | `/post-new <url>` | Full pipeline — clone through final confirmation + image generation |
 | `/post-publish <platform>` | Export for publishing (clipboard + guidance) |
 | `/post-archive <slug>` | Archive completed article, update style profile |
-| `/post-regenerate <slug> <platform>` | Redo one platform from existing analysis |
 | `/post-review <slug>` | 三方会审 quality review |
 
 ## Acknowledgments

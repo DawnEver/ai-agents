@@ -4,18 +4,16 @@ Now spawn sub-agents to generate the articles. Each agent reads the analysis, ma
 
 **If generating for ALL platforms**, spawn all 4 agents in PARALLEL (single message, multiple Agent tool calls):
 
-| Agent | Slug | Task |
-|-------|------|------|
-| `xiaohongshu-writer` | `<slug>` | Generate 小红书 article |
-| `wechat-writer` | `<slug>` | Generate 微信公众号 article |
-| `zhihu-writer` | `<slug>` | Generate 知乎 article |
-| `twitter-writer` | `<slug>` | Generate Twitter/X thread |
+**Agent mapping** — see `templates/_platform-registry.md` for the authoritative platform→agent mapping:
 
-**If generating for ONE platform**, spawn just that agent:
-- xiaohongshu → `xiaohongshu-writer`
-- wechat → `wechat-writer`
-- zhihu → `zhihu-writer`
-- twitter → `twitter-writer`
+| Platform Key | Agent |
+|-------------|-------|
+| xiaohongshu | xiaohongshu-writer |
+| wechat | wechat-writer |
+| zhihu | zhihu-writer |
+| twitter | twitter-writer |
+
+Spawn all target platform agents in PARALLEL (single message, multiple Agent tool calls). Pass the slug to each agent.
 
 Pass the slug to each agent. Each agent must:
 1. Read `ongoing/<slug>/1-research/repo-analysis.md`

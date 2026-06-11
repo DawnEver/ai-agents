@@ -110,7 +110,7 @@ Default to Pattern A — it works best for a bilingual tech audience.
 
 ## Images
 
-**核心原则**：图片路径来自 `articles/<slug>/images.md`，不要自行发明路径。优先复用其他平台已有的图片。
+Image paths and counts: see `templates/_platform-registry.md`.
 
 Twitter threads benefit from 1-2 strong images. Place them using markdown image refs alongside the relevant tweet.
 
@@ -126,31 +126,18 @@ Example (alongside Tweet 1):
 ![Side-by-side: 30s build vs 0.5s build — same codebase](images/comparison.png)
 ```
 
-## Anti-AI & Quality Rules
+## Writing Quality
 
-### Voice Authenticity
-- **Creator voice, not reviewer voice**: "I built this because..." not "This project aims to..." — you have direct experience, not secondhand observations.
-- **Specifics over adjectives**: "3x faster than ESLint on 10k-file repos" is a tweet. "Significantly faster" is filler. If you don't have a number, describe the concrete behavior instead.
-- **Energetic, not hyperbolic**: "Impressive" yes. "Mind-blowing", "blazingly fast", "revolutionary", "game-changing" — no. The tech speaks; let it.
-- **No preamble**: Start with the fact or the hook. Never "I'm excited to share", "Today I want to talk about", "Thrilled to announce."
+Read `templates/_writing-craft.md` for universal writing techniques. Twitter-specific applications:
+- **Strong opening**: Tweet 1 hook uses 惊人结论 or 痛点直击 pattern
+- **Microhumor**: at least 1 moment in the thread
+- **Specifics over adjectives**: "3x faster than ESLint on 10k-file repos" not "significantly faster"
+- **No preamble**: start with the fact, never "I'm excited to share"
+- **Self-contained tweets**: every tweet readable standalone (test: cover others, read just this one)
+- **Thread narrative arc**: Tweet 1 hook → 2-3 build → 4 "aha" → 5 context → 6 CTA
+- **Banned**: "Check out this article", "In this thread I'll", "Here's a breakdown", "excited to share"
 
-### Thread Narrative Arc
-The thread must build tension toward an "aha" moment, not just list features:
-- Tweet 1 = hook: one surprising stat, bold claim, or sharp pain point that makes the reader stop scrolling
-- Tweets 2-3 = build: each tweet a self-contained feature that raises the stakes
-- Tweet 4 = "aha": the demo, clever detail, or elegant API that makes it click
-- Tweet 5 = context/comparison (optional): who built it, what it replaces, why now
-- Tweet 6 = CTA only: GitHub link + engagement ask, nothing else
-
-If reading the thread top-to-bottom doesn't create rising interest toward Tweet 4, restructure before finalizing.
-
-### Self-Contained Tweets
-Every tweet must be readable standalone — someone who only sees that tweet should get full value. Test: cover all other tweets, read just this one. Does it make sense? Is it useful on its own?
-
-No thread-unraveling phrases: "As I mentioned...", "Building on that...", "From my previous tweet..." — each tweet starts fresh.
-
-### BANNED phrases
-"Check out this article" / "In this thread I'll" / "Here's a breakdown" / "excited to share" / "I'm happy to announce" — say the thing directly, skip the meta-announcement.
+This template contains only Twitter-specific rules. Apply BOTH files when generating.
 
 ## Generation Checklist
 

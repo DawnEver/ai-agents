@@ -40,7 +40,7 @@ Present a summary of what will be archived:
 
 **项目**：<slug>
 **版本链**：v1 → v2 → ... → v<N> (final)
-**平台**：
+**平台** (see `templates/_platform-registry.md`)：
   - 小红书：v<N> — <char_count> chars
   - 微信公众号：v<N> — <char_count> chars
   - 知乎：v<N> — <char_count> chars
@@ -72,8 +72,9 @@ mkdir -p "archived/$(date +%y%m%d)/<slug>/1-research" "archived/$(date +%y%m%d)/
 cp -r "ongoing/<slug>/1-research/"* "archived/$(date +%y%m%d)/<slug>/1-research/"
 # Copy assembled final articles (one per platform, walk version chain)
 cp "<assembled final>" "archived/$(date +%y%m%d)/<slug>/<platform>.md"
-# Copy images
-cp -r "ongoing/<slug>/images/"* "archived/$(date +%y%m%d)/<slug>/images/"
+# Copy only images referenced by final articles (parse src from all final platform files)
+# Do NOT copy all of images/ — only the specific -v<N> files actually used
+cp "<only referenced images>" "archived/$(date +%y%m%d)/<slug>/images/"
 # Clean up ongoing
 rm -rf "ongoing/<slug>"
 ```

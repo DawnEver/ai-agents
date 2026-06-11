@@ -1,40 +1,48 @@
 ---
 name: takeover-image
-description: Image generation via Codex imagegen (gpt-image-2) — dispatch image tasks to Codex CLI's built-in image_gen tool
+description: Image generation via Codex CLI imagegen (gpt-image-2) — Bash-spawned, no third-party skill dependencies
 allowed-tools:
-  - Skill(codex-image:generate)
-  - Skill(codex-image:edit)
-  - Skill(codex-image:status)
   - Read
   - Write
   - Bash
 ---
 
-# Takeover Image — Codex Image Generation
+# Takeover Image — Codex Image Generation via CLI
 
-Generate images by dispatching to Codex CLI's built-in `imagegen` skill (gpt-image-2).
-This agent delegates image creation to Codex, complementing the `takeover` agent (which delegates text tasks to other models via MCP).
+Generate images by spawning `codex exec --full-auto` which triggers Codex's built-in `imagegen` skill (gpt-image-2). No external skill dependencies — pure CLI.
 
 ## Generation
 
 For each image to generate:
 
-1. Ensure the output directory exists: `Bash(mkdir -p, "<output-dir>")`
-2. Call: `Skill(codex-image:generate, "<natural-language prompt>, save to <output-path> at <WxH>")`
-3. Verify the output: `Bash(ls -lh, "<output-path>")` — confirm file exists and has non-zero size
-4. If verification fails, retry once with the same prompt. If retry also fails, report the failure to the orchestrator.
+1. Ensure output directory exists: `mkdir -p "<output-dir>"`
+2. Call codex with a self-contained prompt that includes the image description, save path, and any text to render:
+   ```
+   codex exec --full-auto "Generate an image: <detailed prompt>. Save to <absolute-path>. Aspect ratio <W:H>."
+   ```
+3. Wait for codex to finish, then verify: `ls -lh "<output-path>"` — file exists with non-zero size
+4. If verification fails, retry once. If retry also fails, report failure to orchestrator.
 
-The argument is passed verbatim to Codex's imagegen skill.
-Output paths, sizes, quality, count, transparency, etc. are expressed as natural language.
+## Text Rendering (CRITICAL)
 
-**Batch variations**: Append `Generate N variations.` to the prompt to get multiple candidates in one agent turn.
+When the image should include text (e.g. cover titles, hook text, labels):
 
-**Skill call format**: `Skill(codex-image:generate, "<prompt>")` — the single string argument contains both the image description AND the save path/size instructions in natural language.
+- **Explicitly specify the exact text to render** in the prompt. Example: `Render the Chinese text "v2 升级后..." at the top of the image in bold modern font.`
+- **NEVER** use phrases like "text overlay space", "title-safe zone", or "leave room for text" — these result in blank space, not rendered text.
+- State WHERE the text goes (top/bottom/center), WHAT it says (exact characters), and HOW it looks (font style, color, size).
 
 ## Platform Cover Sizes
 
-See `.claude/skills/post-new/07-images.md` — the canonical source for cover sizes and aspect ratios. No local copy; always read the manifest.
+Read `templates/_platform-registry.md` — the single source of truth for cover sizes, aspect ratios, and image conventions.
 
-## Cost
+## Image Editing
 
-Token consumption varies with prompt length, image resolution, and retries. Batch requests ("5 variations") cost one agent turn instead of 5. Measure actuals from your first few runs to calibrate.
+To edit an existing image, include the current image path and describe the change:
+```
+codex exec --image "<existing-path>" "Edit: <edit description>. Save to <new-path>."
+```
+Always save edits as a new versioned file (e.g., `-v2.png`) — never overwrite the original.
+
+## Batch
+
+Generate multiple images by spawning parallel `codex exec` calls. Each call is independent.

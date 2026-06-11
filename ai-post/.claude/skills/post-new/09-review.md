@@ -48,14 +48,9 @@ Also reviews `images.md`:
 
 ## After Review
 
-1. Create `2-draft/v<N+1>/` directory
-2. For each platform that passes (✅ or ⚠️ after fixes):
-   - Apply review fixes to the current version's file → write to `2-draft/v<N+1>/<platform>.md`
-   - Only write files that actually changed
-3. Apply image plan fixes to `images.md`
-4. Update `brief.md`: `review_completed: true`, `current_version: v<N+1>`
-5. Return to step 08 — user may do light edits, re-review, or confirm final
+1. Persist review outcomes per `post-review/06-persist.md` — writes fixed articles + `review-verdict.md` to `v<N+1>/`
+2. Update `brief.md`: `review_completed: true`, `current_version: v<N+1>`
+3. Return to step 08 — user may do light edits, re-review, or confirm final
 
 For any platform that fails (❌):
-- Auto-offer `/post-regenerate <slug> <platform>`
-- Regenerated article goes into a new version
+- Tell user: "需要手动重写后重新 `/post-review <slug> <platform>`"

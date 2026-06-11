@@ -80,7 +80,7 @@ After angles are confirmed, generate titles for each Chinese platform being gene
 
 **Title generation rules:**
 - Author is the subject, tool is the instrument. ✅ "我用它3分钟搞定" not ❌ "被它3分钟搞定"
-- No banned opening formulas (see AGENT.md § Quality Standards for full banned-phrase list and banned section headers)
+- No banned opening formulas (see templates/ for per-platform banned-phrase lists and banned section headers)
 
 **Round A — Hook titles (3 per platform)**. Use varied elements across the 3 options:
 - 💰 Specific numbers (time saved, speed multiplier, star count)

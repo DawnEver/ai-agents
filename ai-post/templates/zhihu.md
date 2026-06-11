@@ -29,10 +29,6 @@ emoji_density: minimal
 
 ## Voice Rules
 
-- **「我」是主语，不是旁观者**: 文章必须以"我"的视角贯穿始终。每一段至少有一句以"我"作主语。不是介绍项目——是我在讲我的经历。
-  - ❌ "该项目提供了X功能" / "项目支持Y" / "用户可以Z"
-  - ✅ "我用它做了X" / "我踩了个坑" / "我最开始以为Y，结果发现Z"
-- **Write as the project's maintainer sharing firsthand experience**: You built or deeply use this tool. Share real insights, not academic observations. Frame as "我做了X，发现Y" not "该项目具有X特性".
 - **Objective, measured, professional**: Present facts and analysis, not enthusiasm. Even as the author, be honest about trade-offs.
 - Use concrete, personal framing: "在实际使用中我发现..." (In actual use I found...), "用下来感觉..." (After using it...), "有个地方被我踩到了..." (I stepped on a landmine...)
 - Avoid hype words entirely: NO "惊艳", "震撼", "逆天", "神器"
@@ -115,7 +111,7 @@ emoji_density: minimal
 
 知乎文章需要一张封面图，显示在文章顶部和 feed 流中。封面图独立于正文配图，单独生成。
 
-- **Aspect ratio**: `--ar 16:9`
+- **Aspect ratio**: see `templates/_platform-registry.md` (16:9 for 知乎).
 - **Purpose**: Article header + feed preview. 读者在时间线看到的第一视觉。
 - **Style**: Clean academic/professional, project name as focal point, neutral tech aesthetic.
 - **Design notes**: 
@@ -128,8 +124,7 @@ emoji_density: minimal
 **核心原则**：图片路径来自 `ongoing/<slug>/2-draft/v1/images.md`，不要自行发明路径。优先使用项目真实截图，AI 生成图作为补充。
 
 - **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](../../images/<filename>)`（从 `2-draft/vN/<platform>.md` 的相对路径）
-- **Aspect ratio**: `--ar 16:9`
-- **Number**: 2-3 张正文配图（知乎读者重视数据可视化）
+- Image paths and counts: see `templates/_platform-registry.md`.
 - **Image types for 知乎**:
   1. 对比表格可视化（将 markdown 表格转为视觉图表）
   2. Benchmark / 性能对比图
@@ -140,65 +135,21 @@ Example:
 ![横向对比——三个工具在性能/易用性/生态三个维度的得分对比](images/comparison.png)
 ```
 
-## Anti-AI Writing Techniques
+## Writing Quality
 
-### 开门见山 (Lead with the Answer)
-First paragraph: directly answer "推荐/不推荐, reason is X." No buildup, no suspense. 知乎 readers have high tolerance for density but zero for burying the lede.
+Read `templates/_writing-craft.md` for ALL universal writing techniques:
+- Strong opening patterns + banned openers
+- Microhumor density rules
+- Concept handles
+- Sentence rhythm + paragraph splitting
+- Connectives & transitions (动机段衔接, 场景链式衔接, 段落首句回扣)
+- 「我」as subject identity consistency
+- Dopamine density
+- Anti-AI check (banned phrases master list, AI味 grading 🟢🟡🔴)
+- Paragraph mini-thesis (知乎 readers especially value this)
+- 3-pass review process
 
-### 具体帧 (First-Person Concrete Frame)
-Write from direct experience: "在实际使用中我发现..." not "该项目具有..."  
-知乎 readers detect promotional framing immediately and discount the entire article.
-
-### 段落迷你论点 (Paragraph Mini-Thesis)
-Every paragraph should have a clear core point expressible in one sentence. If you can't, the paragraph needs to be split or rewritten. String all mini-theses together — they should form the article's logical spine.
-
-### 句子节奏 (Sentence Rhythm)
-Even analytical writing needs rhythm. After a long explanatory sentence, drop a short one to let the reader breathe. Avoid 5+ consecutive long sentences — it becomes a wall.
-
-### 连接词与段落过渡 (Connectives & Transitions)
-Every paragraph needs connective tissue — both within sentences and between paragraphs. AI writing often omits this, making each sentence feel like an isolated bullet point.
-
-**句内连接词** — vary by function:
-- 转折: 不过、但、然而、只是、话虽如此
-- 递进: 而且、另外、更重要的是、加上
-- 因果: 所以、因此、正是因为、这也导致了
-- 举例: 比如、比方说、具体来说、以X为例
-- 解释: 也就是说、换句话说、说白了
-- 让步: 当然、确实、倒是、不可否认
-
-**段落衔接** — the first sentence of each paragraph should connect to the previous one:
-- ❌ AI pattern:每段开头都是主语+动词 ("A项目提供了...", "B功能支持了...", "C场景下...")
-- ✅ Human pattern: "这带来了另一个问题..." / "但真正麻烦的地方在这里..." / "相比之下..." / "用下来，最意外的其实是..."
-
-**动机段衔接（关键规则）** — 当描述完工作流紧接着引出痛点时，必须用桥接词：
-- ❌ ...Claude 做 plan，deepseek-v4-pro 做实现，Codex 来锐评。\n\nChrome MCP 远端控制...
-- ✅ ...Claude 做 plan，deepseek-v4-pro 做实现，Codex 来锐评。\n\n但这个工作流还卡在一个地方：Chrome MCP 远端控制...
-- 桥接词库: "但这个分工还有个前提" / "问题是" / "麻烦出在" / "这就碰到一个硬限制"
-
-**段落首句回扣** — 新段落的开头必须与上一段有语义连接，不能凭空另起：
-- ❌ ## 它到底是什么\n\ntakeover 是一个 Claude Code 插件...
-- ✅ ## 所以我写了 takeover\n\n所以我写了 takeover 这个插件，核心三个命令...
-- 回扣模式: "所以" / "这就引出了" / "但真正麻烦的是" / "用了之后我发现" / "相比之下"
-
-**场景链式衔接** — 多个使用场景之间不能裸跳：
-- ❌ 写完一个 PR，顺手让 DeepSeek review。\n\n有个工程细节我自己挺满意...
-- ✅ 写完一个 PR，顺手让 DeepSeek review。\n\n还有个工程细节我自己挺满意：...（"还有"作为桥接）
-
-**段落拆分节奏** — 有力的短句独立成段：
-- ❌ ...都得交一笔复制粘贴税。这笔税，我交了很多次。
-- ✅ ...都得交一笔**复制粘贴税**——丢掉上下文，丢掉手头的文件状态，丢掉正在进行的任务。\n\n这笔税，我交了很多次。
-
-**身份一致性** — 全文"我"，永远不用"作者"或"笔者"
-
-**句首不重复**: Never start 3+ consecutive sentences with the same structure. Mix: 主语开头 / 状语开头 / 连词开头 / 短句.
-
-### 降AI味自查 (Anti-AI Check)
-- ❌ Delete: 这篇文章 / 本文将 / 总的来说 / 值得注意的是 / 综上所述 / 通过对比可以发现
-- ❌ Delete hype: 惊艳 / 震撼 / 逆天 / 神器
-- ❌ 主语不是"我"的段落扫描: 凡是一整段主语都是"项目/它/该工具/用户"，必须改写成"我"的视角
-- ❌ Replace vague quantifiers with numbers or explicit uncertainty: "大幅提升" → "提升约3倍（benchmark见原文）" or "我没有测试，但官方声称..."
-- ✅ Keep: specific versions, concrete limitations, "在X场景下" qualifiers
-- Grade each paragraph: 🟢 technical human / 🟡 slightly formulaic / 🔴 obvious AI (must rewrite 🔴)
+This template contains only 知乎-specific rules. Apply BOTH files when generating.
 
 ## Generation Checklist
 
@@ -215,6 +166,6 @@ Every paragraph needs connective tissue — both within sentences and between pa
 - [ ] 封面图 present: `![封面](images/zhihu-cover.png)` at top of article
 - [ ] 正文配图 present (2-3 markdown image refs, paths from images.md)
 - [ ] 「我」主语覆盖：每段至少一句以"我"作主语，无整段以"项目/它"为主语的段落
-- [ ] Anti-AI check complete — no 🔴 paragraphs
+- [ ] Writing quality check complete (see `_writing-craft.md`) — no 🔴 paragraphs
 - [ ] GitHub link at the end
 - [ ] Frame answers a real question/need

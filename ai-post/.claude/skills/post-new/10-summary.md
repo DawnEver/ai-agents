@@ -39,7 +39,7 @@ After user confirms, generate all planned images. Walk back versions to find the
 
 ## 3. Update Image References
 
-After images are generated, update markdown image references in the latest version files. Version files are at `2-draft/v<N>/` — image refs must use `../../images/<filename>` (two levels up to slug root).
+After images are generated, replace `[IMAGE: ...]` placeholders in the latest version files with real markdown references: `![alt](../../images/<image-id>-v<N>.png)`. Use the versioned filenames from the manifest. Articles in `2-draft/v<N>/` — path is two levels up to slug root.
 
 ## 4. Confirm Final State
 
@@ -57,5 +57,5 @@ The latest version in `2-draft/v<N>/` IS the published version. No separate `3-f
 - **Publish**: `/post-publish <platform> <slug>`
 - **After publishing all platforms**: archive with `/post-archive <slug>`
 
-For platforms that failed review (❌) and weren't regenerated:
-- **Regenerate**: `/post-regenerate <slug> <platform>` or manual edit, then re-run review
+For platforms that failed review (❌):
+- Manual rewrite, then re-run `/post-review <slug> <platform>`

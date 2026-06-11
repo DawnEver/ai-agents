@@ -1,41 +1,40 @@
 ---
 name: project-architecture-refactor
-description: AI-Post 架构重整计划 — post-new 渐进式披露拆分 + 整体管线层级重构
+description: AI-Post 架构重整 — 渐进式披露拆分 → 消除跨文件重复 → 共享引用文件体系
 metadata:
   type: project
+created: 2026-05-26
+accessed: 2026-06-11
 ---
 
 # AI-Post 架构重整
 
-## 背景
+## 2026-05-26 — 渐进式披露拆分
 
-2026-05-26 讨论了三项架构问题：
+- post-new SKILL.md 从 ~380 行拆分为轻量 orchestrator + 10 个子文件 (01-10)
+- 选题确认从 post-publish 移到 post-new Step 5 (Brief Review Gate)
+- Step 8 User Draft Review（强制阅读初稿，三方会审之前）
+- 确认 post-style 集成：4 个 writer agents + post-publish 都读取 style/profile.md
 
-1. **post-new SKILL.md 太长**（~380行），需渐进式披露拆分
-2. **post-style 是否在用** — 确认已正确集成（4个writer agents + post-publish + post-regenerate 都读取 style/profile.md）
-3. **整体架构** — 5个skill本质是一条管线，但缺少清晰层级
+## 2026-06-11 — 消除跨文件重复（去臃肿）
 
-## 已完成的改动
+**问题**：31 个 markdown 文件 ~3500 行，大量重复——封面比例 8 处、平台列表 6 处、降 AI 味技巧 4 份 ~223 行重复、agent 工作流 4 份重复。
 
-- ✅ 选题（title generation）从 post-publish Step 4.5 移到 post-new Step 5.5 Brief Review Gate
-- ✅ Step 5.5 扩展为两阶段门：Phase 1 Angle Confirmation + Phase 2 Title Selection，多轮迭代
-- ✅ 新增 Step 8: User Draft Review（强制用户阅读初稿，在三方会审之前）
-- ✅ post-new 渐进式披露拆分：SKILL.md → 轻量 orchestrator + 9个子文件 (01-09)
-- ✅ CLAUDE.md 架构层级描述：Architecture 段 + Pipeline Flow 段 + progressive disclosure 说明
-- ✅ post-style 集成确认：4个writer agents + post-publish + post-regenerate 都读取 style/profile.md
+**方案**：提取 3 个共享引用文件作为单一真相源，所有引用方瘦身指向它们。
 
-## 当前完整管线流程
+**新增共享文件**：
+- `templates/_writing-craft.md` (90L) — 通用写作技艺，从 4 模板提取合并
+- `templates/_platform-registry.md` (29L) — 平台元数据注册表（比例/字数/agent映射/发布URL）
+- `.claude/agents/_writer-base.md` (30L) — 共享 writer 工作流
 
-```
-/post:new <repo>
-  → clone + deep explore
-  → write repo-analysis.md
-  → ⭐ BRIEF REVIEW GATE: 选题确认 (angles + titles, iterate until user approves)
-  → write images.md
-  → spawn writers in parallel (创意排水 → draft → 三遍审校)
-  → ⭐ USER DRAFT REVIEW: mandatory read-through before review
-  → 三方会审 (3-model fanout per identity)
-  → fix (auto-offer /post:regenerate on ❌)
-  → /post:publish
-  → /post:style add
-```
+**瘦身效果**：
+- 4 模板：196-229 → 116-127 (-40%)
+- 4 agents：49-56 → 18-24 (-59%)
+- post-publish/SKILL.md：173 → 74 (-57%)
+- 审校checklist.md：100 → 51
+
+**新增发布子文件**：`post-publish/_platforms/` 下 4 个平台发布细则 (15-27L each)
+
+**设计约定**：`_` 前缀文件 = 引用文件，不独立调用。所有引用是增量 Read，零破坏性变更。
+
+**Commit**: `f254e62` — 33 files, +593/-582

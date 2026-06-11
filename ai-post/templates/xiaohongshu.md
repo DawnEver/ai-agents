@@ -22,12 +22,7 @@ emoji_density: high
 
 ## Voice Rules
 
-- **「我」是主语，不是旁观者**: 全文以"我"的视角贯穿。每一段至少有一句以"我"作主语。小红书读者跟的是人，不是项目说明书。
-  - ❌ "这个工具可以..." / "项目支持..." / "功能包括..."
-  - ✅ "我用它做了..." / "我踩了个坑" / "我测试下来..." / "我最爽的一点是..."
 - Use "我" (I) and "你" (you) — personal, direct, conversational
-- **Write as the project's author/maintainer**, not a third-party reviewer. You built this. You're sharing your own work.
-- Sound like a friend who just found something amazing, not a tech reviewer
 - Short sentences. Break long ones.
 - One-sentence paragraphs are fine. Walls of text are death.
 - NO marketing speak. NO "revolutionary" / "game-changing" / "next-gen"
@@ -104,7 +99,7 @@ This is a product spec sheet, not a 小红书 post. It screams AI. Instead, ment
 
 ### 封面图设计规范
 
-- **Aspect ratio**: `--ar 3:4`（小红书竖屏封面）
+- **Aspect ratio**: see `templates/_platform-registry.md` (3:4 for 小红书)
 - **Purpose**: Feed 流中吸引点击。读者看到封面的第一秒决定是否点进来。
 - **必须包含的元素**:
   1. **钩子文字（中文）** —— 封面上的标题文字，通常 1-2 行，字体大且醒目。直接来自文章的钩子句或标题。
@@ -121,9 +116,8 @@ This is a product spec sheet, not a 小红书 post. It screams AI. Instead, ment
 
 **核心原则**：图片路径来自 `ongoing/<slug>/2-draft/v1/images.md`，不要自行发明路径。优先使用项目真实截图（GIF、操作截图等），AI 生成图作为补充。
 
+- **Aspect ratio** and **count**: see `templates/_platform-registry.md` for platform conventions.
 - **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](../../images/<filename>)`（从 `2-draft/vN/<platform>.md` 的相对路径）
-- **Aspect ratio**: `--ar 3:4` (小红书竖屏图表现最好)
-- **Number**: 2-3 张正文配图（小红书是视觉平台，图片必不可少）。封面不计入。
 - **Image types for 小红书**:
   1. 项目主界面 / 操作截图（来自项目真实产出，如有）
   2. 使用前后对比，展示痛点被解决
@@ -134,48 +128,21 @@ Example:
 ![项目主界面——深色IDE风格，代码高亮，左侧文件树右侧编辑器](images/product-shot.png)
 ```
 
-## Anti-AI Writing Techniques
+## Writing Quality
 
-### 强开头 (Strong Opening — First Line is Life or Death)
-- **痛点直击**: Describe the exact frustrating scenario the reader is living right now
-- **惊人结论**: Lead with the result, make them want to know how
-- BANNED: 随着XX发展 / 今天来分享一个 / 最近发现了 / 相信很多小伙伴
+Read `templates/_writing-craft.md` for ALL universal writing techniques:
+- Strong opening patterns + banned openers
+- Microhumor density rules
+- Concept handles
+- Sentence rhythm + paragraph splitting
+- Connectives & transitions (动机段衔接, 场景链式衔接, 段落首句回扣)
+- 「我」as subject identity consistency
+- Dopamine density
+- Anti-AI check (banned phrases master list, AI味 grading 🟢🟡🔴)
+- Paragraph mini-thesis
+- 3-pass review process
 
-### 微幽默 (Microhumor)
-At least 1 moment that makes the reader smile. Small, real, specific:
-- Unexpected number: "我试了23次才搞定" not "试了很多次"
-- Self-deprecating: a small real failure before the win
-- Exaggerated-but-true description of the pain point
-
-### 连接词 (Connectives)
-短文更容易暴露句式单调。每一句都要和上一句有关系，而不是并排摆放的孤立事实。
-
-- 转折: 不过、但、就是有一点、话说回来
-- 递进: 而且、更爽的是、还有个细节
-- 因果: 所以才、正是因为、这才导致
-- ❌ 3句以上连续同一句式开头 (如每句都是 "它支持…"/"可以…"/"功能包括…")
-- ✅ 打断: 插一个短句。问句。感叹。然后继续。
-
-**动机段衔接**：当"工作流"后紧接"痛点"时，必须桥接，不能裸跳。
-- ❌ ...DeepSeek 拿来实现，再让 Codex 来锐评。\n\n另一个卡点是 Chrome MCP...
-- ✅ ...DeepSeek 拿来实现，再让 Codex 来锐评。但这个工作流有个绕不开的坎：Chrome MCP...
-- 桥接词: "但问题是" / "不过有个坎" / "这就碰到" / "麻烦的是"
-
-**拆分大段**：动机段包含多个不同性质的信息（工作流 + 卡点）时，拆成独立段落：
-- ❌ 💡 起因很具体：Claude Code 拿来 plan，DeepSeek 实现，Codex 锐评。另一个卡点是 Chrome MCP...
-- ✅ 💡 起因很具体：我想要在我的工作流里实现让 Claude 拿来 plan，DeepSeek 实现，Codex 锐评。\n\n当然，Claude Code 使用中还有别的卡点，比如我很喜欢的 Chrome MCP...
-
-**身份一致性** — 全文"我"，不出现"作者"：
-- ❌ takeover 的作者用 heredoc / 作者自己也在用多模型编排
-- ✅ 我用 heredoc / 我自己也在用多模型编排
-
-### 降AI味自查 (Anti-AI Check)
-Before finalizing, read every sentence aloud:
-- ❌ Delete: 这篇文章 / 本文将 / 总结一下 / 总的来说 / 值得注意的是 / 综上所述
-- ❌ Delete: 显著提升 / 充分利用 / 进行操作 / 相关功能 / 有效提升
-- ❌ Delete: anything you wouldn't say to a friend over coffee
-- ✅ Keep: specific numbers, real reactions, casual expressions
-- Grade each paragraph: 🟢 human / 🟡 slightly AI / 🔴 AI-bot (must rewrite 🔴)
+This template contains only 小红书-specific rules. Apply BOTH files when generating.
 
 ## Generation Checklist
 
@@ -191,5 +158,5 @@ Before finalizing, verify ALL of these:
 - [ ] 封面图 present: `![封面：...](images/xhs-cover.png)` at top of article
 - [ ] 正文配图 present (2-3 markdown image refs, paths from images.md)
 - [ ] 「我」主语覆盖：每段至少一句以"我"作主语，无整段以"项目/工具/它"为主语的段落
-- [ ] Anti-AI check complete — no 🔴 paragraphs
+- [ ] Writing quality check complete (see `_writing-craft.md`) — no 🔴 paragraphs
 - [ ] Sounds like a friend sharing, not a press release
