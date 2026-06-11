@@ -3,9 +3,6 @@ name: feedback-ai-taste-patterns
 description: Platform-specific AI-taste anti-patterns — what formats and phrases to ban from generation templates
 metadata:
   type: feedback
-created: 2026-05-27
-accessed: 2026-05-27
-tier: short
 ---
 
 小红书 and 知乎 generation had heavy AI-taste, while 微信公众号 was acceptable.

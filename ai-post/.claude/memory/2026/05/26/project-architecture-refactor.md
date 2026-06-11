@@ -3,9 +3,6 @@ name: project-architecture-refactor
 description: AI-Post 架构重整计划 — post-new 渐进式披露拆分 + 整体管线层级重构
 metadata:
   type: project
-created: 2026-05-26
-accessed: 2026-05-26
-tier: short
 ---
 
 # AI-Post 架构重整

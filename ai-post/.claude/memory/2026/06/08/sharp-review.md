@@ -3,9 +3,6 @@ name: sharp-review-2026-06-08
 description: Post-feature sharp review — 15 findings across MEMORY.md broken links, dropped knowledge entries, cost claims, Agent() syntax, Codex CLI pre-check
 metadata:
   type: project
-created: 2026-06-08
-accessed: 2026-06-08
-tier: short
 ---
 
 # Sharp Review 2026-06-08

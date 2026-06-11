@@ -3,9 +3,6 @@ name: feedback-author-voice
 description: "Articles must be written in the repo author's voice, never third-party reviewer; banned AI-tell phrases"
 metadata:
   type: feedback
-created: 2026-05-27
-accessed: 2026-05-27
-tier: short
 ---
 
 # Write as Repo Author, Not Reviewer

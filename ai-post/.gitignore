@@ -1,11 +1,3 @@
 repos/
 ongoing/
 archived/
-.DS_Store
-.claude/*
-!.claude/agents/
-!.claude/commands/
-!.claude/skills/
-!.claude/rules/
-!.claude/memory/
-!.claude/settings.json

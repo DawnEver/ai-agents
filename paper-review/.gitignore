@@ -2,15 +2,7 @@ ongoing/*
 archived/*
 style/*
 critiques-library/*
-.claude/*
-!.claude/agents/
-!.claude/rules/
-!.claude/memory/
-!.claude/skills/
-!.claude/workflows/
-!.claude/settings.json
 __pycache__/
-.DS_Store
 
 # paper_pdf_ingest — Python project
 .venv*
