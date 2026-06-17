@@ -23,11 +23,9 @@ After step 07 completes, present the generated articles AND image plan:
 ```
 📄 初稿 + 图片计划，请阅读
 
-**生成结果** (v1 baseline)：
-- 小红书：`<title>` — ongoing/<slug>/2-draft/v1/xiaohongshu.md (<char_count> chars)
-- 微信公众号：`<title>` — ongoing/<slug>/2-draft/v1/wechat.md (<char_count> chars)
-- 知乎：`<title>` — ongoing/<slug>/2-draft/v1/zhihu.md (<char_count> chars)
-- Twitter/X：`<title>` — ongoing/<slug>/2-draft/v1/twitter.md (<tweet_count> tweets)
+**生成结果** (v1 baseline) — render ONE line per ACTIVE platform only (from `brief.md` `platforms:`, defaulting from `templates/_platform-registry.md`). Do not list inactive platforms:
+- <platform-label>：`<title>` — ongoing/<slug>/2-draft/v1/<platform>.md (<char_count> chars / <tweet_count> tweets)
+  (e.g. 小红书 / 微信公众号 / 知乎 — char_count; Twitter/X — tweet_count)
 
 **图片计划**：ongoing/<slug>/2-draft/v1/images.md (N 张图)
 
@@ -69,16 +67,22 @@ Update both the H1 heading in the file AND `brief.md` (`## Selected Titles`).
 
 ### If user confirms final ("可以发布了" / "final"):
 
-**Gate first — 三方会审 must have actually run.** Check for a real `2-draft/v<N>/review-verdict.md` (the latest one resolved via the version chain). It must exist and reflect a completed review.
+**Gate first — 三方会审 must have actually run AND passed.** Check for a real `2-draft/v<N>/review-verdict.md` (the latest one resolved via the version chain). It must exist, reflect a completed review, and pass for every ACTIVE platform.
+
+1. **Resolve active platforms** from `brief.md` `platforms:` (defaulting from `templates/_platform-registry.md` if absent).
+2. **Parse the latest `review-verdict.md`** and read each active platform's verdict.
+
+Then branch:
 
 - **If no `review-verdict.md` exists** (review never ran) → do NOT set `finalized` or `review_completed`. Route the user to Step 09: "还没过三方会审，先审完再发。" Run the review, then return here.
-- **If a real `review-verdict.md` exists**:
+- **If any ACTIVE platform is ❌ (rejected/failing)** → do NOT set `finalized` or `review_completed`. Report which platform(s) failed and route back to Step 09 (re-review) or manual rewrite: "<platform> 三方会审未通过，先修复再发。" A finalized article requires every active platform to be publishable.
+- **If every ACTIVE platform passes** (✅, or ⚠️ warnings-only — warnings may proceed):
   1. Create final snapshot `2-draft/v<N+1>/` with any last changes
   2. **Assemble full set**: for each platform, walk back versions until you find the latest copy. If any platform is missing entirely, re-spawn or copy from the nearest version that has it — the final version set must be complete.
   3. Update `brief.md`: `finalized: true`, `current_version: v<N+1>`, `review_completed: true`
   4. Proceed to Step 10.
 
-> ⚠️ `finalized: true` / `review_completed: true` may ONLY be set after a real latest `2-draft/vN/review-verdict.md` exists. Never set them to skip ahead.
+> ⚠️ `finalized: true` / `review_completed: true` may ONLY be set after a real latest `2-draft/vN/review-verdict.md` exists AND every active platform passes (❌ blocks; ⚠️ warnings may proceed). Never set them to skip ahead.
 
 ## Optional Self-Check Supplement (NOT a replacement for 三方会审)
 

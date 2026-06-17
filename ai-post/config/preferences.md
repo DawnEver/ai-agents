@@ -27,4 +27,4 @@ technical_depth: auto
 
 - **Mode**: Manual copy-paste (API integration planned for future)
 - **Review**: Always review before publishing
-- **Style tracking**: Manually add published articles to style references
+- **Style tracking**: Automatic — `/post-archive` copies published articles into `style/published/` and updates `style/profile.md` (no manual step)

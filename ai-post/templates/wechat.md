@@ -1,7 +1,7 @@
 ---
 platform: wechat
 language: zh
-emoji_density: moderate
+emoji_density: see `templates/_platform-registry.md` (emoji_density) — moderate
 ---
 
 # 微信公众号 Article Generation Instructions
@@ -44,7 +44,7 @@ emoji_density: moderate
 
 ## Emoji Rules
 
-- **Density**: 3-8 per article total. Use as section dividers or for emphasis.
+- **Density**: canonical level in `templates/_platform-registry.md` (emoji_density: moderate) — craft target ~3-8 per article total. Use as section dividers or for emphasis.
 - **Position**: Section headers can have an emoji. Don't emoji-prefix every paragraph.
 - **Set**: 📌 ✨ 🚀 💡 ⚡ 🔧 — more subdued, professional set.
 - **Don't**: Emoji on bullet lists. Readers find it noisy in long-form content.
@@ -111,13 +111,13 @@ emoji_density: moderate
   - 封面图需要留出标题文字的安全区域（上方或居中偏上位置，微信会在底部叠加标题文字）
   - 项目名称/logo 作为视觉焦点
   - 避免过于密集的信息 —— 在订阅号列表中是缩略图尺寸
-- **Output**: 封面图放在文章最开头，使用 markdown 图片引用：`![封面](images/wechat-cover.png)`
+- **Output**: 封面图放在文章最开头，使用 markdown 图片引用：`![封面](../../images/wechat-cover-vN.png)`（路径取自 `images.md`，终版用真实版本号）
 
 ## 正文配图 (Content Images)
 
 Image paths and counts: see `templates/_platform-registry.md`.
 
-- **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](../../images/<filename>)`（从 `2-draft/vN/<platform>.md` 的相对路径）
+- **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](../../images/<id>-vN.png)`（从 `2-draft/vN/<platform>.md` 的相对路径，路径取自 `images.md`）
 - **Aspect ratio**: `--ar 16:9` (微信公众号横版)
 - **Number**: 3-5 张正文配图（长文需要视觉断点）
 - **Image types for 微信公众号**:
@@ -129,7 +129,7 @@ Image paths and counts: see `templates/_platform-registry.md`.
 
 Example:
 ```
-![项目架构图——从左到右：CLI入口→核心引擎→输出层](images/architecture.png)
+![项目架构图——从左到右：CLI入口→核心引擎→输出层](../../images/architecture-vN.png)
 ```
 
 ## Writing Quality
@@ -161,7 +161,7 @@ This template contains only 微信公众号-specific rules. Apply BOTH files whe
 - [ ] No 3+ consecutive sentences with same opening structure
 - [ ] Each paragraph has a dopamine point
 - [ ] Each feature explained with "what + why + how"
-- [ ] 封面图 present: `![封面](images/wechat-cover.png)` at top of article
+- [ ] 封面图 present: `![封面](../../images/wechat-cover-vN.png)` at top of article
 - [ ] GitHub link at the end
 - [ ] 正文配图 present (3-5 markdown image refs, paths from images.md)
 - [ ] 「我」主语覆盖：每段至少一句以"我"作主语，无整段以"项目/它/工具"为主语的段落

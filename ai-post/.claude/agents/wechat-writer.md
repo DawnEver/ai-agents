@@ -1,4 +1,4 @@
-﻿---
+---
 name: wechat-writer
 description: 微信公众号文案专家 — 生成深度教程、技术解析、故事性长文
 platform: wechat

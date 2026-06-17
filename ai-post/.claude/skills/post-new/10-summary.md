@@ -9,12 +9,11 @@ Present the assembled final set:
 ```
 📊 三方会审通过，最终版本确认
 
+(Render ONE row per ACTIVE platform only — from `brief.md` `platforms:`, defaulting from `templates/_platform-registry.md`. Do not show inactive platforms as incomplete.)
+
 | Platform | Title | Latest Version | Status |
 |----------|-------|---------------|--------|
-| 小红书 | `<title>` | v<N> | ✅ / ⚠️ |
-| 微信公众号 | `<title>` | v<N> | ✅ / ⚠️ |
-| 知乎 | `<title>` | v<N> | ✅ / ⚠️ |
-| Twitter/X | `<title>` | v<N> | ✅ / ⚠️ |
+| <platform-label> | `<title>` | v<N> | ✅ / ⚠️ |
 
 版本链：v1 (AI) → v2 (用户编辑) → v3 (会审修复) → ... → v<N> (当前)
 已修复的问题：<汇总>

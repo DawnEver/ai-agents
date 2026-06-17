@@ -12,12 +12,13 @@ If platform is omitted it's inferred from the filename
 
 Counting rules (match what the platform editor shows):
 - xiaohongshu: title = H1 (≤20). caption = everything from after the H1 up to
-  the first '---' that introduces the '## 配图' upload list (that list is NOT
-  posted), with image markdown refs / [IMAGE:] markers stripped. Spaces and
-  line breaks COUNT (小红书 counts them). Limit 1000.
+  the '## 配图' upload-list heading (that list is NOT posted), with image
+  markdown refs / [IMAGE:] markers stripped. Spaces and line breaks COUNT
+  (小红书 counts them). Limit 1000.
 - wechat / zhihu: body length reported for info (no hard cap here); also reports
   the 摘要 if a line '摘要：...' is present (wechat ≤120).
-- twitter: each tweet (split on '**Tweet' headers / '---') counted, limit 280.
+- twitter: each tweet (split on '**Tweet' / 'Tweet N' / '[Tweet N]' headers and
+  '---' separators) counted, limit 280.
 """
 import re
 import sys
@@ -42,7 +43,7 @@ def count_xhs(text: str):
     title = lines[0].lstrip("# ").strip() if lines else ""
     body = []
     for ln in lines[1:]:
-        if ln.strip() == "---":      # 配图 upload list separator — stop
+        if ln.lstrip("# ").strip().startswith("配图"):  # 配图 upload list heading — stop
             break
         body.append(ln)
     caption = strip_images("\n".join(body)).strip()
@@ -55,14 +56,19 @@ def count_xhs(text: str):
 
 
 def count_twitter(text: str):
-    # split into tweets on the **Tweet N** headers
-    blocks = re.split(r"(?m)^\*\*Tweet[^\n]*\*\*[^\n]*$", text)
+    # split into tweets on tweet headers (**Tweet N**, Tweet N, [Tweet N])
+    # and on '---' separator lines
+    split_re = re.compile(
+        r"(?m)^(?:\*{0,2}\[?Tweet\b[^\n]*|---+)\s*$",
+    )
+    blocks = split_re.split(text)
     out = []
     n = 0
     for b in blocks:
         b = strip_images(b)
-        # drop separator lines and the H1
-        b = "\n".join(l for l in b.splitlines() if l.strip() not in ("---",) and not l.startswith("# "))
+        # drop residual separator lines and the H1
+        b = "\n".join(l for l in b.splitlines()
+                      if not re.match(r"^---+$", l.strip()) and not l.startswith("# "))
         b = b.strip()
         if not b:
             continue
@@ -74,7 +80,7 @@ def count_twitter(text: str):
 def count_generic(text: str, platform: str):
     body = strip_images(text)
     body = "\n".join(l for l in body.splitlines() if not l.startswith("# "))
-    out = [("正文(含空格+换行)", len(body.strip()), None, None)]
+    out: list[tuple] = [("正文(含空格+换行)", len(body.strip()), None, None)]
     m = re.search(r"摘要[:：]\s*(.+)", text)
     if m and platform == "wechat":
         out.append(("摘要", len(m.group(1).strip()), LIMITS["wechat"]["summary"], m.group(1).strip()))

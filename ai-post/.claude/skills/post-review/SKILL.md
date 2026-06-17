@@ -54,7 +54,7 @@ Phase 1-2 run per platform. Phase 3-4 synthesize per-platform (per-identity 合�
 ## Hard Rules
 
 - **Twitter/X skips identity B** — no code to verify, text-only platform.
-- **`--full-review`** adds Codex as a 3rd reviewer to each identity.
+- **`--full-review`** adds Claude Opus as a 3rd reviewer to each identity.
 - **Failed reviewer → `⚠️ 未响应`**, don't block the other identity.
 - **Verdict persists**: every round writes `review-verdict.md` to `v<N+1>/`. Check it to determine review status across sessions.
 - **Image plan review is mandatory (Phase 6)**: every round审 `images.md`; `review-verdict.md` must include an `## Image plan review` section (or note "no images.md yet"). Cover-hook stale after a title/motivation change is the most common miss — always re-check covers against the latest title.

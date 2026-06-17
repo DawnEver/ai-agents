@@ -38,4 +38,5 @@ Platform rules are centralized in `templates/_platform-registry.md` (metadata: a
 ## Acknowledgments
 
 - [auto-claude-writing-agent-pub](https://github.com/MapleShaw/auto-claude-writing-agent-pub) by MapleShaw — original project architecture and inspiration.
-- [codex-image-in-cc](https://github.com/KingGyuSuh/codex-image-in-cc) by KingGyuSuh — bridges Codex CLI's built-in `imagegen` skill (gpt-image-2) into Claude Code. Powers the `takeover-image` agent.
+- [Codex CLI](https://github.com/openai/codex) — its built-in `imagegen` skill (gpt-image-2) powers the `takeover-image` agent, which spawns `codex exec` directly with no third-party plugin.
+- [codex-image-in-cc](https://github.com/KingGyuSuh/codex-image-in-cc) by KingGyuSuh — historical inspiration for bridging Codex's `imagegen` into Claude Code (no longer a dependency).

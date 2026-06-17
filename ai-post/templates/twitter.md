@@ -1,7 +1,7 @@
 ---
 platform: twitter
 language: English ONLY (no Chinese)
-emoji_density: moderate
+emoji_density: see `templates/_platform-registry.md` (emoji_density) — moderate
 ---
 
 # Twitter/X Article Generation Instructions
@@ -35,7 +35,7 @@ Twitter/X is concise, high-density, **English-only** content in thread format. E
 
 ## Emoji Rules
 
-- **Density**: 1-2 per tweet.
+- **Density**: canonical level in `templates/_platform-registry.md` (emoji_density: moderate) — craft target 1-2 per tweet.
 - **Position**: Start of tweet as visual anchor. Or inline as emphasis.
 - **Set**: ✨ 🚀 💡 ⚡ 🔥 🧵 👇 🔗 ⭐ 💻
 - **Thread markers**: Tweet 1 ends with 🧵👇. Other tweets can start with ✨ or 💡 as category markers.
@@ -92,7 +92,7 @@ Image paths and counts: see `templates/_platform-registry.md`.
 
 Twitter threads benefit from 1-2 strong images. Place them using markdown image refs alongside the relevant tweet.
 
-- **Format**: `![alt text](images/<filename>)` placed below the relevant tweet
+- **Format**: `![alt text](../../images/<id>-vN.png)` placed below the relevant tweet (path from `images.md`)
 - **Aspect ratio**: `--ar 16:9` (Twitter card) or `--ar 1:1` (inline tweet image)
 - **Number**: 1-2 images max — threads with too many images lose focus
 - **Image types for Twitter/X**:
@@ -101,7 +101,7 @@ Twitter threads benefit from 1-2 strong images. Place them using markdown image 
 
 Example (alongside Tweet 1):
 ```
-![Side-by-side: 30s build vs 0.5s build — same codebase](images/comparison.png)
+![Side-by-side: 30s build vs 0.5s build — same codebase](../../images/comparison-vN.png)
 ```
 
 ## Writing Quality
@@ -127,7 +127,7 @@ This template contains only Twitter-specific rules. Apply BOTH files when genera
 - [ ] GitHub link only in final tweet
 - [ ] CTA for engagement (Star / RT / Like) in final tweet
 - [ ] No code blocks — described in plain language
-- [ ] Images (if any): markdown refs `![alt](images/<file>)`, paths from images.md
+- [ ] Images (if any): markdown refs `![alt](../../images/<id>-vN.png)`, paths from images.md
 - [ ] Stats/specifics over adjectives (no "significantly", "blazingly", "revolutionary")
 - [ ] Thread builds tension toward an "aha" moment (Tweet 4)
 - [ ] Every tweet stands alone (self-contained, no thread-unraveling phrases)

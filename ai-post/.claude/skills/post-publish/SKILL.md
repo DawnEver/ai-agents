@@ -24,7 +24,7 @@ You handle the mechanics of getting content onto the platform. The article text 
 
 ### Step 1: Identify the Article
 
-If `project-slug` is provided, load `ongoing/<slug>/2-draft/v<N>/<platform>.md` from the latest version (highest N). If no versions exist or `brief.md` does not have `finalized: true`, abort.
+If `project-slug` is provided, load the target platform's draft with **walk-back inheritance** (mirroring `export_article.py`): later versions store ONLY the files that changed, so an unchanged platform inherits from an earlier version and may be absent at the highest vN. Locate the highest version N, then search `2-draft/v<N>/<platform>.md` from vN down to v1 and use the first match. If the file is found in no version, or no versions exist, or `brief.md` does not have `finalized: true`, abort.
 
 **Review-verdict gate (BLOCKING):** Do not trust `brief.md` alone. Locate the latest `2-draft/v<N>/review-verdict.md` (walk the version chain back if the highest N lacks one). If no verdict artifact exists, abort: "未找到 review-verdict.md — 请先完成 /post-review (三方会审)。" If the verdict marks the target `<platform>` as failing/rejected (not passing), abort: "<platform> 在最近一次会审中未通过，不能发布。" Only proceed when the actual review artifact shows the platform passing.
 

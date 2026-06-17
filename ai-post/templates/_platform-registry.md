@@ -2,12 +2,12 @@
 
 Single source of truth for all platform metadata. Reference this file instead of hardcoding platform properties.
 
-| key | name_zh | name_en | cover_ar | content_ar | char_limit | emoji_density | code_blocks | agent | template |
-|-----|---------|---------|----------|------------|------------|---------------|-------------|-------|----------|
-| xiaohongshu | 小红书 | RED | 3:4 | 3:4 | **≤1000** | high | minimal | xiaohongshu-writer | xiaohongshu.md |
-| wechat | 微信公众号 | WeChat Official | 2.35:1 | 16:9 | 2000-5000 | moderate | expected | wechat-writer | wechat.md |
-| zhihu | 知乎 | Zhihu | 16:9 | 16:9 | 1500-4000 | minimal | fine | zhihu-writer | zhihu.md |
-| twitter | Twitter/X | Twitter/X | 16:9 | 16:9 | 280/tweet | moderate | none | twitter-writer | twitter.md |
+| key | name_zh | name_en | cover_ar | content_ar | char_limit | title_limit | emoji_density | code_blocks | agent | template |
+|-----|---------|---------|----------|------------|------------|-------------|---------------|-------------|-------|----------|
+| xiaohongshu | 小红书 | RED | 3:4 | 3:4 | **≤1000** | **≤20字** | high | minimal | xiaohongshu-writer | xiaohongshu.md |
+| wechat | 微信公众号 | WeChat Official | 2.35:1 | 16:9 | 2000-5000 | — | moderate | expected | wechat-writer | wechat.md |
+| zhihu | 知乎 | Zhihu | 16:9 | 16:9 | 1500-4000 | — | minimal | fine | zhihu-writer | zhihu.md |
+| twitter | Twitter/X | Twitter/X | 16:9 | 16:9 | 280/tweet | — | moderate | none | twitter-writer | twitter.md |
 
 ## Publish URLs
 

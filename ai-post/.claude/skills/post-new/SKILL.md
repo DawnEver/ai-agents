@@ -1,7 +1,7 @@
-﻿---
+---
 name: post-new
 description: Generate platform-adapted articles from a GitHub repo URL — spawns platform-specific agents for generation.
-argument-hint: <github-url> [platform]
+argument-hint: <github-url|slug> [platform]
 allowed-tools:
   - Read
   - Write
@@ -26,7 +26,7 @@ You are the orchestrator. Given a GitHub repo URL, clone and deeply explore the 
 | 02 | `02-explore.md` — Deep code exploration → `1-research/repo-exploration.md` | — |
 | 03 | `03-market-research.md` — WebSearch market landscape → `1-research/market-research.md` | — |
 
-> Steps 02 and 03 have no dependency — run in parallel to cut research latency ~40%.
+> Step 03 depends on Step 02: `03-market-research.md` reads `1-research/repo-exploration.md` and extracts language/topics from it. Run 02 first, then 03 (03 may start from Step-01 metadata but is enriched by 02's output) — they are NOT dependency-free parallel.
 
 | 04 | `04-analysis.md` — Consolidated analysis + article angles | — |
 | 05 | `05-brief-gate.md` — ⭐ 选题确认 (angles + titles, iterate) | **User** |
@@ -37,6 +37,8 @@ You are the orchestrator. Given a GitHub repo URL, clone and deeply explore the 
 | 10 | `10-summary.md` — Final confirm → assemble → images → publish | **User** |
 
 ## How to Execute
+
+The argument is either a GitHub URL (new article) or an existing `<slug>` (e.g. `owner--repo` or `owner--repo__topic`). **Before Step 01's URL parsing, check whether the argument matches an existing `<slug>`** under `ongoing/` or `archived/` — if so, route to resume per the Resume Table below rather than treating it as a URL.
 
 Run each step in order. **At the start of each step, Read the corresponding sub-file** and follow its instructions. The sub-file is the detailed playbook — this SKILL.md is just the map.
 

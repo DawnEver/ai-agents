@@ -1,8 +1,8 @@
 ---
 platform: xiaohongshu
-title_limit: 20 字 (HARD — the H1 title must be ≤20 Chinese chars incl. punctuation/emoji; count and trim if over)
+title_limit: see `templates/_platform-registry.md` (title_limit, HARD — H1 must be ≤ registry cap incl. punctuation/emoji; count and trim if over)
 language: zh
-emoji_density: high
+emoji_density: see `templates/_platform-registry.md` (emoji_density) — high
 ---
 
 # 小红书 Article Generation Instructions
@@ -41,7 +41,7 @@ emoji_density: high
 
 ## Emoji Rules
 
-- **Density**: 8-15 emojis per article (~1 per 60-80 characters)
+- **Density**: canonical level in `templates/_platform-registry.md` (emoji_density: high) — craft target ~8-15 emojis per article (~1 per 60-80 characters)
 - **Position**: Every bullet point starts with an emoji. Headline has one. CTA has one.
 - **Preferred set**: 🔥 🚀 💡 ✨ 🛠️ 👨‍💻 📌 💻 🎯 ⚡ 🎉 🔗 ⭐ 💬 👇
 - **Pattern**: Use emojis as visual bullet markers and emotional amplifiers
@@ -56,7 +56,7 @@ emoji_density: high
 
 ## Content Constraints
 
-- **Length**: ~800-1000 characters total
+- **Length**: ~800-1000 characters total (craft target). 硬上限见 `templates/_platform-registry.md` (char_limit)。
 - **正文纯文本，零 markdown（小红书硬性要求）**: 小红书正文框是纯文本编辑器，markdown 语法会原样显示成乱码。正文里**禁止**任何 markdown：不要 `**加粗**`、不要 `` `行内代码` ``、不要 `## 标题`、不要 `[文字](链接)`、不要 ``` 代码块、不要 `-`/`1.` 列表符号、不要内嵌 `![](...)` 图片。只允许：纯文字、emoji、换行/空行。强调用词语本身或 emoji，不要用加粗。技术名词（DeepSeek、sharp-review、≥2）直接写，不加反引号。
 - **图文分离（写作时就要做到）**: 正文**完全不含图片**。所有配图（含封面）统一放到文末 `## 配图（单独上传，正文不内嵌）` 清单里。写正文时心里就把图和字分开——正文是能一次性复制进小红书的纯文字，图片照清单逐张手动上传。
 - **No external links in body** — 小红书 may hide posts with links. Use "评论区/主页自取" pattern.
@@ -133,7 +133,7 @@ This is a product spec sheet, not a 小红书 post. It screams AI. Instead, ment
 **核心原则**：图片路径来自 `ongoing/<slug>/2-draft/v1/images.md`，不要自行发明路径。优先使用项目真实截图（GIF、操作截图等），AI 生成图作为补充。
 
 - **Aspect ratio** and **count**: see `templates/_platform-registry.md` for platform conventions.
-- **图文分离（小红书特有）**：小红书正文**不内嵌图片**，图片单独上传。所以正文是纯文字（≤1000 字），配图在文末**单独成一个 `## 配图（单独上传）` 清单**列出。
+- **图文分离（小红书特有）**：小红书正文**不内嵌图片**，图片单独上传。所以正文是纯文字（字数硬上限见 `templates/_platform-registry.md` char_limit），配图在文末**单独成一个 `## 配图（单独上传）` 清单**列出。
 - **终版必须给真实路径引用，不能只留描述**：生成期可用 `[IMAGE: 描述]` 占位标记位置；但**最终版**里这些必须替换成真实文件引用 `![中文说明](../../images/<id>-vN.png)`，路径取自 `images.md`。不允许终版只有 `[IMAGE: ...]` 文字描述。
 - 配图清单按出现顺序排列，每条：序号 + 用途（封面/配图）+ `![说明](../../images/<id>-vN.png)`，方便用户照单逐张上传。
 - **Image types for 小红书**:
@@ -167,8 +167,8 @@ This template contains only 小红书-specific rules. Apply BOTH files when gene
 ## Generation Checklist
 
 Before finalizing, verify ALL of these:
-- [ ] 标题 ≤20 字（H1；含标点/emoji 一起数。超了必须精简——小红书标题硬上限 20 字）
-- [ ] 800-1000 characters (under 600 = too thin, over 1000 = cut)
+- [ ] 标题在 registry title_limit 内（H1；含标点/emoji 一起数。超了必须精简——硬上限见 `templates/_platform-registry.md`）
+- [ ] 800-1000 characters craft target；硬上限见 `templates/_platform-registry.md` char_limit (under 600 = too thin, over cap = cut)
 - [ ] 8-15 emojis total, every bullet starts with one
 - [ ] First line is a strong hook (pain point or surprising result)
 - [ ] At least 1 microhumor moment

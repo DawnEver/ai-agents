@@ -97,7 +97,7 @@ After angles are confirmed, generate titles for each Chinese platform being gene
 **Title generation rules:**
 - Author is the subject, tool is the instrument. ✅ "我用它3分钟搞定" not ❌ "被它3分钟搞定"
 - No banned opening formulas (see templates/ for per-platform banned-phrase lists and banned section headers)
-- **小红书标题 ≤20 字硬上限**（含标点/emoji）。生成 RA/RB 选项时每条都数一遍，超 20 字的直接不要。
+- **小红书标题硬上限见 `templates/_platform-registry.md`（title_limit）**（含标点/emoji）。生成 RA/RB 选项时每条都数一遍，超出 registry 上限的直接不要。
 
 **Round A — Hook titles (3 per platform)**. Use varied elements across the 3 options:
 - 💰 Specific numbers (time saved, speed multiplier, star count)

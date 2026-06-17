@@ -26,7 +26,7 @@ Read these files in order:
 - Follow the template's structural formula
 - Apply ALL rules from _writing-craft.md: strong opening, microhumor, connectives, sentence rhythm, 「我」as subject, dopamine density
 - **Honor brief `persona`** (see _writing-craft.md 身份绑定). If `author`: 「我」IS the repo's designer — code-level details (commit hashes, file paths, design tricks) are MY decisions, never framed as external findings (no「能看出作者…」「翻代码才看懂」)
-- Mark potential image spots with `[IMAGE: brief description]` placeholders. **At draft/v1 generation time, use ONLY `[IMAGE: ...]` placeholders — do NOT write markdown image references.** The real markdown refs (`![alt](../../images/<image-id>-vN.png)`) are added LATER, at the image-generation / finalization stage (Step 10), once images exist. This is a deliberate two-stage lifecycle: placeholders now, resolved image refs at finalization — they are not a contradiction.
+- Mark potential image spots with `[IMAGE: brief description]` placeholders. **At draft/v1 generation time, use ONLY `[IMAGE: ...]` placeholders — do NOT write markdown image references.** The canonical final form is the versioned markdown ref `![alt](../../images/<image-id>-vN.png)` (never an unversioned `images/<file>` path), added LATER at the image-generation / finalization stage (Step 10), once images exist. This is a deliberate two-stage lifecycle: `[IMAGE: ...]` placeholders now, resolved `../../images/<id>-vN.png` refs at finalization — they are not a contradiction.
 
 ### 4. Self-Check
 - Run through the platform template's Generation Checklist

@@ -13,7 +13,7 @@ Plain Chinese text with emoji preserved. Hashtags on a separate line at end. Ima
 - 封面图单独上传（比例见 `templates/_platform-registry.md`，hook 文字已渲染在图上）。
 
 ## Character Limit — BLOCKING
-- **标题 ≤20 字、正文 ≤1000 字**（正文含空格+换行，小红书都计入；图片 markdown 引用和「## 配图」清单不计）。
+- **标题、正文上限见 `templates/_platform-registry.md`（title_limit / char_limit）**（正文含空格+换行，小红书都计入；图片 markdown 引用和「## 配图」清单不计）。
 - **用脚本核对，别手数**：`python .claude/skills/post-publish/char_count.py <article.md> xiaohongshu`（exit 1 = 超限）。超限拒绝发布并精简。
 
 ## Restrictions
@@ -21,10 +21,10 @@ Plain Chinese text with emoji preserved. Hashtags on a separate line at end. Ima
 - Hashtags: remind user to add 3-5 hashtags if the article has them
 
 ## Title — BLOCKING
-- **标题 ≤20 字硬上限**（含标点/emoji）。发布前数一遍 H1 标题；超 20 字必须精简后才能发。
+- **标题硬上限见 `templates/_platform-registry.md`（title_limit）**（含标点/emoji）。发布前数一遍 H1 标题；超出 registry 上限必须精简后才能发。
 
 ## Pre-Publish Checklist
-- [ ] 标题 ≤20 字
+- [ ] 标题在 registry title_limit 内
 - [ ] 封面图已上传（比例见 registry）
 - [ ] Hook 文字在封面上
 - [ ] Hashtags 已添加

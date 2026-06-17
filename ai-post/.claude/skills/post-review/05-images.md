@@ -29,7 +29,7 @@ Verify aspect ratios match platform requirements per `templates/_platform-regist
 
 ## Image Editing
 
-If an existing image needs content fixes (not just prompt text updates), use takeover image-edit to create a new version:
+If an existing image needs content fixes (not just prompt text updates), spawn a takeover-image agent with an edit prompt to create a new version:
 
 1. Spawn a takeover-image agent with the edit prompt and current image path
 2. Save output as `<image-id>-v<N+1>.png` — do NOT overwrite the old version

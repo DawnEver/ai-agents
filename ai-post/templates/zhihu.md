@@ -1,7 +1,7 @@
 ---
 platform: zhihu
 language: zh
-emoji_density: minimal
+emoji_density: see `templates/_platform-registry.md` (emoji_density) — minimal
 ---
 
 # 知乎 Article Generation Instructions
@@ -47,7 +47,7 @@ emoji_density: minimal
 
 ## Emoji Rules
 
-- **Density**: 0-3 per article. Minimal to none.
+- **Density**: canonical level in `templates/_platform-registry.md` (emoji_density: minimal) — craft target 0-3 per article. Minimal to none.
 - Use only for technical emphasis or to break up a very long section. Never as bullet markers.
 - Preferred: 📊 (for data/comparison), ⚡ (for performance), 🔧 (for configuration)
 
@@ -82,7 +82,7 @@ emoji_density: minimal
 
 [One paragraph. What it does, key stats, how it works at a high level.]
 
-## [Mechanism deep-dive, phrased as curiosity — e.g. "它到底怎么让三个模型互相挑刺的" NOT "技术实现"]
+## [Mechanism deep-dive, phrased as curiosity — e.g. "它到底怎么让几个模型各审各的" NOT "技术实现"]
 
 [Walk through the 1-3 most interesting mechanisms — explain the logic and data flow in plain terms so the reader understands *why* it works; a short code snippet is fine to make it concrete. Do NOT cite source file paths, function names, or line numbers. The reader should finish able to explain the design to a colleague. This is co-core with the comparison below.]
 
@@ -123,13 +123,13 @@ emoji_density: minimal
 - **Design notes**: 
   - 封面图应包含项目名称（英文）作为视觉主体
   - 避免过于花哨 —— 知乎读者偏好克制、专业的设计
-- **Output**: 封面图放在文章最开头，使用 markdown 图片引用：`![封面](images/zhihu-cover.png)`
+- **Output**: 封面图放在文章最开头，使用 markdown 图片引用：`![封面](../../images/zhihu-cover-vN.png)`（路径取自 `images.md`，终版用真实版本号）
 
 ## 正文配图 (Content Images)
 
 **核心原则**：图片路径来自 `ongoing/<slug>/2-draft/v1/images.md`，不要自行发明路径。优先使用项目真实截图，AI 生成图作为补充。
 
-- **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](../../images/<filename>)`（从 `2-draft/vN/<platform>.md` 的相对路径）
+- **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](../../images/<id>-vN.png)`（从 `2-draft/vN/<platform>.md` 的相对路径，路径取自 `images.md`）
 - Image paths and counts: see `templates/_platform-registry.md`.
 - **Image types for 知乎**:
   1. 对比表格可视化（将 markdown 表格转为视觉图表）
@@ -138,7 +138,7 @@ emoji_density: minimal
 
 Example:
 ```
-![横向对比——三个工具在性能/易用性/生态三个维度的得分对比](images/comparison.png)
+![横向对比——三个工具在性能/易用性/生态三个维度的得分对比](../../images/comparison-vN.png)
 ```
 
 ## Writing Quality
@@ -170,7 +170,7 @@ This template contains only 知乎-specific rules. Apply BOTH files when generat
 - [ ] No 3+ consecutive sentences with same opening structure
 - [ ] Objective, measured tone — no hype words (惊艳/震撼/逆天/神器)
 - [ ] Specific, verifiable claims (not "fastest ever")
-- [ ] 封面图 present: `![封面](images/zhihu-cover.png)` at top of article
+- [ ] 封面图 present: `![封面](../../images/zhihu-cover-vN.png)` at top of article
 - [ ] 正文配图 present (2-3 markdown image refs, paths from images.md)
 - [ ] 「我」主语覆盖：每段至少一句以"我"作主语，无整段以"项目/它"为主语的段落
 - [ ] Writing quality check complete (see `_writing-craft.md`) — no 🔴 paragraphs

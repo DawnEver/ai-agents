@@ -8,7 +8,7 @@ Generate platform-adapted social media content from GitHub repositories. Clone �
 /post-new (pipeline entry) → /post-review (三方会审) → /post-publish → /post-archive
 ```
 
-All commands are skills under `.claude/skills/<name>/`. Each uses progressive disclosure: `SKILL.md` is the map, `0X-*.md` sub-files are the playbook.
+All commands are skills under `.claude/skills/<name>/`. `post-new` and `post-review` use progressive disclosure: `SKILL.md` is the map, `0X-*.md` sub-files are the playbook. `post-archive` and `post-publish` are currently single-file `SKILL.md` (decomposition into map + 0X-playbook is pending).
 
 ## Directory Layout
 
