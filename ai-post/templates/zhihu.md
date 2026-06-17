@@ -15,7 +15,7 @@ emoji_density: minimal
 1. **Opening: Direct Answer (1 paragraph)** — Answer the implied question immediately. Don't bury the lede. "推荐一个开源项目：[name]。它能解决 [problem]，相比现有方案 [key differentiator]。"
 2. **Context: Why This Matters (1-2 paragraphs)** — Personal experience, not industry report. What changed, why existing solutions started failing you, the specific moment you decided to look for an alternative.
 3. **What It Is (1-2 paragraphs)** — What it does, key stats. One paragraph is usually enough. Don't over-explain.
-4. **机制拆解 / 技术深挖 (核心章节之一)** — Dig into *how it actually works*, not just what it does. This is co-core with the comparison for 知乎's technical audience. Pick the 1-3 most interesting mechanisms (architecture, key algorithm, clever design trade-off) and walk through them with concrete evidence — config keys, function/file references, data flow. Cite `repo-exploration.md` / `repo-analysis.md` Standout Details. A reader should finish this section able to explain the design to a colleague. Don't hand-wave with feature lists — show the actual mechanism.
+4. **机制拆解 / 技术深挖 (核心章节之一)** — Dig into *how it actually works*, not just what it does. This is co-core with the comparison for 知乎's technical audience. Pick the 1-3 most interesting mechanisms (architecture, key algorithm, clever design trade-off) and walk through the **logic** so the reader understands *why* it works. Ground your own understanding in `repo-exploration.md` / `repo-analysis.md` Standout Details, but **explain in plain terms — do NOT cite source file paths, function names, or line numbers in the article**; readers want the idea, not a code map. A short, self-contained code snippet (a few lines) is welcome when it makes the mechanism concrete. A reader should finish this section able to explain the design to a colleague. Don't hand-wave with feature lists — show the actual mechanism.
 5. **Comparative Analysis (核心章节之一)** — The other core section for 知乎. Compare with 2-3 alternatives across relevant dimensions. Use a table format:
    | 维度 | 本项目 | 替代A | 替代B |
    |------|--------|-------|-------|
@@ -54,7 +54,8 @@ emoji_density: minimal
 ## Technical Depth
 
 - **Deep**. This is the most technical of all platforms. A dedicated 机制拆解 section (structural formula §4) is co-core with the comparison — not optional flavor.
-- Walk through the actual mechanism: architecture, key algorithm, data flow, config schema. Use concrete file/function/config-key references from `repo-exploration.md`. Show how it works, don't just assert that it does.
+- Walk through the actual mechanism: architecture, key algorithm, data flow, key design trade-offs. Read `repo-exploration.md` to understand it, then explain the **logic** in plain terms — show how it works, don't just assert that it does. Do NOT pepper the article with source file paths, function names, or line numbers; keep it about the idea.
+- Concise code snippets are welcome to illustrate a mechanism, but keep them short and self-contained (focus on analysis, not a tutorial walkthrough of the repo).
 - Include architecture observations, performance characteristics, and design trade-offs.
 - Mention specific versions, benchmarks, and compatibility notes when relevant.
 - Code blocks are fine for illustrating behavior, but the focus is on analysis, not tutorial.
@@ -83,7 +84,7 @@ emoji_density: minimal
 
 ## [Mechanism deep-dive, phrased as curiosity — e.g. "它到底怎么让三个模型互相挑刺的" NOT "技术实现"]
 
-[Walk through the 1-3 most interesting mechanisms with concrete evidence — config keys, file/function references, data flow. The reader should finish able to explain the design to a colleague. This is co-core with the comparison below.]
+[Walk through the 1-3 most interesting mechanisms — explain the logic and data flow in plain terms so the reader understands *why* it works; a short code snippet is fine to make it concrete. Do NOT cite source file paths, function names, or line numbers. The reader should finish able to explain the design to a colleague. This is co-core with the comparison below.]
 
 ## 横向对比
 | 维度 | 本项目 | [Alt A] | [Alt B] |
@@ -159,7 +160,7 @@ This template contains only 知乎-specific rules. Apply BOTH files when generat
 ## Generation Checklist
 
 - [ ] 1500-4000 characters
-- [ ] 机制拆解 section present (REQUIRED) — ≥1 mechanism walked through with concrete file/function/config evidence, not a feature list
+- [ ] 机制拆解 section present (REQUIRED) — ≥1 mechanism explained as logic/data flow (optionally a short code snippet), not a feature list; NO source file paths / function names / line numbers in the article
 - [ ] Comparison table with 2+ real alternatives (REQUIRED)
 - [ ] Table has meaningful dimensions (not just 2 rows)
 - [ ] At least 1-2 limitations or "not suitable for" scenarios acknowledged
