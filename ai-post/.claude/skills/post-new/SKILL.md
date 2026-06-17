@@ -66,6 +66,7 @@ Re-invoking `/post-new <slug>` resumes from the latest non-empty artifact:
 
 - **Market research before analysis**: step 03 → 04.
 - **Never skip user gates** (steps 05, 08, 10) — iterate until explicit approval.
+- **Determine persona before writing** (step 05 Phase 0): set `persona: author|deep-user` in `brief.md` from `style/private/author-identity.md`; ask the user when uncertain. Writers bind narrator identity to it, not just tone.
 - **三方会审 (step 09) is mandatory** — no path to publish without review.
 - **Archive is frozen** — `archived/YYMMDD/<slug>/` never modified except `postmortem.md`.
 - **Fanout is parallel** — step 06 spawns all writers in one message.

@@ -1,7 +1,7 @@
 ---
 platform: twitter
-character_limit: 280 per tweet, 4-6 tweets per thread
-language: bilingual (EN primary, CN secondary)
+character_limit: 280 per tweet (HARD LIMIT — count every tweet, no exceptions), 4-6 tweets per thread
+language: English ONLY (no Chinese)
 emoji_density: moderate
 ---
 
@@ -9,7 +9,7 @@ emoji_density: moderate
 
 ## Platform DNA
 
-Twitter/X is concise, high-density, bilingual content in thread format. Each tweet must stand alone as a valuable unit of information while contributing to a larger narrative. The first tweet determines whether the thread gets read or scrolled past. Information density matters: every word must earn its place. The audience is global — primarily English-speaking developers, with Chinese-speaking tech community as secondary.
+Twitter/X is concise, high-density, **English-only** content in thread format. Each tweet must stand alone as a valuable unit of information while contributing to a larger narrative. The first tweet determines whether the thread gets read or scrolled past. Information density matters: every word must earn its place. The audience is global English-speaking developers. **Do NOT add Chinese lines** — this thread is English only.
 
 ## Structural Formula (Thread)
 
@@ -26,7 +26,7 @@ Twitter/X is concise, high-density, bilingual content in thread format. Each twe
 ## Voice Rules
 
 - **Write as the project's creator**: "I built this because..." not "I found this project that..." — first-person author voice.
-- **Bilingual by default**: English as primary language, with Chinese as parenthetical or summary line. Example: "A build tool that's actually fast. 一个真的很快的构建工具。"
+- **English only**: no Chinese lines, no bilingual summaries. Every tweet is pure English.
 - **Energetic but not hyperbolic**: "Impressive" not "mind-blowing." "Fast" not "blazingly fast."
 - **Direct**: No preamble. No "I'm excited to share." Jump straight to the point.
 - **One idea per tweet**: If you need a comma-separated list of features, put each in its own tweet.
@@ -50,9 +50,9 @@ Twitter/X is concise, high-density, bilingual content in thread format. Each twe
 
 ## Content Constraints
 
-- **Length**: Each tweet MUST stay under 280 characters. Count them.
+- **Length — HARD LIMIT**: Each tweet MUST be ≤280 characters. Count every tweet exactly (spaces, punctuation, emoji each count). If any tweet exceeds 280, rewrite/split it before finalizing — never ship an over-limit tweet. Report the char count per tweet.
 - **Thread length**: 4-6 tweets. Shorter feels incomplete. Longer loses engagement.
-- **Bilingual**: At least a CN summary line in each tweet, or alternate EN/CN tweets.
+- **English only**: no Chinese lines anywhere in the thread.
 - **Links**: Only in the final tweet. Twitter penalizes link-heavy threads.
 - **Hashtags**: 0-2 max. #opensource #github are fine. Don't hashtag-stuff.
 - **No thread marks mid-thread**: Only Tweet 1 has 🧵👇. Don't number tweets "1/6" — it looks automated.
@@ -61,52 +61,31 @@ Twitter/X is concise, high-density, bilingual content in thread format. Each twe
 
 ```
 Tweet 1 (Hook):
-Did you know most build tools spend 80% of time on things other than building? 
-I found an open-source tool that fixes this. 终于有工具解决这个问题了 🧵👇
+Most build tools spend 80% of their time on things other than building.
+I got tired of it and built something that doesn't. 🧵👇
 
 Tweet 2 (Feature):
 ✨ Zero-config startup
-Drop it in any JS project and it just works. No config file. No plugin system to learn. 
-零配置，开箱即用。
+Drop it in any JS project and it just works. No config file. No plugin system to learn.
 
 Tweet 3 (Feature):
 ⚡ Built in Rust
 Cold builds are 10-50x faster than Webpack. HMR under 100ms even on large codebases.
-冷启动比 Webpack 快 10-50 倍。
 
 Tweet 4 (How it works):
-💻 One command:
-`bun run index.ts`
+💻 One command: `bun run index.ts`
 That's it. No node_modules. No tsconfig. TypeScript just runs.
-一行命令，TypeScript 直接运行。
 
 Tweet 5 (Context):
-From the team at @oven_sh. Already at 70k+ stars. 
-The JS tooling space is finally getting competition. 终于有人挑战 JS 工具链的现状了。
+From the team at @oven_sh. Already at 70k+ stars.
+The JS tooling space is finally getting real competition.
 
 Tweet 6 (CTA):
 🔗 github.com/oven-sh/bun
 Star it. Try it. Your build times will thank you. ⭐
 ```
 
-## Bilingual Patterns
-
-Choose one pattern for the thread and stick with it:
-
-**Pattern A (line-by-line)**: English line, Chinese line below it.
-```
-A build tool that actually delivers on speed.
-一个真正快速的构建工具。
-```
-
-**Pattern B (per-tweet)**: Alternate EN and CN tweets.
-```
-Tweet 1: EN
-Tweet 2: CN summary of Tweet 1 content + new info
-```
-
-**Pattern C (EN-only with CN hashtag)**: English tweets, one CN hashtag at end.
-Default to Pattern A — it works best for a bilingual tech audience.
+Every tweet is English only — no Chinese lines.
 
 ## Images
 
@@ -141,10 +120,10 @@ This template contains only Twitter-specific rules. Apply BOTH files when genera
 
 ## Generation Checklist
 
-- [ ] Each tweet under 280 characters (count them exactly)
+- [ ] Each tweet ≤280 characters — count exactly, report per-tweet counts, split any over-limit tweet
 - [ ] Thread: 4-6 tweets total
 - [ ] Tweet 1 has 🧵👇 thread marker
-- [ ] Bilingual: EN primary, CN summary in each tweet
+- [ ] English only — no Chinese lines anywhere
 - [ ] One clear idea per tweet
 - [ ] GitHub link only in final tweet
 - [ ] CTA for engagement (Star / RT / Like) in final tweet

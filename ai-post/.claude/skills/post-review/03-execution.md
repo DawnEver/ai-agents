@@ -16,7 +16,7 @@ Workflow({
     reviewScope: "开头钩子吸引度(1-5分), 逐段AI味(🟢人味/🟡轻微AI/🔴明显AI), 微幽默密度与位置, 最无聊段落, 句子节奏, 图片alt text与主题一致性",
     findingSchema: <身份A finding schema>,
     reviewers: <身份A reviewers>,
-    pickStrategy: "all",
+    pickStrategy: "seed-mod",   // 随机抽 1/3 后端；--full-review 时改 "all" 跑全部 3 个
     dedupKeyFields: ["location", "dimension"],
     idPrefix: "CR-A"
   }
@@ -35,14 +35,14 @@ Workflow({
     reviewScope: "代码块语法与可运行性, 安装步骤准确性, 技术术语正确使用, 架构描述与repo-analysis一致性, 性能数据真实性, 依赖包名版本真实性",
     findingSchema: <身份B finding schema>,
     reviewers: <身份B reviewers>,
-    pickStrategy: "all",
+    pickStrategy: "seed-mod",   // 随机抽 1/3 后端；--full-review 时改 "all" 跑全部 3 个
     dedupKeyFields: ["location", "dimension"],
     idPrefix: "CR-B"
   }
 })
 ```
 
-> 每个 workflow 内 2 个 reviewer agent 并行运行，全部受 JSON Schema 约束。
+> 每个 workflow 内 reviewer agent 并行运行，全部受 JSON Schema 约束。
 
 ## Phase 2：收集结果
 

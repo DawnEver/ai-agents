@@ -40,8 +40,10 @@ Walk `ongoing/<slug>/2-draft/` to find the latest version number (highest N). Fo
 | Setup | `02-reviewers.md` | Reviewer model config arrays + `--full-review` + workflow path resolution |
 | 1-2 | `03-execution.md` | Parallel Workflow calls (1 per identity) + result collection |
 | 3-5 | `04-synthesis.md` | Cross-identity synthesis → per-platform verdict → all-platform overview |
-| 6 | `05-images.md` | Image prompt review (术语一致性, 残留引用, 封面匹配) |
-| 7 | `06-persist.md` | Write fixed articles + `review-verdict.md` to `v<N+1>/` |
+| 6 | `05-images.md` | **MANDATORY** image plan review (术语一致性, 残留引用, 封面标题匹配, 比例) |
+| 7 | `06-persist.md` | Write fixed articles + corrected `images.md` + `review-verdict.md` to `v<N+1>/` |
+
+> Phase 6 is **not optional** — every review round (including single-platform re-reviews) must审 `images.md` against the latest drafts. If no `images.md` exists yet, note that in the verdict; otherwise the verdict MUST contain an `## Image plan review` section. A title/motivation change in the drafts almost always staleizes the cover hook — Phase 6 is what catches it.
 
 ## How to Execute
 
@@ -55,6 +57,7 @@ Phase 1-2 run per platform. Phase 3-4 synthesizes per-platform (per-identity →
 - **`--full-review`** adds Codex as a 3rd reviewer to each identity.
 - **Failed reviewer → `⚠️ 未响应`**, don't block the other identity.
 - **Verdict persists**: every round writes `review-verdict.md` to `v<N+1>/`. Check it to determine review status across sessions.
+- **Image plan review is mandatory (Phase 6)**: every round审 `images.md`; `review-verdict.md` must include an `## Image plan review` section (or note "no images.md yet"). Cover-hook stale after a title/motivation change is the most common miss — always re-check covers against the latest title.
 - **`❌` → manual rewrite needed, then re-review**; **`⚠️` → fix then re-check**; **`✅` → ready for publish**.
 
 ## Invocation

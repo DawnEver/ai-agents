@@ -1,6 +1,7 @@
 ---
 platform: xiaohongshu
 character_limit: 800-1000
+title_limit: 20 字 (HARD — the H1 title must be ≤20 Chinese chars incl. punctuation/emoji; count and trim if over)
 language: zh
 emoji_density: high
 ---
@@ -117,15 +118,19 @@ This is a product spec sheet, not a 小红书 post. It screams AI. Instead, ment
 **核心原则**：图片路径来自 `ongoing/<slug>/2-draft/v1/images.md`，不要自行发明路径。优先使用项目真实截图（GIF、操作截图等），AI 生成图作为补充。
 
 - **Aspect ratio** and **count**: see `templates/_platform-registry.md` for platform conventions.
-- **Format**: 在文章正文中直接使用 markdown 图片引用：`![中文说明](../../images/<filename>)`（从 `2-draft/vN/<platform>.md` 的相对路径）
+- **图文分离（小红书特有）**：小红书正文**不内嵌图片**，图片单独上传。所以正文是纯文字（≤1000 字），配图在文末**单独成一个 `## 配图（单独上传）` 清单**列出。
+- **终版必须给真实路径引用，不能只留描述**：生成期可用 `[IMAGE: 描述]` 占位标记位置；但**最终版**里这些必须替换成真实文件引用 `![中文说明](../../images/<id>-vN.png)`，路径取自 `images.md`。不允许终版只有 `[IMAGE: ...]` 文字描述。
+- 配图清单按出现顺序排列，每条：序号 + 用途（封面/配图）+ `![说明](../../images/<id>-vN.png)`，方便用户照单逐张上传。
 - **Image types for 小红书**:
   1. 项目主界面 / 操作截图（来自项目真实产出，如有）
   2. 使用前后对比，展示痛点被解决
   3. 核心功能特写或结果 demo
 
-Example:
+终版配图清单示例：
 ```
-![项目主界面——深色IDE风格，代码高亮，左侧文件树右侧编辑器](images/product-shot.png)
+## 配图（单独上传，正文不内嵌）
+1. 封面（3:4）：![办公室改一半，回家接着改](../../images/xhs-cover-v2.png)
+2. 配图（3:4）：![原生记忆锁本地 vs rem 随仓库走](../../images/native-vs-rem-3x4-v1.png)
 ```
 
 ## Writing Quality
@@ -147,6 +152,7 @@ This template contains only 小红书-specific rules. Apply BOTH files when gene
 ## Generation Checklist
 
 Before finalizing, verify ALL of these:
+- [ ] 标题 ≤20 字（H1；含标点/emoji 一起数。超了必须精简——小红书标题硬上限 20 字）
 - [ ] 800-1000 characters (under 600 = too thin, over 1000 = cut)
 - [ ] 8-15 emojis total, every bullet starts with one
 - [ ] First line is a strong hook (pain point or surprising result)

@@ -32,11 +32,23 @@ AVOID: forced jokes, emoji stacking, trying-too-hard humor.
 
 ## 「我」as Subject — Identity Consistency
 
-全文以"我"的视角贯穿。每一段至少有一句以"我"作主语。不是介绍项目——是我在讲我的经历和发现。Write as the project's author/maintainer, not a third-party reviewer.
+全文以"我"的视角贯穿。每一段至少有一句以"我"作主语。不是介绍项目——是我在讲我的经历和发现。
 
 - ❌ "该项目提供了X" / "工具支持Y" / "用户可以Z" / "本文介绍" / "作者" / "笔者"
 - ✅ "我做了X" / "我遇到过这个问题" / "我最开始以为Y，结果Z" / "我在实际项目里用下来..."
 - 凡是一整段主语都是"项目/它/该工具/用户"，必须改写成"我"的视角
+
+### 身份绑定（不只是腔调 — Identity binding, not just register）
+
+"第一视角"有两层：**腔调**（说人话、用"我"）和**身份**（"我"到底是谁）。光做到腔调还会漏，
+因为研究笔记天然以"外部审计第三方仓库"的口吻写（"clever pattern"、"commit xxx"、"作者的设计"），
+写手一引用代码级细节，第三方"作者"就会回流。必须由 brief 里的 `persona` 字段显式绑定身份：
+
+- **persona: author**（我=repo 设计者本人）——这是默认追求的强身份：
+  - ❌ 禁止把 repo 的人当第三人称："作者/开发者/设计者（他）想明白了"、"**能看出作者真踩过坑**"、"**翻代码才看懂**"、"读源码发现"、"看得出…的用心"——这些把**自己的设计**当成**外部发现**，与"我就是作者"直接矛盾。
+  - ✅ 代码级细节 = 我的设计决策："我当初这么设计就是因为…"、"我在 Windows 上踩过这个坑，所以写成原子操作 + 重试"。commit hash / 文件路径照引，但框成"我写的"。
+- **persona: deep-user**（我=深度使用者，repo 是别人的）——可提作者，但**禁止赞赏式第三方归因**（"能看出作者真踩过坑"），代码细节框成"我用下来发现"。
+- 写手开写前必读 brief 的 `persona` 字段；缺失时按 `style/private/author-identity.md` 规则判定或回退询问。
 
 ---
 
@@ -120,6 +132,7 @@ Before finalizing, read every sentence aloud. Grade each paragraph: 🟢 human /
 | AI sentence patterns | "不是A而是B" 重复出现、"不仅…还…" 堆砌、三段对称结构过于工整 |
 | Vague quantifiers | "大幅提升" → specific number or "我没有测试，但官方声称..." |
 | Formal written style | "通过XX方式进行XX" → 直接说怎么做、"可能会" → "我觉得" |
+| Third-party-author leak (persona: author) | 能看出作者…、看得出作者…、作者是真的…、翻代码才看懂、读源码才发现、看得出…的用心、开发者/设计者（他）想明白了 |
 | Banned section headers | 项目概览、问题背景、上手体验、适用场景与局限、总结 |
 
 ### Replacement Table

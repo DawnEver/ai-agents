@@ -13,7 +13,7 @@ All platform writer agents follow this base workflow. Platform-specific agents a
 Read these files in order:
 - `ongoing/<slug>/1-research/repo-analysis.md` — repo data, features, architecture
 - `ongoing/<slug>/1-research/market-research.md` — competitive landscape, content gaps
-- `ongoing/<slug>/1-research/brief.md` — selected title from ## Selected Titles (use as H1 heading)
+- `ongoing/<slug>/1-research/brief.md` — selected title from ## Selected Titles (use as H1 heading) AND `persona:` from ## Status (narrator identity — author | deep-user)
 - `style/profile.md` if exists — auto-accumulated personal style
 
 ### 2. Load Rules
@@ -25,6 +25,7 @@ Read these files in order:
 - Write the selected title as H1 heading (`# <title>`) on the first line
 - Follow the template's structural formula
 - Apply ALL rules from _writing-craft.md: strong opening, microhumor, connectives, sentence rhythm, 「我」as subject, dopamine density
+- **Honor brief `persona`** (see _writing-craft.md 身份绑定). If `author`: 「我」IS the repo's designer — code-level details (commit hashes, file paths, design tricks) are MY decisions, never framed as external findings (no「能看出作者…」「翻代码才看懂」)
 - Mark potential image spots with `[IMAGE: brief description]` placeholders — do NOT use markdown image refs
 
 ### 4. Self-Check

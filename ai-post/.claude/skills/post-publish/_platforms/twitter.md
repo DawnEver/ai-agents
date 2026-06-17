@@ -20,8 +20,9 @@ Twitter threads must be built tweet-by-tweet:
 2. Compose Tweet 1, paste content, attach image if any
 3. Click "+" to add each subsequent tweet
 
-## Character Count
-Each tweet verified against 280-char limit. Flag any over limit.
+## Character Count — BLOCKING
+- Each tweet ≤280. **Verify with the script, not by hand**: `python .claude/skills/post-publish/char_count.py <article.md> twitter` (exit 1 = some tweet over). Split/trim any over-limit tweet.
+- Note: emoji count as 2 on Twitter — leave a few chars of margin under 280.
 
 ## Image
 Attach to Tweet 1 (the hook visual). `twitter-cover.png` if available (16:9 — see `templates/_platform-registry.md`).

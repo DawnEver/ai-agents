@@ -38,13 +38,15 @@ If the user says "skip review" or "直接发布" → refuse: "三方会审是强
 
 See `post-review/SKILL.md` for the full review design — two identities (A: 读者代理人, B: 技术核查员), each independently run by 2 models (Claude Sonnet + DeepSeek; 3 with --full-review adding Codex). Twitter/X skips identity B (no code to verify).
 
-## Image Plan Review
+## Image Plan Review — MANDATORY, not optional
 
-Also reviews `images.md`:
-- Do the images match the article content?
+Every review round MUST also审 `images.md` (post-review Phase 6). Do not finish a review without it. The `review-verdict.md` must contain an `## Image plan review` section (or explicitly note "no images.md yet").
+
+- Do the images match the article content? (orphan check — every manifest image still maps to an `[IMAGE]` marker in the latest drafts)
 - Are any key images missing?
 - Does each image's AI prompt accurately describe the requirement?
-- Does the cover image hook text match each platform's style?
+- **Cover hook freshness**: does each cover's hook text match the LATEST title? A title or motivation change between versions almost always staleizes the cover prompt — this is the most common miss. Update the stale cover text and save the corrected `images.md` to `v<N+1>/`.
+- Aspect ratios per `templates/_platform-registry.md`.
 
 ## After Review
 

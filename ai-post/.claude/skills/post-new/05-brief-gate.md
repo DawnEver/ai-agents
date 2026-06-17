@@ -10,7 +10,22 @@ This is an **iterative discussion gate**. The user may question angles, ask for 
 → 用户可以在这里提问、质疑、调整任意多轮
 ```
 
-This gate has two phases: angle confirmation, then title selection. **Both phases write to `ongoing/<slug>/1-research/brief.md`** so the session can resume correctly after interruption.
+This gate has three phases: **Phase 0 身份确认 (persona)**, then angle confirmation, then title selection. **All phases write to `ongoing/<slug>/1-research/brief.md`** so the session can resume correctly after interruption.
+
+## Phase 0: Persona Determination (narrator identity)
+
+Before angles, decide who「我」is — this is **identity binding**, not tone. Get it wrong and writers leak a third-party "作者" (e.g.「能看出作者真踩过坑」「翻代码才看懂」) no matter how much the prompt says "第一视角".
+
+1. Read `style/private/author-identity.md` (gitignored personal-info file).
+2. Get the target repo owner / primary git author (`git -C repos/<slug> remote get-url origin`, or gh metadata).
+3. Decide:
+   - Owner matches an identity in `author-identity.md` → **persona: author** (我 = repo 的设计者本人).
+   - Clearly the user's repo but owner not listed → **ask the user**, then add the alias to `author-identity.md`.
+   - Repo is someone else's and user didn't write it → **persona: deep-user**.
+   - **Uncertain → ask the user. Never guess.**
+4. Write `persona: author` (or `deep-user`) into `brief.md`. Writers MUST honor it (see `_writing-craft.md` 身份绑定).
+
+Personal info beyond the persona flag stays in `style/private/` (gitignored) — never copy it into drafts or committed research.
 
 ## Persistence File: `brief.md`
 
@@ -31,6 +46,7 @@ This gate has two phases: angle confirmation, then title selection. **Both phase
 - **知乎**: <title>
 
 ## Status
+persona: author                ← set in Phase 0 (author | deep-user); writers MUST honor
 angles_confirmed: true         ← set after Phase 1 approved
 titles_confirmed: true         ← set after Phase 2 approved
 titles_reviewed: true          ← set after step 08 user approves drafts (may include title changes)
@@ -81,6 +97,7 @@ After angles are confirmed, generate titles for each Chinese platform being gene
 **Title generation rules:**
 - Author is the subject, tool is the instrument. ✅ "我用它3分钟搞定" not ❌ "被它3分钟搞定"
 - No banned opening formulas (see templates/ for per-platform banned-phrase lists and banned section headers)
+- **小红书标题 ≤20 字硬上限**（含标点/emoji）。生成 RA/RB 选项时每条都数一遍，超 20 字的直接不要。
 
 **Round A — Hook titles (3 per platform)**. Use varied elements across the 3 options:
 - 💰 Specific numbers (time saved, speed multiplier, star count)
@@ -99,31 +116,34 @@ Present all platforms' titles at once:
 ```
 📝 标题选项
 
-**小红书**：
+**小红书 (R)**：
 A轮 (钩子型):
-  A1. <title>
-  A2. <title>
-  A3. <title>
+  RA1. <title>
+  RA2. <title>
+  RA3. <title>
 B轮 (自然型):
-  B1. <title>
-  B2. <title>
-  B3. <title>
+  RB1. <title>
+  RB2. <title>
+  RB3. <title>
 
-**微信公众号**：
+**微信公众号 (W)**：
 A轮 (钩子型):
-  A1. <title>
-  ...
-B轮 (自然型):
-  ...
-
-**知乎**：
-A轮 (钩子型):
+  WA1. <title>
   ...
 B轮 (自然型):
   ...
 
-每个平台选一个（回复如"小红书 A1，微信 B2，知乎 A3"），或告诉我要调整哪个平台的方向。
+**知乎 (Z)**：
+A轮 (钩子型):
+  ZA1. <title>
+  ...
+B轮 (自然型):
+  ...
+
+每个平台选一个（回复如"RA1, WB2, ZA3"），或告诉我要调整哪个平台的方向。
 ```
+
+**Platform letter labels**: 小红书=R, 微信=W, 知乎=Z. Prefix every option ID with the platform letter (`RA1`, `WB2`, `ZA3`) so the user can select across platforms in one compact reply without naming each platform.
 
 **This is iterative** — the user may ask for different title styles, request alternatives for a specific platform, or go back to adjust angles. Loop until satisfied.
 

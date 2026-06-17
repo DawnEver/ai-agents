@@ -40,7 +40,7 @@ See `templates/_writing-craft.md` for the full banned phrases list, replacement 
 ### 口语化 + 个人态度
 - [ ] "通过XX方式进行XX" → 直接说怎么做
 - [ ] 中立客观处 → 加明确观点
-- [ ] 「我」主语覆盖：每段至少一句以"我"作主语 (see `_writing-craft.md` Identity Consistency)
+- [ ] 「我」视角 — 腔调 + 身份 (see `_writing-craft.md` Identity Consistency)：每段至少一句以"我"作主语；核对 brief `persona`，若 author 则无任何「作者/开发者（他）」第三人称、无「能看出作者…」「翻代码才看懂」等把自身设计当外部发现的措辞
 
 ### AI味逐段检测
 | 段落 | AI味 | 问题 | 修改 |
