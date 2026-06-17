@@ -11,6 +11,15 @@ emoji_density: high
 
 小红书 is short-form, high visual density, emotion-driven content. Readers scroll fast through a feed and decide in 1-2 seconds whether to stop. Your article must hook instantly and deliver value in a skimmable format. The tone is "a friend sharing a cool discovery" — not a teacher, not a salesperson.
 
+## 正文格式硬规则（纯文本 + 图文分离）⚠️ 写作时就要遵守
+
+小红书的正文框是**纯文本**，不渲染 markdown，且发布时**文字与图片分开上传**。因此从第一稿起就必须：
+
+1. **正文 = 纯文本**。正文里**禁止任何 markdown 语法**：不写图片 `![]()`、不写 `#` 标题、不写 `**加粗**`/`*斜体*`、不写 `` ` `` 行内代码或代码块、不写 `|表格|`、不写 `>` 引用、不写 `- `/`1.` 列表符号。换行、空行、emoji、中文标点是允许的（emoji 不是 markdown）。要"分点"就用 emoji 起头的自然短句，而不是 markdown 列表。
+2. **图文分离**。正文里**不内嵌任何图片**（封面图也不放正文顶部）。所有图片——封面 + 正文配图——统一放在文末**单独的 `## 配图（单独上传，正文不内嵌）` 清单**里，按上传顺序逐张列出，方便用户照单上传。正文里需要"这里该配图"的提示，只在生成期用纯文字占位（见 正文配图 一节），终版清单才给真实路径。
+
+> 这两条凌驾于下面的结构公式与示例之上：任何示例若出现正文内嵌图片，以本节为准。
+
 ## Structural Formula
 
 1. **Hook line (1 sentence)** — Lead with a strong emoji + pain point or surprising claim. Make the reader think "I need this."
@@ -48,31 +57,38 @@ emoji_density: high
 ## Content Constraints
 
 - **Length**: ~800-1000 characters total
+- **正文纯文本，零 markdown（小红书硬性要求）**: 小红书正文框是纯文本编辑器，markdown 语法会原样显示成乱码。正文里**禁止**任何 markdown：不要 `**加粗**`、不要 `` `行内代码` ``、不要 `## 标题`、不要 `[文字](链接)`、不要 ``` 代码块、不要 `-`/`1.` 列表符号、不要内嵌 `![](...)` 图片。只允许：纯文字、emoji、换行/空行。强调用词语本身或 emoji，不要用加粗。技术名词（DeepSeek、sharp-review、≥2）直接写，不加反引号。
+- **图文分离（写作时就要做到）**: 正文**完全不含图片**。所有配图（含封面）统一放到文末 `## 配图（单独上传，正文不内嵌）` 清单里。写正文时心里就把图和字分开——正文是能一次性复制进小红书的纯文字，图片照清单逐张手动上传。
 - **No external links in body** — 小红书 may hide posts with links. Use "评论区/主页自取" pattern.
-- **Hashtags**: Suggest 3-5 relevant hashtags at the end (e.g., #开源工具 #程序员必备 #效率提升)
-- **Image placeholders**: Include bracketed descriptions like `[配图：项目主页截图]` where visuals would go
+- **Hashtags**: Suggest 3-5 relevant hashtags at the end (e.g., #开源工具 #程序员必备 #效率提升). Hashtags 是纯文本 `#词`，不是 markdown 标题。
 
 ## Example Structure
 
+First line of the file is the H1 title (`# <title>`, pipeline convention — NOT part of the copy-paste body). Everything after it is plain-text body: no markdown, no inline images.
+
 ```
+# <小红书标题，≤20 字>
+
 🔥 [Hook: pain point or surprising result — one sentence that makes the reader stop scrolling]
 
 [What it is + what it does — 1-2 sentences, plain language, no hype]
 
-![配图](images/xxx.png)
-
 💡 [Why you built it / why it matters — 1-2 sentences. Personal motivation, not market analysis.]
 
 ✨ [Features woven into natural paragraphs, NOT a catalog. Each paragraph covers 1-2 features in a conversational way. Lead with what's surprising or useful, not a feature name.]
-
-![配图](images/xxx.png)
 
 ⭐ [One or two standout details — the stuff you only learn from actually building it. Technical but told as a story.]
 
 👇 [CTA — casual, one line. How to find it.]
 
 #hashtag1 #hashtag2 #hashtag3
+
+## 配图（单独上传，正文不内嵌）
+1. 封面（3:4）：![钩子文字](../../images/xhs-cover-v1.png)
+2. 配图（3:4）：![说明](../../images/<id>-v1.png)
 ```
+
+Note: the body above is pure text + emoji + line breaks only — no `**`, no `` ` ``, no inline `![]()`. Images live ONLY in the trailing 配图 list.
 
 **Critical anti-pattern** — Do NOT write this:
 ```
@@ -110,7 +126,7 @@ This is a product spec sheet, not a 小红书 post. It screams AI. Instead, ment
   - 文字区域占封面 30-50%，不要太小（feed 中是缩略图）
   - 避免白色背景（feed 中不突出），优先深色或高饱和背景
   - 风格：现代科技产品图 / 开发者工具深色主题 / 扁平插画
-- **Output**: 封面图放在文章最开头，使用 markdown 图片引用 `![封面：钩子文字](images/xhs-cover.png)`。封面图不计入正文配图数量。
+- **Output**: 封面图**不放正文顶部**（图文分离）。它作为文末 `## 配图（单独上传，正文不内嵌）` 清单的第 1 条列出：`1. 封面（3:4）：![钩子文字](../../images/xhs-cover-vN.png)`。封面图不计入正文配图数量。
 
 ## 正文配图 (Content Images)
 
@@ -157,11 +173,11 @@ Before finalizing, verify ALL of these:
 - [ ] First line is a strong hook (pain point or surprising result)
 - [ ] At least 1 microhumor moment
 - [ ] CTA present (comment/homepage pattern)
-- [ ] No markdown code fences (```)
+- [ ] 正文零 markdown：无 `**加粗**`、无 `` `行内代码` ``、无 `##` 标题、无 `[](链接)`、无 ``` 代码块、无 `-`/`1.` 列表符、无内嵌 `![]()` 图片（只有纯文字+emoji+换行）
+- [ ] 图文分离：正文不含任何图片；所有配图（含封面）只在文末 `## 配图（单独上传，正文不内嵌）` 清单里
 - [ ] No external URLs in body
-- [ ] 3-5 hashtags suggested
-- [ ] 封面图 present: `![封面：...](images/xhs-cover.png)` at top of article
-- [ ] 正文配图 present (2-3 markdown image refs, paths from images.md)
+- [ ] 3-5 hashtags suggested（纯文本 `#词`）
+- [ ] 配图清单 present at end: 封面（3:4）+ 1-2 配图，每条 `![说明](../../images/<id>-vN.png)`，路径来自 images.md
 - [ ] 「我」主语覆盖：每段至少一句以"我"作主语，无整段以"项目/工具/它"为主语的段落
 - [ ] Writing quality check complete (see `_writing-craft.md`) — no 🔴 paragraphs
 - [ ] Sounds like a friend sharing, not a press release
