@@ -57,8 +57,10 @@ Re-invoking `/post-new <slug>` resumes from the latest non-empty artifact:
 | `ongoing/<slug>/1-research/repo-analysis.md` (no brief.md) | 05 Phase 1 |
 | `ongoing/<slug>/1-research/market-research.md` | 04 |
 | `ongoing/<slug>/1-research/repo-exploration.md` | 03 |
-| `repos/<slug>/` exists | 02 |
+| `repos/<repo-slug>/` exists (clone cache; shared across articles) | 02 |
 | nothing | 01 |
+
+> Resume matches on `<slug>` (article-slug, possibly `<repo-slug>__<topic>`). The clone-cache row is the only one keyed on `<repo-slug>` — a cached clone can serve a brand-new article.
 
 `--restart-from <N>` jumps to any step. `--reclone` forces step 01 re-run.
 
@@ -74,4 +76,11 @@ Re-invoking `/post-new <slug>` resumes from the latest non-empty artifact:
 
 ## Slug
 
-Derive `<slug>` from the GitHub URL: `owner/repo` → `owner--repo` (lowercased, `/` → `--`). If user passes an existing slug, use the resume table above.
+Two distinct keys — the clone cache is shared across articles, the working dir is per-article:
+
+- **`<repo-slug>`** = `owner--repo` (lowercased, `/` → `--`). Keys the clone cache `repos/<repo-slug>/`. One clone serves every article written from that repo.
+- **`<slug>`** (article-slug) keys the working dir under `ongoing/` and `archived/`. Defaults to `<repo-slug>` for the first/only article from a repo. For **additional articles from the same repo**, append a short topic suffix: `<repo-slug>__<topic>` (e.g. `dawneever--cc-market__sharp-review`). Lowercase, hyphenate the topic.
+
+When to add a suffix: if `ongoing/<repo-slug>/` or any `archived/*/<repo-slug>/` already exists for a *different* topic, the new request is a **separate article** — derive `<slug> = <repo-slug>__<topic>` (topic from the user's angle) so it never clobbers the existing one. Confirm the chosen slug with the user at the step 05 brief gate.
+
+If the user passes an existing `<slug>` (with or without suffix) directly, use the resume table above.

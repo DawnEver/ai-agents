@@ -26,8 +26,10 @@ ongoing/<slug>/     — in-progress (gitignored)
   images/           — generated images
 archived/YYMMDD/<slug>/ — published articles, frozen snapshot (gitignored)
 style/profile.md    — auto-accumulated personal style
-repos/              — cached clones (gitignored)
+repos/<repo-slug>/  — cached clones, keyed by repo, shared across articles (gitignored)
 ```
+
+> **Slug**: `<repo-slug>` = `owner--repo` keys the clone cache. `<slug>` (article-slug) keys `ongoing/`+`archived/` — defaults to `<repo-slug>`, but a second article from the same repo uses `<repo-slug>__<topic>` so the repo can yield multiple distinct articles without clobbering. See `post-new/SKILL.md` ## Slug.
 
 ## Platform Agents
 

@@ -17,7 +17,7 @@ This gate has three phases: **Phase 0 身份确认 (persona)**, then angle confi
 Before angles, decide who「我」is — this is **identity binding**, not tone. Get it wrong and writers leak a third-party "作者" (e.g.「能看出作者真踩过坑」「翻代码才看懂」) no matter how much the prompt says "第一视角".
 
 1. Read `style/private/author-identity.md` (gitignored personal-info file).
-2. Get the target repo owner / primary git author (`git -C repos/<slug> remote get-url origin`, or gh metadata).
+2. Get the target repo owner / primary git author (`git -C repos/<repo-slug> remote get-url origin`, or gh metadata).
 3. Decide:
    - Owner matches an identity in `author-identity.md` → **persona: author** (我 = repo 的设计者本人).
    - Clearly the user's repo but owner not listed → **ask the user**, then add the alias to `author-identity.md`.

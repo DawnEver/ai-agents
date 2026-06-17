@@ -140,11 +140,21 @@ If `style/profile.md` exists:
 
 ### Step 7: Clean Up Cached Repo
 
+The clone cache is keyed on `<repo-slug>` (= `<slug>` with any `__<topic>` suffix stripped) and is **shared across every article from that repo**. Only delete it when no other article still needs it.
+
 ```bash
-rm -rf repos/<slug>
+repo_slug="${slug%%__*}"   # strip the __<topic> suffix, if any
+# Are there OTHER ongoing or archived articles from the same repo?
+others=$( (ls -d ongoing/"$repo_slug"* archived/*/"$repo_slug"* 2>/dev/null) | grep -v "/$slug\$\|/$slug/" )
+if [ -z "$others" ]; then
+  rm -rf "repos/$repo_slug"
+  echo "🗑️ 已清理：repos/$repo_slug"
+else
+  echo "↩️ 保留 repos/$repo_slug（仍有其他文章使用同一仓库克隆）"
+fi
 ```
 
-The cached clone is no longer needed. The frozen archive at `archived/YYMMDD/<slug>/` is never deleted.
+The frozen archive at `archived/YYMMDD/<slug>/` is never deleted.
 
 ### Step 8: Offer Postmortem (Optional)
 
@@ -174,7 +184,7 @@ If yes, create `archived/YYMMDD/<slug>/postmortem.md`:
   - 结尾: <added or "已存在，跳过">
   - 语气标记: <N added, M skipped>
 
-🗑️ 已清理：repos/<slug>
+<clone-cleanup line from Step 7: 🗑️ 已清理 repos/<repo-slug>  OR  ↩️ 保留 repos/<repo-slug>>
 
 📊 Style profile — <N> articles accumulated.
 ```

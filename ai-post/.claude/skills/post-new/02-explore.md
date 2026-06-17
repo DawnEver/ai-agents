@@ -3,7 +3,7 @@
 Explore the cloned repo and write structured exploration notes.
 
 ## Inputs
-- `repos/<slug>/` — cloned repo from step 01
+- `repos/<repo-slug>/` — cloned repo from step 01
 
 ## Output
 - `ongoing/<slug>/1-research/repo-exploration.md` — organized exploration findings
@@ -13,7 +13,7 @@ Explore the cloned repo and write structured exploration notes.
 ### 1. Project overview
 
 ```bash
-ls -la repos/<slug>/
+ls -la repos/<repo-slug>/
 ```
 Read these if they exist: `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md`, `LICENSE`.
 
@@ -28,7 +28,7 @@ Read the main entry point, core library API, example/demo code, and key test fil
 ### 4. Recent activity
 
 ```bash
-cd repos/<slug> && git log --oneline -20
+cd repos/<repo-slug> && git log --oneline -20
 ```
 
 ### 5. Write exploration notes

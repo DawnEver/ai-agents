@@ -7,7 +7,12 @@ Extract `owner/repo` from the URL. Supported formats:
 - `https://github.com/owner/repo.git`
 - `owner/repo`
 
-Derive the slug: lowercased, `--` replacing `/` (e.g., `facebook--react`).
+Derive the **`<repo-slug>`**: lowercased, `--` replacing `/` (e.g., `facebook--react`). This keys the shared clone cache `repos/<repo-slug>/`.
+
+Derive the **`<slug>`** (article-slug, keys the working dir):
+- Default `<slug> = <repo-slug>`.
+- If `ongoing/<repo-slug>/` or any `archived/*/<repo-slug>/` already exists for a **different topic**, this is a separate article from the same repo → set `<slug> = <repo-slug>__<topic>` (short hyphenated topic from the user's requested angle). See SKILL.md ## Slug. Surface the chosen slug to the user.
+
 If the URL is invalid, tell the user and stop.
 
 Create the working directory:
@@ -23,11 +28,11 @@ Determine target platforms:
 
 ```bash
 # If NOT exists:
-git clone --depth 50 --single-branch https://github.com/owner/repo.git repos/<slug>
+git clone --depth 50 --single-branch https://github.com/owner/repo.git repos/<repo-slug>
 # If clone FAILS: report the error clearly and stop. Common causes: private repo, renamed, network.
 
 # If EXISTS:
-cd repos/<slug> && git pull --depth 50 origin $(git branch --show-current) 2>&1
+cd repos/<repo-slug> && git pull --depth 50 origin $(git branch --show-current) 2>&1
 # If pull FAILS (conflicts, detached HEAD): warn user, proceed with existing copy.
 ```
 
