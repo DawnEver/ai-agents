@@ -14,7 +14,7 @@ allowed-tools:
 
 # /post-review — 三方会审
 
-Two reviewer identities, each independently run by 2 models (3 with `--full-review`) via sharp-review's generalized workflow engine. The engine handles parallel fanout, JSON Schema enforcement, dedup merge, and confidence tagging. post-review handles identity-specific configuration and pipeline integration.
+Two reviewer identities, each independently run by 2 models by default (3 with `--full-review`) via sharp-review's generalized workflow engine. The engine handles parallel fanout, JSON Schema enforcement, dedup merge, and confidence tagging. post-review handles identity-specific configuration and pipeline integration.
 
 ```
 身份A 读者代理人:  [Claude Sonnet] [DeepSeek V4 Pro]  → sharp-review workflow → merged findings
@@ -38,10 +38,10 @@ Walk `ongoing/<slug>/2-draft/` to find the latest version number (highest N). Fo
 |-------|------|-------------|
 | Setup | `01-identities.md` | 审稿身份 A/B prompts + finding JSON schemas + AI味 grades |
 | Setup | `02-reviewers.md` | Reviewer model config arrays + `--full-review` + workflow path resolution |
-| 1-2 | `03-execution.md` | Parallel Workflow calls (1 per identity) + result collection |
-| 3-5 | `04-synthesis.md` | Cross-identity synthesis → per-platform verdict → all-platform overview |
-| 6 | `05-images.md` | **MANDATORY** image plan review (术语一致性, 残留引用, 封面标题匹配, 比例) |
-| 7 | `06-persist.md` | Write fixed articles + corrected `images.md` + `review-verdict.md` to `v<N+1>/` |
+| Phase 1-2 | `03-execution.md` | Parallel Workflow calls (1 per identity) + result collection |
+| Phase 3-5 | `04-synthesis.md` | 分身份合议 (P3) → 综合裁决 (P4) → 全平台总览 (P5) |
+| Phase 6 | `05-images.md` | **MANDATORY** image plan review (术语一致性, 残留引用, 封面标题匹配, 比例) |
+| Phase 7 | `06-persist.md` | Write fixed articles + corrected `images.md` + `review-verdict.md` to `v<N+1>/` |
 
 > Phase 6 is **not optional** — every review round (including single-platform re-reviews) must审 `images.md` against the latest drafts. If no `images.md` exists yet, note that in the verdict; otherwise the verdict MUST contain an `## Image plan review` section. A title/motivation change in the drafts almost always staleizes the cover hook — Phase 6 is what catches it.
 
@@ -49,7 +49,7 @@ Walk `ongoing/<slug>/2-draft/` to find the latest version number (highest N). Fo
 
 Run phases in order. **At the start of each phase, Read the corresponding sub-file** and follow its instructions. This SKILL.md is just the map.
 
-Phase 1-2 run per platform. Phase 3-4 synthesizes per-platform (per-identity → cross-identity verdict). Phase 5 runs once for the all-platform overview.
+Phase 1-2 run per platform. Phase 3-4 synthesize per-platform (per-identity 合议 → cross-identity verdict). Phase 5 runs once for the all-platform overview.
 
 ## Hard Rules
 

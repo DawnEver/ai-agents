@@ -11,7 +11,16 @@ allowed-tools:
 
 # /post-archive — Archive & Style Accumulation
 
-Archive a completed article slug. Moves the entire `ongoing/<slug>/` to a frozen archive at `archived/YYMMDD/<slug>/`, extracts style fingerprints, and updates `style/profile.md`. No editing — the article text is final.
+Archive a completed article slug. Distills `ongoing/<slug>/` into a frozen archive at `archived/YYMMDD/<slug>/` — research notes, the assembled final article per platform, the images those finals reference, and the latest review verdict. The raw `2-draft/vN/` version chain is collapsed (the final assembled output is kept, intermediate revisions are dropped). Then extracts style fingerprints and updates `style/profile.md`. No editing — the article text is final.
+
+> **Archive contract** (what survives — Step 3 and the actual archived contents must match this exactly):
+> - `1-research/` — copied verbatim
+> - `<platform>.md` (one per platform) — the assembled final, version chain collapsed
+> - `images.md` — the assembled final
+> - `images/` — only the `-v<N>` files referenced by the final articles
+> - `review-verdict.md` — the latest `2-draft/vN/review-verdict.md` (audit record of the passing 三方会审)
+> - exported `.docx` (if produced by /post-publish) — kept alongside the platform finals
+> - NOT preserved: the raw `2-draft/vN/` chain, draft-only scratch files
 
 ## Workflow
 
@@ -51,7 +60,7 @@ Present a summary of what will be archived:
 
 ### Step 3: Assemble Final & Move to Archive
 
-First, assemble the final version set by walking the version chain for each platform and images.md. Then create a clean archive with only the final output:
+First, assemble the final version set by walking the version chain for each platform and images.md. Then create the curated archive per the **Archive contract** above:
 
 ```
 archived/YYMMDD/<slug>/
@@ -61,10 +70,12 @@ archived/YYMMDD/<slug>/
   zhihu.md             ← final assembled version
   twitter.md           ← final assembled version
   images.md            ← final assembled version
-  images/              ← preserved from ongoing (generated image files)
+  images/              ← only the -v<N> image files referenced by the finals
+  review-verdict.md    ← latest 2-draft/vN/review-verdict.md (audit record)
+  <slug>.docx          ← exported Word file, if /post-publish produced one
 ```
 
-Archive structure is flat with `1-research/` for reference and the final articles at root level. The raw `2-draft/` chain is NOT preserved — only the assembled final output matters.
+Archive structure is flat: `1-research/` plus the final articles at root level, with the review verdict and any exported `.docx` kept as audit/output artifacts. The raw `2-draft/vN/` revision chain is NOT preserved — only the assembled final output (plus verdict and docx) survives.
 
 ```bash
 mkdir -p "archived/$(date +%y%m%d)/<slug>/1-research" "archived/$(date +%y%m%d)/<slug>/images"
@@ -75,7 +86,11 @@ cp "<assembled final>" "archived/$(date +%y%m%d)/<slug>/<platform>.md"
 # Copy only images referenced by final articles (parse src from all final platform files)
 # Do NOT copy all of images/ — only the specific -v<N> files actually used
 cp "<only referenced images>" "archived/$(date +%y%m%d)/<slug>/images/"
-# Clean up ongoing
+# Copy the latest review verdict (walk back the version chain to find it)
+cp "<latest review-verdict.md>" "archived/$(date +%y%m%d)/<slug>/review-verdict.md"
+# Copy the exported Word file if /post-publish produced one
+[ -f "ongoing/<slug>/<slug>.docx" ] && cp "ongoing/<slug>/<slug>.docx" "archived/$(date +%y%m%d)/<slug>/"
+# Clean up ongoing (the raw 2-draft chain is intentionally dropped here)
 rm -rf "ongoing/<slug>"
 ```
 

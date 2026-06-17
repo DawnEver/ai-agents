@@ -1,7 +1,7 @@
 # 知乎 Publish Rules
 
 ## Publish URL
-https://zhuanlan.zhihu.com/write
+See `templates/_platform-registry.md` (## Publish URLs).
 
 ## Export
 Run `python .claude/skills/post-publish/export_article.py <slug> zhihu` to generate `ongoing/<slug>/<title>.docx`. Handles markdown tables (renders as Word table with blue header row).
@@ -10,7 +10,7 @@ Run `python .claude/skills/post-publish/export_article.py <slug> zhihu` to gener
 Full markdown preserved. Comparison tables kept as markdown table syntax (知乎 editor renders markdown tables). Image references become `[此处插入图片]`.
 
 ## Cover Image
-- File: `zhihu-cover.png` (16:9 — see `templates/_platform-registry.md`)
+- File: `zhihu-cover.png` (aspect ratio — see `templates/_platform-registry.md`)
 - Professional/academic style. Upload via editor UI.
 - Paste title separately in title field
 
@@ -23,7 +23,7 @@ Markdown tables should render correctly — verify after pasting.
 
 ## Pre-Publish Checklist
 - [ ] Word 已生成（`export_article.py <slug> zhihu`）
-- [ ] 封面图 16:9 已上传
+- [ ] 封面图已上传（比例见 registry）
 - [ ] 对比表格渲染正确
 - [ ] 原创声明已勾选
 - [ ] 引用来源已标注

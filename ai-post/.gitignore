@@ -2,3 +2,5 @@ repos/
 ongoing/
 archived/
 style/private/
+.DS_Store
+**/.DS_Store

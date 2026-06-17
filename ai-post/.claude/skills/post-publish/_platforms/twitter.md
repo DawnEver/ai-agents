@@ -1,7 +1,7 @@
 # Twitter/X Publish Rules
 
 ## Publish URL
-https://x.com/home
+See `templates/_platform-registry.md` (## Publish URLs).
 
 ## Clipboard Format
 Each tweet as a separate block:
@@ -25,7 +25,7 @@ Twitter threads must be built tweet-by-tweet:
 - Note: emoji count as 2 on Twitter — leave a few chars of margin under 280.
 
 ## Image
-Attach to Tweet 1 (the hook visual). `twitter-cover.png` if available (16:9 — see `templates/_platform-registry.md`).
+Attach to Tweet 1 (the hook visual). `twitter-cover.png` if available (aspect ratio — see `templates/_platform-registry.md`).
 
 ## Thread Verify
 After composing, read top-to-bottom to verify flow.

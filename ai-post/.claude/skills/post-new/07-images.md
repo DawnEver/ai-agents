@@ -54,7 +54,7 @@ _(Add more shared images as needed — one per concept)_
 
 ### 微信公众号 Cover (`wechat-cover`) (v1)
 - **AI Prompt**: <prompt>
-- **Aspect ratio**: see `templates/_platform-registry.md` (16:9 for 微信公众号)
+- **Aspect ratio**: see `templates/_platform-registry.md` (2.35:1 for 微信公众号)
 - **Path**: `../../images/wechat-cover-v1.png`
 
 ### 知乎 Cover (`zhihu-cover`) (v1)
@@ -72,7 +72,7 @@ _(Add more shared images as needed — one per concept)_
 | Platform | Cover | Content Images |
 |----------|-------|----------------|
 | 小红书 | `xhs-cover-v1.png` (3:4) | ... |
-| 微信公众号 | `wechat-cover-v1.png` (16:9) | ... |
+| 微信公众号 | `wechat-cover-v1.png` (2.35:1) | ... |
 | 知乎 | `zhihu-cover-v1.png` (16:9) | ... |
 | Twitter/X | `twitter-cover-v1.png` (16:9) | (optional) ... |
 

@@ -20,9 +20,9 @@ Read `templates/_platform-registry.md` for image specs and char limits.
 
 ### 定框架 + 角度检查
 知乎读者核心问题："我应该用这个吗？" + "它到底怎么实现的？"
-先想清楚：它和什么对比？在什么场景下更好？在什么场景下不如替代品？对比表的替代品从 market-research.md 的 Similar Repos 中选取。
-**机制拆解与横向对比是两个并列核心章节**（见 zhihu.md 结构公式 §4/§5）。机制拆解：从 repo-exploration.md 选 1-3 个最有意思的机制（架构/关键算法/设计取舍），带 config key、文件/函数引用、数据流走一遍，让读者能讲给同事听——不要 feature list。对比表：先确定对比维度再写。
-角度检查：确认切入选框架不是纯 feature list——最好有一个具体问题场景。
+先想清楚切入角度：它和什么对比？在什么场景下更好/不如替代品？对比表的替代品从 market-research.md 的 Similar Repos 中选取；机制深挖的素材从 repo-exploration.md 中挑选。
+机制深挖、横向对比的具体规则（机制数量、config/文件证据、no-feature-list、对比表维度）见 `templates/zhihu.md` 结构公式 §4/§5——此处不复述，只负责选定角度与素材。
+角度检查：确认切入框架不是纯 feature list——最好有一个具体问题场景。
 
 ### 段落迷你论点检查
 逐段检查：能否用一句话说出核心论点？标不出来 = 段落需拆分或重写。把所有迷你论点串起来，测试逻辑链条。

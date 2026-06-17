@@ -69,10 +69,26 @@ Update both the H1 heading in the file AND `brief.md` (`## Selected Titles`).
 
 ### If user confirms final ("可以发布了" / "final"):
 
-1. Create final snapshot `2-draft/v<N+1>/` with any last changes
-2. **Assemble full set**: for each platform, walk back versions until you find the latest copy. If any platform is missing entirely, re-spawn or copy from the nearest version that has it — the final version set must be complete.
-3. Update `brief.md`: `finalized: true`, `current_version: v<N+1>`, `review_completed: true`
-4. Proceed to Step 10.
+**Gate first — 三方会审 must have actually run.** Check for a real `2-draft/v<N>/review-verdict.md` (the latest one resolved via the version chain). It must exist and reflect a completed review.
+
+- **If no `review-verdict.md` exists** (review never ran) → do NOT set `finalized` or `review_completed`. Route the user to Step 09: "还没过三方会审，先审完再发。" Run the review, then return here.
+- **If a real `review-verdict.md` exists**:
+  1. Create final snapshot `2-draft/v<N+1>/` with any last changes
+  2. **Assemble full set**: for each platform, walk back versions until you find the latest copy. If any platform is missing entirely, re-spawn or copy from the nearest version that has it — the final version set must be complete.
+  3. Update `brief.md`: `finalized: true`, `current_version: v<N+1>`, `review_completed: true`
+  4. Proceed to Step 10.
+
+> ⚠️ `finalized: true` / `review_completed: true` may ONLY be set after a real latest `2-draft/vN/review-verdict.md` exists. Never set them to skip ahead.
+
+## Optional Self-Check Supplement (NOT a replacement for 三方会审)
+
+The mandatory gate is 三方会审 (Step 09). The quick pass below is an **optional** aid the user (or you) may run while reading drafts — it does not substitute for review and never satisfies the `review_completed` gate. Full banned-phrase list, replacement table, and anti-AI grading live in `templates/_writing-craft.md`.
+
+- [ ] 「我」视角一致：每段至少一句以"我"作主语；核对 brief `persona` — 若 `author`，无「能看出作者…」「翻代码才看懂」等把自身设计当外部发现的第三人称措辞
+- [ ] 段落迷你论点 + 串联测试：每段一句话能说出核心论点，串起来逻辑链条通顺
+- [ ] 多巴胺密度：每段至少 1 个点（洞察/例子/比喻/细节/微幽默），无连续 3 段空白
+- [ ] 句子节奏：无连续 5 句长度相近；插入短句(5-10字)或长句(25-35字)打破单调
+- [ ] 段落长度：手机屏 3-5 行，无超过 7 行的段落
 
 ## State Tracking in brief.md
 

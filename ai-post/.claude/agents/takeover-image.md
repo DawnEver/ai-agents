@@ -5,6 +5,8 @@ allowed-tools:
   - Read
   - Write
   - Bash
+model: opus
+thinking: 16000
 ---
 
 # Takeover Image — Codex Image Generation via CLI

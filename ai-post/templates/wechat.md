@@ -1,6 +1,5 @@
 ---
 platform: wechat
-character_limit: 2000-5000
 language: zh
 emoji_density: moderate
 ---
@@ -106,7 +105,7 @@ emoji_density: moderate
 
 微信公众号文章必须有一张封面图，显示在订阅号列表、朋友圈分享和文章顶部。封面图独立于正文配图，单独生成。
 
-- **Aspect ratio**: see `templates/_platform-registry.md` (16:9 for 微信公众号).
+- **Aspect ratio**: see `templates/_platform-registry.md` (2.35:1 for 微信公众号).
 - **Purpose**: 订阅号列表吸引点击 + 朋友圈分享卡片 + 文章顶部头图。读者决定是否点开的关键视觉。
 - **Design notes**:
   - 封面图需要留出标题文字的安全区域（上方或居中偏上位置，微信会在底部叠加标题文字）

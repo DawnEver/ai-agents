@@ -1,6 +1,5 @@
 ---
 platform: xiaohongshu
-character_limit: 800-1000
 title_limit: 20 字 (HARD — the H1 title must be ≤20 Chinese chars incl. punctuation/emoji; count and trim if over)
 language: zh
 emoji_density: high

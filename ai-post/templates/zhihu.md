@@ -1,6 +1,5 @@
 ---
 platform: zhihu
-character_limit: 1500-4000
 language: zh
 emoji_density: minimal
 ---

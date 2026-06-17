@@ -18,7 +18,7 @@ Present the assembled final set:
 
 版本链：v1 (AI) → v2 (用户编辑) → v3 (会审修复) → ... → v<N> (当前)
 已修复的问题：<汇总>
-图片计划：ongoing/<slug>/images.md — X 张待生成
+图片计划：ongoing/<slug>/2-draft/v<N>/images.md（经版本链回溯到的最新 manifest）— X 张待生成
 
 标题最终确认？内容还有需要微调的吗？确认后生成图片。
 ```

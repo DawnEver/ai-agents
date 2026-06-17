@@ -25,7 +25,10 @@ ongoing/<slug>/     — in-progress (gitignored)
   2-draft/vN/       — versioned drafts (v1=AI gen, v2=user edit, v3+=review fixes)
   images/           — generated images
 archived/YYMMDD/<slug>/ — published articles, frozen snapshot (gitignored)
-style/profile.md    — auto-accumulated personal style
+style/
+  profile.md        — auto-accumulated personal style (committed)
+  published/<platform>/ — text-only style corpus profile.md accumulates from; post-archive Step 4 writes here (committed)
+  private/          — persona identity (e.g. author-identity.md) (gitignored)
 repos/<repo-slug>/  — cached clones, keyed by repo, shared across articles (gitignored)
 ```
 
@@ -33,12 +36,19 @@ repos/<repo-slug>/  — cached clones, keyed by repo, shared across articles (gi
 
 ## Platform Agents
 
+**Writer Agents** — one per platform:
+
 | Agent | Platform |
 |-------|----------|
 | `xiaohongshu-writer` | 小红书 |
 | `wechat-writer` | 微信公众号 |
 | `zhihu-writer` | 知乎 |
 | `twitter-writer` | Twitter/X |
+
+**Utility Agents** — no platform, support the pipeline:
+
+| Agent | Role |
+|-------|------|
 | `takeover-image` | Image generation via Codex |
 
 ## Key Principles
@@ -47,5 +57,5 @@ repos/<repo-slug>/  — cached clones, keyed by repo, shared across articles (gi
 - **Shared reference files (`_` prefix) are the single source of truth**. Templates and agents reference them — never copy rules across files.
 - **Research before writing**: market research → analysis → brief gate → spawn. Never skip user confirmation gates.
 - **三方会审 is mandatory**: every article passes review before publish. Verdicts persist in `2-draft/vN/review-verdict.md`.
-- **repos/, ongoing/, archived/ are gitignored**. style/ and config/ are committed.
+- **repos/, ongoing/, archived/, style/private/ are gitignored**. style/profile.md, style/published/, and config/ are committed.
 - **Version chain**: v1 (AI baseline) → v2 (user edits) → v3+ (review rounds). Missing files inherit from previous version. The latest vN IS the final article.

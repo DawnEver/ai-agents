@@ -151,7 +151,12 @@ B轮 (自然型):
   > "角度 + 标题已确认，开始生成初稿？"
 - **If user wants adjustments** → regenerate titles for that platform, re-present that platform's options (loop).
 - **If user wants to revisit angles** → go back to Phase 1, update `brief.md` accordingly.
-- **If user says "skip"** → proceed without pre-selected titles (writers will derive their own); write `brief.md` with `titles_confirmed: skipped`.
+- **If user says "skip"** → write `brief.md` with `titles_confirmed: skipped`, but STILL populate `## Selected Titles` so the writer contract holds (writers always read `## Selected Titles` and never invent a title). For each skipped platform, record an explicit instruction line instead of a final title, e.g.:
+  ```markdown
+  ## Selected Titles
+  - **Twitter/X**: [DERIVE: no pre-selected title — writer derives the opening tweet hook from the confirmed angle + repo analysis]
+  ```
+  The `[DERIVE: ...]` marker is the title contract for the skip path: the writer treats it as direction to generate its own title from the angle, rather than copying it verbatim as an H1.
 
 > 🛑 **Final gate**: Only start writing when the user explicitly says yes to "开始生成初稿？"
 

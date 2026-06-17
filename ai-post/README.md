@@ -24,8 +24,7 @@ Platform rules are centralized in `templates/_platform-registry.md` (metadata: a
 
 ## Prerequisites
 
-- [Codex CLI](https://github.com/openai/codex) v0.124.0+ with `codex login` (for image generation)
-- Install the Codex image plugin (`codex-image-in-cc`) — see plugin repo for install instructions
+- [Codex CLI](https://github.com/openai/codex) v0.124.0+ with `codex login` (for image generation). The `takeover-image` agent spawns `codex exec --full-auto` directly to trigger Codex's built-in `imagegen` skill — no third-party plugin required.
 
 ## Commands
 

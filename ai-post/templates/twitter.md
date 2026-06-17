@@ -1,6 +1,5 @@
 ---
 platform: twitter
-character_limit: 280 per tweet (HARD LIMIT — count every tweet, no exceptions), 4-6 tweets per thread
 language: English ONLY (no Chinese)
 emoji_density: moderate
 ---

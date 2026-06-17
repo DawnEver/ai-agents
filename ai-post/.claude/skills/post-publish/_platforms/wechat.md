@@ -1,7 +1,7 @@
 # 微信公众号 Publish Rules
 
 ## Publish URL
-https://mp.weixin.qq.com/cgi-bin/home?t=home/index&token= (requires login — open URL, user navigates after auth)
+See `templates/_platform-registry.md` (## Publish URLs). Requires login — open the URL, user navigates after auth.
 
 ## Export
 Run `python .claude/skills/post-publish/export_article.py <slug> wechat` to generate `ongoing/<slug>/<title>.docx`. Embeds all images and formats code blocks.
@@ -17,7 +17,7 @@ WeChat shows a 摘要 under the title in the article list and share card. Genera
 - Count and report the char length; if >120, tighten before presenting.
 
 ## Cover Image
-- File: `wechat-cover.png` (**2.35:1** — see `templates/_platform-registry.md`)
+- File: `wechat-cover.png` (aspect ratio — see `templates/_platform-registry.md`)
 - WeChat overlays title text at bottom of cover — title-safe zone in upper portion
 - Paste title separately in the title field at top of editor
 
@@ -33,7 +33,7 @@ Generate Word → import or paste → format code blocks → preview on mobile �
 ## Pre-Publish Checklist
 - [ ] Word 已生成（`export_article.py <slug> wechat`）
 - [ ] 摘要 ≤120 字已填入摘要栏
-- [ ] 封面图 2.35:1 已上传
+- [ ] 封面图已上传（比例见 registry）
 - [ ] 代码块已通过编辑器工具格式化
 - [ ] "阅读原文" 链接已添加
 - [ ] 手机预览已检查

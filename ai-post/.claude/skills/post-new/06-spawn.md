@@ -2,18 +2,11 @@
 
 Now spawn sub-agents to generate the articles. Each agent reads the analysis, market research, and its template.
 
-**If generating for ALL platforms**, spawn all 4 agents in PARALLEL (single message, multiple Agent tool calls):
+**Active platforms** are those recorded in `ongoing/<slug>/1-research/brief.md` (defaulting to the full set in `templates/_platform-registry.md` if the brief lists none). A single-platform or Twitter-only run is valid — only spawn agents for the active platforms.
 
-**Agent mapping** — see `templates/_platform-registry.md` for the authoritative platform→agent mapping:
+**Agent mapping**: consult `templates/_platform-registry.md` (the `agent` column) for the authoritative platform→agent mapping. Do not hardcode it here.
 
-| Platform Key | Agent |
-|-------------|-------|
-| xiaohongshu | xiaohongshu-writer |
-| wechat | wechat-writer |
-| zhihu | zhihu-writer |
-| twitter | twitter-writer |
-
-Spawn all target platform agents in PARALLEL (single message, multiple Agent tool calls). Pass the slug to each agent.
+Spawn the active platform agents in PARALLEL (single message, multiple Agent tool calls). Pass the slug to each agent.
 
 Pass the slug to each agent. Each agent must:
 1. Read `ongoing/<slug>/1-research/repo-analysis.md`
@@ -37,10 +30,10 @@ These markers become input for step 07 to plan the image manifest.
 ## After All Agents Complete
 
 1. Create `ongoing/<slug>/2-draft/v1/` directory (if not already created by agents)
-2. Verify all 4 platform files exist in `2-draft/v1/` — this is the baseline, must be complete
+2. Verify a platform file exists in `2-draft/v1/` for EACH active platform recorded in `brief.md` (defaulting from `templates/_platform-registry.md`) — only the active platforms form the baseline, not always all 4
 3. Update `brief.md`: `current_version: v1`
 4. Proceed to Image Planning (07-images)
 
-**Layout**: `2-draft/v1/` is the baseline — all platforms required. Subsequent versions (`v2/`, `v3/`, ...) only contain files that changed. Missing files inherit from the previous version. No separate `annotated/` or `3-final/` directory.
+**Layout**: `2-draft/v1/` is the baseline — every active platform required. Subsequent versions (`v2/`, `v3/`, ...) only contain files that changed. Missing files inherit from the previous version. No separate `annotated/` or `3-final/` directory.
 
 Do NOT create version snapshots if agents failed — only for successfully written drafts.

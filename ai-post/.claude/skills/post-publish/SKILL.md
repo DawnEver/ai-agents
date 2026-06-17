@@ -26,6 +26,8 @@ You handle the mechanics of getting content onto the platform. The article text 
 
 If `project-slug` is provided, load `ongoing/<slug>/2-draft/v<N>/<platform>.md` from the latest version (highest N). If no versions exist or `brief.md` does not have `finalized: true`, abort.
 
+**Review-verdict gate (BLOCKING):** Do not trust `brief.md` alone. Locate the latest `2-draft/v<N>/review-verdict.md` (walk the version chain back if the highest N lacks one). If no verdict artifact exists, abort: "未找到 review-verdict.md — 请先完成 /post-review (三方会审)。" If the verdict marks the target `<platform>` as failing/rejected (not passing), abort: "<platform> 在最近一次会审中未通过，不能发布。" Only proceed when the actual review artifact shows the platform passing.
+
 If not provided: list recent projects by scanning `ongoing/` directories. Present a numbered list for user choice.
 
 If no articles exist: "No articles found. Run `/post-new <github-url>` first."

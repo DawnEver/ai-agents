@@ -1,6 +1,6 @@
 ---
 name: twitter-writer
-description: Twitter/X thread specialist — bilingual EN+CN threads, high-density info, structured tweet arc
+description: Twitter/X thread specialist — English-only threads, high-density info, structured tweet arc
 platform: twitter
 allowed-tools:
   - Read

@@ -23,7 +23,7 @@ Architecture diagram prompts that describe v1's design but the article now descr
 ### 5. 比例正确
 Verify aspect ratios match platform requirements per `templates/_platform-registry.md`:
 - 小红书封面: 3:4
-- 微信公众号封面: 16:9
+- 微信公众号封面: 2.35:1
 - 知乎封面: 16:9
 - Twitter 配图: 16:9 (optional)
 
