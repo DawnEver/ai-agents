@@ -4,10 +4,10 @@
 See `templates/_platform-registry.md` (## Publish URLs).
 
 ## Export
-Run `python .claude/skills/post-publish/export_article.py <slug> zhihu` to generate `ongoing/<slug>/<title>.docx`. Handles markdown tables (renders as Word table with blue header row).
+Run `python .claude/skills/post-publish/export_article.py <slug> zhihu` to generate `ongoing/<slug>/<title>.docx`. Handles markdown tables (renders as Word table with blue header row). **The Word doc is the 插图参照 (image-insertion reference)** — user imports the markdown, then inserts each image at the position the Word shows.
 
 ## Clipboard Format
-Full markdown preserved. Comparison tables kept as markdown table syntax (知乎 editor renders markdown tables). Image references become `[此处插入图片]`.
+**Full markdown, for import.** User imports the markdown, then inserts images per the Word doc. Comparison tables kept as markdown table syntax (知乎 editor renders markdown tables). Keep image references as `![alt](path)` markdown (do NOT strip to placeholder — the Word doc is the visual guide for where each image goes).
 
 ## Cover Image
 - File: `zhihu-cover.png` (aspect ratio — see `templates/_platform-registry.md`)

@@ -88,16 +88,22 @@ def add_code_block(doc, code, lang=""):
     p.paragraph_format.left_indent = Inches(0.3)
     p.paragraph_format.space_before = Pt(4)
     p.paragraph_format.space_after = Pt(4)
-    pPr = p._p.get_or_add_pPr()
-    shd = OxmlElement("w:shd")
-    shd.set(qn("w:val"), "clear")
-    shd.set(qn("w:color"), "auto")
-    shd.set(qn("w:fill"), "F0F0F0")
-    pPr.append(shd)
-    run = p.add_run(code)
-    run.font.name = "微软雅黑"
-    run.font.size = Pt(12)
-    run.italic = True
+    # Render code verbatim (保留原样): monospace, no italics, and preserve every line
+    # break — a single python-docx run ignores "\n", so we emit an explicit break per line.
+    code_lines = code.split("\n")
+    for idx, cl in enumerate(code_lines):
+        run = p.add_run(cl)
+        run.font.name = "Consolas"
+        run.font.size = Pt(10.5)
+        rPr = run._element.get_or_add_rPr()
+        rFonts = rPr.find(qn("w:rFonts"))
+        if rFonts is None:
+            rFonts = OxmlElement("w:rFonts")
+            rPr.append(rFonts)
+        rFonts.set(qn("w:ascii"), "Consolas")
+        rFonts.set(qn("w:hAnsi"), "Consolas")
+        if idx < len(code_lines) - 1:
+            run.add_break()
 
 
 def add_image(doc, img_path):
@@ -153,7 +159,9 @@ def is_table_separator(line):
 
 def add_inline_paragraph(doc, line):
     p = doc.add_paragraph()
-    parts = re.split(r"(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\([^)]+\))", line)
+    # Inline formula pattern requires the opening $ to be followed by a non-space,
+    # non-digit char — so currency like "$5 and $10" is NOT matched as a formula.
+    parts = re.split(r"(\*\*[^*]+\*\*|`[^`]+`|\$[^\s\d$][^$\n]*\$|\[[^\]]+\]\([^)]+\))", line)
     for part in parts:
         if part is None:
             continue
@@ -162,6 +170,10 @@ def add_inline_paragraph(doc, line):
             set_font(run, bold=True)
         elif part.startswith("`") and part.endswith("`"):
             run = p.add_run(part[1:-1])
+            set_font(run, code=True)
+        elif part.startswith("$") and part.endswith("$") and len(part) > 2:
+            # inline formula — keep raw original (incl. $ delimiters), no markdown parsing
+            run = p.add_run(part)
             set_font(run, code=True)
         elif re.match(r"\[[^\]]+\]\([^)]+\)", part):
             link_text = re.match(r"\[([^\]]+)\]", part).group(1)
@@ -190,11 +202,12 @@ while i < len(lines):
     if line.startswith("```"):
         if not in_code:
             in_code = True
-            code_lang = line[3:].strip()
+            code_fence_open = line.rstrip()   # keep the opening fence verbatim, incl. lang
             code_lines = []
         else:
             in_code = False
-            add_code_block(doc, "\n".join(code_lines), code_lang)
+            # Preserve the raw markdown block, fences included (保留原样 markdown 格式)
+            add_code_block(doc, "\n".join([code_fence_open] + code_lines + ["```"]))
         i += 1
         continue
 
@@ -202,6 +215,25 @@ while i < len(lines):
         code_lines.append(line)
         i += 1
         continue
+
+    # Block formula $$...$$ — keep raw original (verbatim, incl. $$ delimiters), no rendering
+    if line.strip().startswith("$$"):
+        stripped = line.strip()
+        # single-line $$ ... $$ (require non-empty inner content)
+        if len(stripped) > 4 and stripped.endswith("$$"):
+            add_code_block(doc, stripped, "math")
+            i += 1
+            continue
+        # multi-line: only consume if a closing $$ exists ahead; otherwise treat the
+        # opener as literal text (fall through) so a stray $$ can't swallow the document.
+        if stripped == "$$" or not stripped.endswith("$$"):
+            close = next((j for j in range(i + 1, len(lines))
+                          if lines[j].strip().endswith("$$")), None)
+            if close is not None:
+                add_code_block(doc, "\n".join(lines[i:close + 1]), "math")
+                i = close + 1
+                continue
+        # no closing delimiter (or empty $$$$): fall through and render as normal text
 
     h_match = re.match(r"^(#{1,4})\s+(.*)", line)
     if h_match:

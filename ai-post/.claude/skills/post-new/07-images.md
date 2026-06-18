@@ -11,6 +11,13 @@ Read all draft files in `ongoing/<slug>/2-draft/v1/<platform>.md` to:
 
 Write `ongoing/<slug>/2-draft/v1/images.md` — initial image plan, versioned alongside drafts. Later versions (v2, v3, ...) may update it via post-review.
 
+**Three-layer AI Prompt (MANDATORY)**: Every `AI Prompt` MUST describe three distinct layers so the image is rich and never monotone — a flat single-color background is a defect:
+1. **前景 (Foreground)** — the focal subject(s): the diagram nodes, code block, magnifying glasses, etc. Sharp, high-contrast, the eye lands here.
+2. **后景 (Background)** — a textured, layered backdrop that fills the frame: gradients, depth, ambient glow, subtle grid/circuitry/particle/bokeh motifs, soft vignetting. NEVER a flat solid fill. Add enough secondary elements that no large region reads as empty.
+3. **文字排版 (Text layout)** — exact characters to render, their position (top/center/etc.), hierarchy (title vs subtitle vs badge), font weight/style, and color. Follow the Text Rendering rules in `.claude/agents/takeover-image.md`.
+
+Write each layer explicitly as a labeled clause inside the `AI Prompt` (e.g. `Foreground: …. Background: …. Text: ….`).
+
 **Image versioning**: All generated images use a `-v<N>` suffix (e.g., `product-shot-v1.png`). Edits via takeover image-edit create a new versioned file — never overwrite. Article files reference the specific version. Old versions stay on disk; only the final-used versions survive archive.
 
 **Path convention**: Image files at `ongoing/<slug>/images/<id>-v<N>.png`. Manifest at `2-draft/v1/images.md` (later versions may update it). Article path references: `../../images/<id>-v<N>.png`.
@@ -36,7 +43,7 @@ _(If no real visuals exist, mark: "CLI/text only — all images AI-generated")_
 ### `product-shot` (v1)
 - **描述**: <中文描述，1句>
 - **Scene**: <what to depict>
-- **AI Prompt** (English): <detailed prompt>
+- **AI Prompt** (English): Foreground: <focal subject>. Background: <textured, layered backdrop — gradient/depth/ambient motifs, never flat>. Text: <exact characters, position, hierarchy, style>.
 - **Source**: Draft reference — `[IMAGE: ...]` in 2-draft/v1/<platform>.md line N
 - **Used by**: 小红书 (content), 微信公众号 (content), 知乎 (content)
 - **Aspect ratios**: 3:4 for 小红书 · 16:9 for 微信/知乎 (generate both or crop)

@@ -4,10 +4,10 @@
 See `templates/_platform-registry.md` (## Publish URLs). Requires login — open the URL, user navigates after auth.
 
 ## Export
-Run `python .claude/skills/post-publish/export_article.py <slug> wechat` to generate `ongoing/<slug>/<title>.docx`. Embeds all images and formats code blocks.
+Run `python .claude/skills/post-publish/export_article.py <slug> wechat` to generate `ongoing/<slug>/<title>.docx`. Embeds all images and formats code blocks. **The Word doc is the 插图参照 (image-insertion reference)** — user imports the markdown, then inserts each image at the position the Word shows.
 
 ## Clipboard Format
-Full text as plain text. Code blocks annotated with `[代码：<language>]` above each block (WeChat editor needs manual code block insertion via its toolbar). Image references become `[此处插入配图]`.
+**Full markdown, for import.** User imports the markdown into the editor, then inserts images per the Word doc. Keep code fences as-is. Keep image references as `![alt](path)` markdown (do NOT strip to placeholder — the Word doc is the visual guide for where each image goes).
 
 ## Cover Summary (摘要) — REQUIRED
 WeChat shows a 摘要 under the title in the article list and share card. Generate ONE for every 微信 publish:
@@ -28,7 +28,7 @@ WeChat does not support markdown fences. User must select code text and apply th
 Should point to the GitHub repo URL.
 
 ## Process
-Generate Word → import or paste → format code blocks → preview on mobile → publish.
+Generate Word (插图参照) → copy markdown to clipboard → user imports markdown → user inserts images per the Word doc → format code blocks → preview on mobile → publish.
 
 ## Pre-Publish Checklist
 - [ ] Word 已生成（`export_article.py <slug> wechat`）

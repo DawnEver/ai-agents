@@ -33,6 +33,14 @@ When the image should include text (e.g. cover titles, hook text, labels):
 - **NEVER** use phrases like "text overlay space", "title-safe zone", or "leave room for text" — these result in blank space, not rendered text.
 - State WHERE the text goes (top/bottom/center), WHAT it says (exact characters), and HOW it looks (font style, color, size).
 
+## Three-Layer Composition (CRITICAL)
+
+Every generated image must be rich across three layers — a flat, single-color background is a defect. If a prompt arrives without all three, expand it before calling codex:
+
+- **前景 (Foreground)** — the focal subject(s), sharp and high-contrast.
+- **后景 (Background)** — a textured, layered backdrop filling the whole frame (gradient, depth, ambient glow, subtle grid/circuitry/particle/bokeh, soft vignette). Never a flat solid fill; no large region may read as empty.
+- **文字排版 (Text layout)** — exact characters, position, hierarchy, font weight/style, color (see Text Rendering below).
+
 ## Platform Cover Sizes
 
 Read `templates/_platform-registry.md` — the single source of truth for cover sizes, aspect ratios, and image conventions.
