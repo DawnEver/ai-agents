@@ -306,7 +306,7 @@ Template hardcodes 800-1000 / ≤1000字; registry already owns char_limit ≤10
 ### [SR-20260618-027] [INFO] .claude/skills/post-archive/SKILL.md — Monolithic 9-step SKILL.md with no progressive-disclosure decomposition, unlike post-new/post-review
 
 - **Category:** Feature
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Decompose into SKILL.md map + 0X-*.md sub-files (identify/verify/assemble/style/cleanup/postmortem/report)
 
@@ -317,7 +317,7 @@ Clear sequential 9-step workflow maps naturally to sub-files; current single fil
 ### [SR-20260618-028] [INFO] .claude/skills/post-publish/SKILL.md — Monolithic SKILL.md lacks 0X sub-file decomposition (platform rules already split into _platforms/)
 
 - **Category:** Feature
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Decompose the 5 main steps into 0X-*.md for consistency with post-new/post-review
 
@@ -362,7 +362,7 @@ If the closing $$ is missing, the while loop runs to EOF and every remaining lin
 ### [SR-20260618-031] [INFO] .claude/skills/post-publish/export_article.py — add_code_block ignores its lang argument
 
 - **Category:** Feature
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Branch on lang, or drop the unused 'math' label.
 
@@ -373,7 +373,7 @@ If the closing $$ is missing, the while loop runs to EOF and every remaining lin
 ### [SR-20260618-032] [INFO] .claude/skills/post-publish/_platforms/wechat.md — Clipboard contract is doc-only, not script-enforced
 
 - **Category:** Feature
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Confirm SKILL.md matches the new full-markdown guidance.
 
@@ -417,7 +417,7 @@ Duplicate of SR-002, surfaced by the second reviewer — high signal.
 ### [SR-20260618-036] [MEDIUM] .claude/skills/post-publish/_platforms/wechat.md — Full-markdown clipboard flow not backed by code change
 
 - **Category:** Feature
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Verify the playbook step produces full-markdown clipboard output.
 
@@ -428,7 +428,7 @@ Clipboard is populated manually per /post-publish Step 4 — by design. Doc cons
 ### [SR-20260618-037] [MEDIUM] .claude/skills/post-publish/_platforms/zhihu.md — Same doc/impl note as wechat.md
 
 - **Category:** Feature
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Keep both platform docs in sync with actual behavior.
 
@@ -439,7 +439,7 @@ Mirror of SR-008. Clipboard is manual; by-design.
 ### [SR-20260618-038] [INFO] .claude/agents/takeover-image.md — Three-layer spec duplicated across two files
 
 - **Category:** Feature
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Extract the 前景/后景/文字排版 spec into a shared `_`-prefixed reference file.
 

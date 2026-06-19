@@ -8,7 +8,7 @@ Generate platform-adapted social media content from GitHub repositories. Clone �
 /post-new (pipeline entry) → /post-review (三方会审) → /post-publish → /post-archive
 ```
 
-All commands are skills under `.claude/skills/<name>/`. `post-new` and `post-review` use progressive disclosure: `SKILL.md` is the map, `0X-*.md` sub-files are the playbook. `post-archive` and `post-publish` are currently single-file `SKILL.md` (decomposition into map + 0X-playbook is pending).
+All commands are skills under `.claude/skills/<name>/` and use progressive disclosure: `SKILL.md` is the map, `0X-*.md` sub-files are the playbook.
 
 ## Directory Layout
 
@@ -17,8 +17,9 @@ All commands are skills under `.claude/skills/<name>/`. `post-new` and `post-rev
   skills/           — slash command definitions
   agents/           — platform writer sub-agents (thin wrappers)
     _writer-base.md — shared generation workflow for all platform writers
+scripts/<skill>/    — executable helpers for skills (e.g. post-publish/export_article.py, char_count.py + requirements.txt)
 templates/          — generation rules (single source of truth)
-  _writing-craft.md — universal writing techniques (anti-AI, connectives, rhythm)
+  _writing-craft.md — universal writing techniques (anti-AI, connectives, rhythm); sectioned with a top Section Index
   _platform-registry.md — single source of truth for platform metadata
 ongoing/<slug>/     — in-progress (gitignored)
   1-research/       — repo-exploration, market-research, repo-analysis, brief

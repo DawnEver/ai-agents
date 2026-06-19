@@ -14,9 +14,12 @@ This project is a dedicated email-reply assistant. Its sole job is to draft, rev
 4. Create `ongoing/<topic>/` and write `original.txt` + `draft.md` + `final.md`. `final.md` starts identical to `draft.md`. If the directory already exists, resume from the existing files.
 5. Tell the user the draft is ready. The user edits `final.md` directly to match their needs — no agent iteration unless the user explicitly requests polish.
 6. Optional polish: if the user asks for refinement, edit `final.md` based on their feedback. Repeat only if they ask again.
-7. After approval, move `ongoing/<topic>/` → `archived/<YYYY>/<MM>/<DD>/<topic>/`, diff `draft.md` vs `final.md` to learn, rename `final.md` → `reply.md`, add `meta.md`.
-   - For thread continuations (same topic slug, prior archived rounds exist): set `prev:` in `meta.md` to the relative path of the immediately preceding round's folder (cosmetic; slug-based lookup is authoritative).
-   - **Learn from diff**: diff `draft.md` vs `final.md` before renaming. Identify what the user changed (tone, phrasing, structure, additions, removals). Save persistent patterns (seen in ≥2 archives) to `style/profile.md`. Record per-reply observations in `meta.md`.
+7. After approval, archive the round:
+   - 7a. Move `ongoing/<topic>/` → `archived/<YYYY>/<MM>/<DD>/<topic>/`.
+   - 7b. Diff `draft.md` vs `final.md` (before renaming) to identify what the user changed: tone, phrasing, structure, additions, removals.
+   - 7c. Update style: save persistent patterns (seen in ≥2 archives) to `style/profile.md`; record per-reply observations in `meta.md` under `## Diff notes`.
+   - 7d. Rename `final.md` → `reply.md` and write `meta.md`.
+   - 7e. For thread continuations (same topic slug, prior archived rounds exist): set `prev:` in `meta.md` to the relative path of the immediately preceding round's folder (cosmetic; slug-based lookup is authoritative).
 
 ### Directory structure
 

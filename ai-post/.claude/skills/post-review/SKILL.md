@@ -1,6 +1,6 @@
 ---
 name: post-review
-description: 三方会审 — each reviewer identity is run independently by Claude Sonnet and DeepSeek via sharp-review workflow engine. Disagreements between models surface genuine issues.
+description: 三方会审 — each reviewer identity is run independently by three heterogeneous models (Opus + DeepSeek + Codex) via sharp-review workflow engine. Disagreements between models surface genuine issues.
 argument-hint: <slug> [platform]
 allowed-tools:
   - Read
@@ -14,16 +14,16 @@ allowed-tools:
 
 # /post-review — 三方会审
 
-Two reviewer identities, each independently run by 2 models by default (3 with `--full-review`) via sharp-review's generalized workflow engine. The engine handles parallel fanout, JSON Schema enforcement, dedup merge, and confidence tagging. post-review handles identity-specific configuration and pipeline integration.
+Two reviewer identities, each independently run by 3 heterogeneous models by default (Opus + DeepSeek + Codex; `--fast` drops to the first 2) via sharp-review's generalized workflow engine. The engine handles parallel fanout, JSON Schema enforcement, dedup merge, and confidence tagging. post-review handles identity-specific configuration and pipeline integration.
 
 ```
-身份A 读者代理人:  [Claude Sonnet] [DeepSeek V4 Pro]  → sharp-review workflow → merged findings
-身份B 技术核查员:  [Claude Sonnet] [DeepSeek V4 Pro]  → sharp-review workflow → merged findings
+身份A 读者代理人:  [Opus] [DeepSeek V4 Pro] [Codex]  → sharp-review workflow → merged findings
+身份B 技术核查员:  [Opus] [DeepSeek V4 Pro] [Codex]  → sharp-review workflow → merged findings
                               ↓
                     Cross-identity synthesis
 ```
 
-Two models independently review with the same prompt. **Both agree → confident. They disagree → needs human judgment.**
+Three heterogeneous models independently review with the same prompt. **≥2 agree → confident. Only one flags it → needs human judgment.**
 
 ## 参数解析
 
@@ -37,7 +37,7 @@ Walk `ongoing/<slug>/2-draft/` to find the latest version number (highest N). Fo
 | Phase | File | What Happens |
 |-------|------|-------------|
 | Setup | `01-identities.md` | 审稿身份 A/B prompts + finding JSON schemas + AI味 grades |
-| Setup | `02-reviewers.md` | Reviewer model config arrays + `--full-review` + workflow path resolution |
+| Setup | `02-reviewers.md` | Reviewer model config arrays (Opus + DeepSeek + Codex) + `--fast` + workflow path resolution |
 | Phase 1-2 | `03-execution.md` | Parallel Workflow calls (1 per identity) + result collection |
 | Phase 3-5 | `04-synthesis.md` | 分身份合议 (P3) → 综合裁决 (P4) → 全平台总览 (P5) |
 | Phase 6 | `05-images.md` | **MANDATORY** image plan review (术语一致性, 残留引用, 封面标题匹配, 比例) |
@@ -54,7 +54,7 @@ Phase 1-2 run per platform. Phase 3-4 synthesize per-platform (per-identity 合�
 ## Hard Rules
 
 - **Twitter/X skips identity B** — no code to verify, text-only platform.
-- **`--full-review`** adds Claude Opus as a 3rd reviewer to each identity.
+- **Default is 3 reviewers** per identity (Opus + DeepSeek + Codex). **`--fast`** drops to the first 2 (Opus + DeepSeek) to save a Codex call.
 - **Failed reviewer → `⚠️ 未响应`**, don't block the other identity.
 - **Verdict persists**: every round writes `review-verdict.md` to `v<N+1>/`. Check it to determine review status across sessions.
 - **Image plan review is mandatory (Phase 6)**: every round审 `images.md`; `review-verdict.md` must include an `## Image plan review` section (or note "no images.md yet"). Cover-hook stale after a title/motivation change is the most common miss — always re-check covers against the latest title.

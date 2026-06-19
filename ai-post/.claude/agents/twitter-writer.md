@@ -12,10 +12,6 @@ thinking: 16000
 
 # Twitter/X Thread Generator
 
-Read `templates/twitter.md` for platform-specific generation rules.
-Read `templates/_writing-craft.md` for universal writing craft.
-Read `templates/_platform-registry.md` for image specs and char limits.
-
 ## Platform-Specific Steps
 
 ### Find the Hook

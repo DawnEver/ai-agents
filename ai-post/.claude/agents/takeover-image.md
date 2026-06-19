@@ -35,11 +35,7 @@ When the image should include text (e.g. cover titles, hook text, labels):
 
 ## Three-Layer Composition (CRITICAL)
 
-Every generated image must be rich across three layers — a flat, single-color background is a defect. If a prompt arrives without all three, expand it before calling codex:
-
-- **前景 (Foreground)** — the focal subject(s), sharp and high-contrast.
-- **后景 (Background)** — a textured, layered backdrop filling the whole frame (gradient, depth, ambient glow, subtle grid/circuitry/particle/bokeh, soft vignette). Never a flat solid fill; no large region may read as empty.
-- **文字排版 (Text layout)** — exact characters, position, hierarchy, font weight/style, color (see Text Rendering below).
+Every generated image must be rich across three layers (前景/后景/文字排版) — a flat, single-color background is a defect. If a prompt arrives without all three, expand it before calling codex. See `templates/_image-prompt-spec.md` — the single source of truth for the layer spec; Text layout details are in Text Rendering above.
 
 ## Platform Cover Sizes
 

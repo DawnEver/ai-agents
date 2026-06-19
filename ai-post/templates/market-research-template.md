@@ -1,3 +1,5 @@
+<!-- Loaded by post-new Step 3 (`.claude/skills/post-new/03-market-research.md`): the market-research step fills this structure into `ongoing/<slug>/1-research/market-research.md`. This is the SSOT for the market-research output format — do not duplicate it elsewhere. -->
+
 # Market Research: <repo-name>
 
 ## Similar Repos

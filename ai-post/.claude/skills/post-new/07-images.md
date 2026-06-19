@@ -11,12 +11,7 @@ Read all draft files in `ongoing/<slug>/2-draft/v1/<platform>.md` to:
 
 Write `ongoing/<slug>/2-draft/v1/images.md` — initial image plan, versioned alongside drafts. Later versions (v2, v3, ...) may update it via post-review.
 
-**Three-layer AI Prompt (MANDATORY)**: Every `AI Prompt` MUST describe three distinct layers so the image is rich and never monotone — a flat single-color background is a defect:
-1. **前景 (Foreground)** — the focal subject(s): the diagram nodes, code block, magnifying glasses, etc. Sharp, high-contrast, the eye lands here.
-2. **后景 (Background)** — a textured, layered backdrop that fills the frame: gradients, depth, ambient glow, subtle grid/circuitry/particle/bokeh motifs, soft vignetting. NEVER a flat solid fill. Add enough secondary elements that no large region reads as empty.
-3. **文字排版 (Text layout)** — exact characters to render, their position (top/center/etc.), hierarchy (title vs subtitle vs badge), font weight/style, and color. Follow the Text Rendering rules in `.claude/agents/takeover-image.md`.
-
-Write each layer explicitly as a labeled clause inside the `AI Prompt` (e.g. `Foreground: …. Background: …. Text: ….`).
+**Three-layer AI Prompt (MANDATORY)**: Every `AI Prompt` MUST follow the three-layer composition spec — see `templates/_image-prompt-spec.md` (前景/后景/文字排版, single source of truth). A flat single-color background is a defect.
 
 **Image versioning**: All generated images use a `-v<N>` suffix (e.g., `product-shot-v1.png`). Edits via takeover image-edit create a new versioned file — never overwrite. Article files reference the specific version. Old versions stay on disk; only the final-used versions survive archive.
 

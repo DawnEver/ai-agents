@@ -12,10 +12,6 @@ thinking: 16000
 
 # 知乎文案生成器
 
-Read `templates/zhihu.md` for platform-specific generation rules.
-Read `templates/_writing-craft.md` for universal writing craft.
-Read `templates/_platform-registry.md` for image specs and char limits.
-
 ## Platform-Specific Steps
 
 ### 定框架 + 角度检查
@@ -28,12 +24,3 @@ Read `templates/_platform-registry.md` for image specs and char limits.
 逐段检查：能否用一句话说出核心论点？标不出来 = 段落需拆分或重写。把所有迷你论点串起来，测试逻辑链条。
 
 Then follow the shared workflow in `.claude/agents/_writer-base.md` for loading context, generating, self-checking, and writing output.
-
----
-
-## 生成后报告
-
-- 字符数 / 对比表维度数 / 局限性数量
-- 违规项统计
-- 如违规项为 0：✅ 准备发布
-- 建议：`/post-publish zhihu <slug>`

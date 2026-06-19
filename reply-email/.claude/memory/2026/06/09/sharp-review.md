@@ -23,7 +23,7 @@ metadata:
 
 - **Category:** Bug
 - **Module:** reply-email command
-- **Status:** OPEN
+- **Status:** FIXED
 - **Confidence:** single-reviewer
 - **Suggestion:** Document that `prev:` path is relative to the current archive folder; clarify it is always `../../<YYYY-MM-DD>/<topic>` (two levels up from `archived/<date>/<topic>/`).
 
@@ -42,7 +42,7 @@ metadata:
 
 - **Category:** Bug
 - **Module:** post-new image workflow
-- **Status:** OPEN
+- **Status:** FIXED
 - **Suggestion:** Decide canonical location for image files and align all references.
 
 ---
@@ -51,7 +51,7 @@ metadata:
 
 - **Category:** Bug
 - **Module:** ai-post memory
-- **Status:** OPEN
+- **Status:** FIXED
 - **Suggestion:** Move to `ai-post/.claude/rules/MEMORY.md`.
 
 ---
@@ -60,7 +60,7 @@ metadata:
 
 - **Category:** Feature
 - **Module:** post-new image workflow
-- **Status:** OPEN
+- **Status:** FIXED
 - **Suggestion:** Replace 🖼️ with plain text.
 
 ---
@@ -69,7 +69,7 @@ metadata:
 
 - **Category:** Feature
 - **Module:** ai-post docs
-- **Status:** OPEN
+- **Status:** FIXED
 - **Suggestion:** Clarify publish and archive are user-invoked.
 
 ---
@@ -96,7 +96,7 @@ metadata:
 
 - **Category:** Bug
 - **Module:** memory system
-- **Status:** OPEN
+- **Status:** FIXED
 - **Suggestion:** Delete; canonical location is `ai-post/.claude/rules/MEMORY.md`.
 
 ---
@@ -114,7 +114,7 @@ metadata:
 
 - **Category:** Bug
 - **Module:** reply-email agent
-- **Status:** OPEN
+- **Status:** FIXED
 - **Suggestion:** Move to a clearly numbered sub-step.
 
 ---
@@ -123,7 +123,7 @@ metadata:
 
 - **Category:** Bug
 - **Module:** post-new images skill
-- **Status:** OPEN
+- **Status:** FIXED
 - **Suggestion:** Use `command -v codex` and provide fallback note.
 
 ---
@@ -132,7 +132,7 @@ metadata:
 
 - **Category:** Bug
 - **Module:** ai-post agent docs
-- **Status:** OPEN
+- **Status:** FIXED
 - **Suggestion:** Align manifest path and image file path documentation.
 
 ---
@@ -141,7 +141,7 @@ metadata:
 
 - **Category:** Feature
 - **Module:** memory system
-- **Status:** OPEN
+- **Status:** FIXED
 - **Suggestion:** Remove or add stubs.
 
 ---
@@ -150,7 +150,7 @@ metadata:
 
 - **Category:** Bug
 - **Module:** task archive
-- **Status:** OPEN
+- **Status:** FIXED
 - **Suggestion:** Deduplicate.
 
 ---
@@ -159,7 +159,7 @@ metadata:
 
 - **Category:** Feature
 - **Module:** post-new images skill
-- **Status:** OPEN
+- **Status:** FIXED
 - **Suggestion:** Remove cost table or inline duplication.
 
 

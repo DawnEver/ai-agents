@@ -21,7 +21,7 @@ Twitter threads must be built tweet-by-tweet:
 3. Click "+" to add each subsequent tweet
 
 ## Character Count — BLOCKING
-- Each tweet ≤280. **Verify with the script, not by hand**: `python .claude/skills/post-publish/char_count.py <article.md> twitter` (exit 1 = some tweet over). Split/trim any over-limit tweet.
+- Each tweet ≤280. **Verify with the script, not by hand**: `python scripts/post-publish/char_count.py <article.md> twitter` (exit 1 = some tweet over). Split/trim any over-limit tweet.
 - Note: emoji count as 2 on Twitter — leave a few chars of margin under 280.
 
 ## Image

@@ -14,7 +14,7 @@ Plain Chinese text with emoji preserved. Hashtags on a separate line at end. Ima
 
 ## Character Limit — BLOCKING
 - **标题、正文上限见 `templates/_platform-registry.md`（title_limit / char_limit）**（正文含空格+换行，小红书都计入；图片 markdown 引用和「## 配图」清单不计）。
-- **用脚本核对，别手数**：`python .claude/skills/post-publish/char_count.py <article.md> xiaohongshu`（exit 1 = 超限）。超限拒绝发布并精简。
+- **用脚本核对，别手数**：`python scripts/post-publish/char_count.py <article.md> xiaohongshu`（exit 1 = 超限）。超限拒绝发布并精简。
 
 ## Restrictions
 - No external links in body — use "评论区/主页自取" CTA

@@ -12,10 +12,6 @@ thinking: 16000
 
 # 微信公众号文案生成器
 
-Read `templates/wechat.md` for platform-specific generation rules.
-Read `templates/_writing-craft.md` for universal writing craft.
-Read `templates/_platform-registry.md` for image specs and char limits.
-
 ## Platform-Specific Steps
 
 ### 创意排水 ⭐ (必做)

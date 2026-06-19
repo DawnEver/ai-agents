@@ -16,7 +16,7 @@
 - 图片描述（alt text）：是否与文章主题/术语一致？是否过于通用像占位符？
 ```
 
-**身份 A finding schema:**
+### 身份 A finding schema (SSOT)
 
 ```json
 {
@@ -46,7 +46,7 @@
 - 依赖包名、版本：是否真实存在？
 ```
 
-**身份 B finding schema:**
+### 身份 B finding schema (SSOT)
 
 ```json
 {

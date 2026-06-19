@@ -4,7 +4,7 @@
 See `templates/_platform-registry.md` (## Publish URLs). Requires login — open the URL, user navigates after auth.
 
 ## Export
-Run `python .claude/skills/post-publish/export_article.py <slug> wechat` to generate `ongoing/<slug>/<title>.docx`. Embeds all images and formats code blocks. **The Word doc is the 插图参照 (image-insertion reference)** — user imports the markdown, then inserts each image at the position the Word shows.
+Run `python scripts/post-publish/export_article.py <slug> wechat` to generate `ongoing/<slug>/<title>.docx`. Embeds all images and formats code blocks. **The Word doc is the 插图参照 (image-insertion reference)** — user imports the markdown, then inserts each image at the position the Word shows.
 
 ## Clipboard Format
 **Full markdown, for import.** User imports the markdown into the editor, then inserts images per the Word doc. Keep code fences as-is. Keep image references as `![alt](path)` markdown (do NOT strip to placeholder — the Word doc is the visual guide for where each image goes).

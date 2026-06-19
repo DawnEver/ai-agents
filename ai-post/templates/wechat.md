@@ -134,17 +134,7 @@ Example:
 
 ## Writing Quality
 
-Read `templates/_writing-craft.md` for ALL universal writing techniques:
-- Strong opening patterns + banned openers
-- Microhumor density (every 200 chars ≥1)
-- Concept handles
-- Sentence rhythm + paragraph splitting
-- Connectives & transitions (动机段衔接, 场景链式衔接, 段落首句回扣)
-- 「我」as subject identity consistency
-- Dopamine density
-- Anti-AI check (banned phrases master list, AI味 grading 🟢🟡🔴)
-- Paragraph mini-thesis
-- 3-pass review process
+`templates/_writing-craft.md` is the SSOT for all universal writing techniques — see its Section Index and load every section (微信公众号 is a zh platform, so the Connectives & Transitions tables apply). As a long-form platform, run the full 3-Pass Review and emphasize Paragraph Mini-Thesis.
 
 This template contains only 微信公众号-specific rules. Apply BOTH files when generating.
 

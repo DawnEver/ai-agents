@@ -1,6 +1,6 @@
 ---
-updated: 2026-06-18
-articles: 8
+updated: 2026-06-19
+articles: 9
 ---
 
 ## Openings I Use
@@ -32,30 +32,32 @@ articles: 8
 ### 小红书
 - "👇 插件 ID：quick-inline-suggestion，扩展市场直接搜，或者去 GitHub 找 DawnEver/quick-inline-suggestion～"
 - "👇 GitHub 搜 DawnEver/cc-market，takeover 就在里面，把连接交给你的 claude code 就行。想要直链评论区戳我～"
+- "我想进化的不是代码，是人跟 AI 搭伙的方式：别再逼自己追上它的速度，让它学会替我省注意力。"
 
 ### 微信公众号
 - "代码在 GitHub，没有加密，没有遥测，没有 telemetry 上报。你改什么代码、用什么提示词，只在你和你的 CLI 工具之间。"
 - "代码在 GitHub，三百行，零依赖，连 heredoc 那行的来历都写在 commit 里，你可以自己翻。"
+- "代码在 GitHub，`shared/attention.mjs` 拢共一百多行，零依赖，纯函数，每个字段、每条判据你都能自己翻、自己测。"
 
 ### 知乎
 - "回过头看，sharp-review 想做的其实只有一件事：别让同一个脑子审自己的代码，让几家不同厂商的模型各看各的，把它们的分歧当成信号而不是噪声。"
 - "回过头看这四个决策……有一个共同的逻辑：v1 证明了这件事有价值，v2 把每个卡点修到架构层面，而不是在表面贴胶带。"
-- "它不是"更强的记忆"，是"另一种记忆"——拿语义检索换可读、可审、可共享。我自己更怕"管不住"，所以这条路线对我成立。"
+- "在这个并行 AI 时代，有个数字是任何 benchmark 都测不出来的——我这一天，到底被打扰了几次。"
 
 ### Twitter/X
 - "DeepSeek runs ~50x cheaper than Opus — a third independent opinion for the price of a rounding error."
 - "Star it if you're tired of bloated AI editors. PRs welcome. 如果你也觉得 VS Code AI 越来越重，试试这个。⭐"
-- "便宜量大的用 DeepSeek，锐评用 Codex，封面图也用 Codex ⭐"
+- "The scarce resource was never how fast AI works. It's the one thing that doesn't parallelize — me. Stop optimizing throughput. Budget the human."
 
 ---
 
 ## Voice Markers
 
-- "某个深夜决定" / "某个深夜受不了了" — 用时间场景代替情绪描述，建立真实感
 - "就这样。没有……没有……没有……" — 用排比否定句列举自己去掉的东西，强调克制
 - "先说结论……完。" — 知乎开头直接给判断，结尾一字收束
 - "复制粘贴税" / "记忆跟着仓库走" / "内容和状态，分家" — 自创概念词命名痛点或架构主张，压成一句可复述的锚点
 - "我让贼来抓贼" / "商业互吹" — 用俗语和自造词点破"模型自审"的盲区与空洞，一句立住核心论点
-- "star 还是 0，你自己掂量" — 坦率自黑降低读者戒备，反营销建立信任
-- "翻译成人话" — 用口语化重述架桥技术内容与普通读者之间的鸿沟
 - "正则不会把codex看成claude。它没有'创造性'" — 反直觉洞察，用具体 bug 故事引出哲学总结
+- "自动化焦虑" — 自创概念词命名 AI 时代的注意力危机，把抽象感受压成可复述的锚点
+- "这道闸只管要不要打扰你，不管那件事还修不修" — 用生活化对比讲清技术边界，把架构决策翻译成直觉可感的承诺
+- "加入光荣的进化吧" — slogan 双关收尾，从代码进化升维到人机协作方式进化

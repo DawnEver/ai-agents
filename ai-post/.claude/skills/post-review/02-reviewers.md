@@ -1,31 +1,29 @@
 # 02 — Reviewer 配置 & Workflow 路径
 
-每个身份**默认跑 2 个后端**（Claude Sonnet + DeepSeek）—— 跨模型分歧是三方会审的核心价值，所以默认就要 ≥2 个 reviewer，才能产生 high-confidence (≥2 reviewers) 与模型分歧。`--full-review` 时再加上 Opus 作为第 3 个后端。key 对齐 workflow 引擎的路由。
+每个身份**默认跑 3 个后端**（Opus + DeepSeek + Codex）—— 名副其实的"三方"会审：三个**异构模型**独立审同一份稿，跨模型分歧才是会审的核心价值（≥2 reviewer 命中 = high-confidence，三方都中 = 铁案，只有一方提 = 待人工判断）。这也对齐 sharp-review 引擎自带的默认 reviewer 集（Codex / DeepSeek / Opus）。key 对齐 workflow 引擎的路由。
 
-## 身份 A — 读者代理人（默认 2 个后端）
-
-```json
-[
-  { "key": "A", "name": "读者代理人 (Claude Sonnet)", "provider": "claude", "model": "sonnet" },
-  { "key": "B", "name": "读者代理人 (DeepSeek)", "provider": "deepseek" }
-]
-```
-
-> `--full-review`：追加第 3 个后端 `{ "key": "C", "name": "读者代理人 (Opus)", "provider": "claude", "model": "opus" }`。
-
-## 身份 B — 技术核查员（默认 2 个后端）
+## 身份 A — 读者代理人（默认 3 个后端）
 
 ```json
 [
-  { "key": "A", "name": "技术核查员 (Claude Sonnet)", "provider": "claude", "model": "sonnet" },
-  { "key": "B", "name": "技术核查员 (DeepSeek)", "provider": "deepseek" }
+  { "key": "A", "name": "读者代理人 (Opus)", "provider": "claude", "model": "opus" },
+  { "key": "B", "name": "读者代理人 (DeepSeek)", "provider": "deepseek" },
+  { "key": "C", "name": "读者代理人 (Codex)", "provider": "codex" }
 ]
 ```
 
-> `--full-review`：追加第 3 个后端 `{ "key": "C", "name": "技术核查员 (Opus)", "provider": "claude", "model": "opus" }`。
+## 身份 B — 技术核查员（默认 3 个后端）
 
-> 默认：`pickStrategy: "all"` → 每个身份上面 2 个后端**全部跑**（2 个 reviewer per identity）。
-> `--full-review`：reviewer 数组追加 Opus（变 3 个后端），仍用 `pickStrategy: "all"`，3 个全跑。
+```json
+[
+  { "key": "A", "name": "技术核查员 (Opus)", "provider": "claude", "model": "opus" },
+  { "key": "B", "name": "技术核查员 (DeepSeek)", "provider": "deepseek" },
+  { "key": "C", "name": "技术核查员 (Codex)", "provider": "codex" }
+]
+```
+
+> 默认：`pickStrategy: "all"` → 每个身份上面 3 个后端**全部跑**（3 个 reviewer per identity）。
+> `--fast`：只跑前 2 个后端（Opus + DeepSeek），省一次 Codex 调用，用于快速复审。
 > Twitter/X 跳过身份 B（纯文字平台，无代码需验证），只跑身份 A。
 
 ## Sharp-Review Workflow 路径

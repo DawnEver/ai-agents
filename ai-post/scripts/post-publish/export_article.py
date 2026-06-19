@@ -18,7 +18,7 @@ if platform not in ("wechat", "zhihu"):
     print("platform must be 'wechat' or 'zhihu'")
     sys.exit(1)
 
-ARTICLES = Path(__file__).parent.parent.parent.parent / "ongoing"
+ARTICLES = Path(__file__).parent.parent.parent / "ongoing"
 # Find latest version directory
 versions_dir = ARTICLES / slug / "2-draft"
 if not versions_dir.exists():
@@ -83,7 +83,7 @@ def add_heading(doc, text, level):
     run.bold = True
 
 
-def add_code_block(doc, code, lang=""):
+def add_code_block(doc, code):
     p = doc.add_paragraph()
     p.paragraph_format.left_indent = Inches(0.3)
     p.paragraph_format.space_before = Pt(4)
@@ -221,7 +221,7 @@ while i < len(lines):
         stripped = line.strip()
         # single-line $$ ... $$ (require non-empty inner content)
         if len(stripped) > 4 and stripped.endswith("$$"):
-            add_code_block(doc, stripped, "math")
+            add_code_block(doc, stripped)
             i += 1
             continue
         # multi-line: only consume if a closing $$ exists ahead; otherwise treat the
@@ -230,7 +230,7 @@ while i < len(lines):
             close = next((j for j in range(i + 1, len(lines))
                           if lines[j].strip().endswith("$$")), None)
             if close is not None:
-                add_code_block(doc, "\n".join(lines[i:close + 1]), "math")
+                add_code_block(doc, "\n".join(lines[i:close + 1]))
                 i = close + 1
                 continue
         # no closing delimiter (or empty $$$$): fall through and render as normal text

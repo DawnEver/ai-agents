@@ -29,7 +29,7 @@ If Phase 6 was skipped, return to `05-images.md` now. Do NOT write v<N+1> files 
 
 **日期**: <YYYY-MM-DD>
 **版本**: v<N+1> (审 v<N>)
-**模式**: <default | --full-review>
+**模式**: <default (Opus+DeepSeek+Codex) | --fast (Opus+DeepSeek)>
 
 ## 综合裁决
 

@@ -36,7 +36,7 @@ The review reads the diff chain from the version history prepended to content.
 
 If the user says "skip review" or "直接发布" → refuse: "三方会审是强制步骤，不能跳过。审完再发。"
 
-See `post-review/SKILL.md` for the full review design — two identities (A: 读者代理人, B: 技术核查员), each independently run by 2 models (Claude Sonnet + DeepSeek; 3 with --full-review adding Claude Opus). Twitter/X skips identity B (no code to verify).
+See `post-review/SKILL.md` for the full review design — two identities (A: 读者代理人, B: 技术核查员), each independently run by 3 heterogeneous models by default (Opus + DeepSeek + Codex; `--fast` drops to the first 2). Twitter/X skips identity B (no code to verify).
 
 ## Image Plan Review — MANDATORY, not optional
 

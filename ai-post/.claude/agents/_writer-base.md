@@ -1,9 +1,6 @@
----
-name: _writer-base
-description: Shared generation workflow for all platform writer agents — not directly invocable
----
-
 # Shared Writer Workflow
+
+> Shared include for all platform writer agents — not directly invocable.
 
 All platform writer agents follow this base workflow. Platform-specific agents add their unique pre-writing steps, then delegate to this shared flow.
 
@@ -38,4 +35,8 @@ Read these files in order:
 Write final article to `ongoing/<slug>/2-draft/v1/<platform>.md`
 
 ### 6. Report
-Post-generation report with: char count, key metrics (emoji count, code blocks, etc.), violation count, readiness status.
+Post-generation report with:
+- Char count + platform-relevant metrics (emoji count, code blocks, comparison-table dimensions, limitations count, etc.)
+- Violation count
+- Readiness: if violations are 0 → ✅ ready to publish
+- Suggested next step: `/post-publish <platform> <slug>`

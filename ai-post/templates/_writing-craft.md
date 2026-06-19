@@ -2,6 +2,23 @@
 
 Shared writing techniques applied across all platforms. Platform templates reference this file — do NOT copy these rules into individual templates.
 
+## Section Index (load only what applies)
+
+A writer does NOT need every section. Jump to the anchors relevant to your platform:
+
+| Section | Anchor | Applies to |
+|---------|--------|------------|
+| Strong Opening | `#strong-opening` | all platforms |
+| Microhumor | `#microhumor` | all platforms |
+| 「我」as Subject — Identity Consistency | `#我-as-subject` | zh platforms (xiaohongshu, wechat, zhihu); Twitter uses creator voice but skip the Chinese examples |
+| Concept Handles | `#concept-handles` | all platforms |
+| Sentence Rhythm | `#sentence-rhythm` | all platforms (Chinese char-count guidance is zh-only) |
+| Connectives & Transitions | `#connectives--transitions` | **zh platforms only** — Chinese connective tables; Twitter is English-only, skip entirely |
+| Dopamine Density | `#dopamine-density` | all platforms |
+| Anti-AI Check | `#anti-ai-check` | all platforms (banned-phrase table is zh; the 🟢🟡🔴 grading applies everywhere) |
+| Paragraph Mini-Thesis | `#paragraph-mini-thesis` | all platforms (long-form especially: wechat, zhihu) |
+| 3-Pass Review | `#3-pass-review` | long-form (wechat, zhihu); short-form (xiaohongshu, twitter) may collapse to a single pass |
+
 ---
 
 ## Strong Opening

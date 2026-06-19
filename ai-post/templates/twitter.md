@@ -106,14 +106,13 @@ Example (alongside Tweet 1):
 
 ## Writing Quality
 
-Read `templates/_writing-craft.md` for universal writing techniques. Twitter-specific applications:
-- **Strong opening**: Tweet 1 hook uses 惊人结论 or 痛点直击 pattern
-- **Microhumor**: at least 1 moment in the thread
+`templates/_writing-craft.md` is the SSOT for universal writing techniques — see its Section Index. **Twitter is English-only**, so SKIP the Connectives & Transitions section (Chinese connective tables don't apply) and ignore the Chinese examples/banned-phrase table in 「我」as Subject and Anti-AI Check. Do apply: Strong Opening, Microhumor, Concept Handles, Sentence Rhythm, Dopamine Density, and the 🟢🟡🔴 grading. Twitter-specific applications:
+- **Strong opening**: Tweet 1 hook uses the 惊人结论/result-first or 痛点直击/pain-point pattern (in English)
 - **Specifics over adjectives**: "3x faster than ESLint on 10k-file repos" not "significantly faster"
 - **No preamble**: start with the fact, never "I'm excited to share"
 - **Self-contained tweets**: every tweet readable standalone (test: cover others, read just this one)
 - **Thread narrative arc**: Tweet 1 hook → 2-3 build → 4 "aha" → 5 context → 6 CTA
-- **Banned**: "Check out this article", "In this thread I'll", "Here's a breakdown", "excited to share"
+- **Banned openers**: "Check out this article", "In this thread I'll", "Here's a breakdown", "excited to share"
 
 This template contains only Twitter-specific rules. Apply BOTH files when generating.
 

@@ -12,10 +12,6 @@ thinking: 16000
 
 # 小红书文案生成器
 
-Read `templates/xiaohongshu.md` for platform-specific generation rules.
-Read `templates/_writing-craft.md` for universal writing craft.
-Read `templates/_platform-registry.md` for image specs and char limits.
-
 ## Platform-Specific Steps
 
 ### 定角度

@@ -15,14 +15,23 @@ Derive the **`<slug>`** (article-slug, keys the working dir):
 
 If the URL is invalid, tell the user and stop.
 
+**Validate `<slug>` before using it in any path.** A slug derived from user input must match `^[a-z0-9._-]+$` and contain no `..` segment (guards against path traversal like `../../etc/evil`). If it fails, lowercase it and strip every character outside the allowlist, collapsing runs of `.` to a single `.`; if the result is empty or still contains `..`, tell the user the slug is unusable and stop.
+
+```bash
+# Reject traversal / out-of-allowlist slugs before constructing paths.
+case "$slug" in
+  *..* | *[!a-z0-9._-]* | "") echo "Invalid slug: $slug" >&2; exit 1 ;;
+esac
+```
+
 Create the working directory:
 ```bash
 mkdir -p "ongoing/<slug>/1-research" "ongoing/<slug>/2-draft/v1"
 ```
 
-Determine target platforms:
-- If user specifies one: `xiaohongshu`, `wechat`, `zhihu`, or `twitter` → generate for that only
-- If no platform specified → generate for ALL four (see `templates/_platform-registry.md` for full platform list)
+Determine target platforms — **default is ALL platforms** (see `templates/_platform-registry.md` for the full list):
+- **Default → generate for ALL platforms.** This is the default whenever the user does not *explicitly restrict* scope.
+- Only narrow to a subset when the user gives an **explicit restriction** — e.g. "只发小红书" / "just Twitter" / "微信和知乎就行". A passing **format word** is NOT a restriction: "写一篇推文/帖子/文章" names a format, not a platform whitelist — still default to ALL platforms (the thread is one of the outputs, not the only one). When in doubt, generate all and let the user drop platforms at the brief gate.
 
 ## Clone or Update the Repo
 

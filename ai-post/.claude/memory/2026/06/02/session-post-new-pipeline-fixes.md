@@ -1,5 +1,5 @@
 ---
-name: 2026-06-02-post-new-pipeline-fixes
+name: session-post-new-pipeline-fixes
 description: Full pipeline run for dawneever--cc-market (takeover v1.0.0); skill hardening across brief-gate, transitions, images.md relocation, and image prompt review
 metadata:
   type: project

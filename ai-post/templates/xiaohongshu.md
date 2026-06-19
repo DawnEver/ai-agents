@@ -150,17 +150,7 @@ This is a product spec sheet, not a 小红书 post. It screams AI. Instead, ment
 
 ## Writing Quality
 
-Read `templates/_writing-craft.md` for ALL universal writing techniques:
-- Strong opening patterns + banned openers
-- Microhumor density rules
-- Concept handles
-- Sentence rhythm + paragraph splitting
-- Connectives & transitions (动机段衔接, 场景链式衔接, 段落首句回扣)
-- 「我」as subject identity consistency
-- Dopamine density
-- Anti-AI check (banned phrases master list, AI味 grading 🟢🟡🔴)
-- Paragraph mini-thesis
-- 3-pass review process
+`templates/_writing-craft.md` is the SSOT for all universal writing techniques — see its Section Index and load every section (xiaohongshu is a zh platform, so the Connectives & Transitions tables apply). 小红书-specific note: it's short-form (≤1000 chars), so the long-form 3-Pass Review may collapse to a single pass.
 
 This template contains only 小红书-specific rules. Apply BOTH files when generating.
 
