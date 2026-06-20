@@ -1,4 +1,5 @@
 {
+  "outputStyle": "post",
   "permissions": {
     "allow": [
       "Bash(git clone:*)",
