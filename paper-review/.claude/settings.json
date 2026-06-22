@@ -1,4 +1,5 @@
 {
+  "outputStyle": "Review",
   "permissions": {
     "allow": [
       "Bash(marker:*)",
