@@ -12,6 +12,8 @@
 !**/.claude/skills/**
 !**/.claude/commands/
 !**/.claude/commands/**
+!**/.claude/hooks/
+!**/.claude/hooks/**
 !**/.claude/workflows/
 !**/.claude/workflows/**
 !**/.claude/output-styles/
