@@ -1,6 +1,6 @@
 ---
 name: post-review
-description: 三方会审 — each reviewer identity is run independently by three heterogeneous models (Opus + DeepSeek + Codex) via sharp-review workflow engine. Disagreements between models surface genuine issues.
+description: 三方会审 — each reviewer identity is run independently by three heterogeneous models (Opus + DeepSeek + Codex) via takeover fan-out + sharp-review's merge engine. Disagreements between models surface genuine issues.
 argument-hint: <slug> [platform]
 allowed-tools:
   - Read
@@ -9,16 +9,17 @@ allowed-tools:
   - Grep
   - Agent
   - Skill
-  - Workflow
+  - Bash
+  - mcp__plugin_takeover_takeover__call_model
 ---
 
 # /post-review — 三方会审
 
-Two reviewer identities, each independently run by 3 heterogeneous models by default (Opus + DeepSeek + Codex; `--fast` drops to the first 2) via sharp-review's generalized workflow engine. The engine handles parallel fanout, JSON Schema enforcement, dedup merge, and confidence tagging. post-review handles identity-specific configuration and pipeline integration.
+Two reviewer identities, each independently run by 3 heterogeneous models by default (Opus + DeepSeek + Codex; `--fast` drops to the first 2). Reviewers are fanned out directly via the takeover MCP tool; their findings are merged (dedup + confidence tagging) by sharp-review's `merge-findings.js` engine. post-review handles identity-specific configuration and pipeline integration.
 
 ```
-身份A 读者代理人:  [Opus] [DeepSeek V4 Pro] [Codex]  → sharp-review workflow → merged findings
-身份B 技术核查员:  [Opus] [DeepSeek V4 Pro] [Codex]  → sharp-review workflow → merged findings
+身份A 读者代理人:  [Opus] [DeepSeek V4 Pro] [Codex]  → takeover fan-out → merge-findings → merged findings
+身份B 技术核查员:  [Opus] [DeepSeek V4 Pro] [Codex]  → takeover fan-out → merge-findings → merged findings
                               ↓
                     Cross-identity synthesis
 ```
@@ -37,8 +38,8 @@ Walk `ongoing/<slug>/2-draft/` to find the latest version number (highest N). Fo
 | Phase | File | What Happens |
 |-------|------|-------------|
 | Setup | `01-identities.md` | 审稿身份 A/B prompts + finding JSON schemas + AI味 grades |
-| Setup | `02-reviewers.md` | Reviewer model config arrays (Opus + DeepSeek + Codex) + `--fast` + workflow path resolution |
-| Phase 1-2 | `03-execution.md` | Parallel Workflow calls (1 per identity) + result collection |
+| Setup | `02-reviewers.md` | Reviewer model config arrays (Opus + DeepSeek + Codex) + `--fast` + merge-findings.js path resolution |
+| Phase 1-2 | `03-execution.md` | Per-identity takeover fan-out + merge-findings collection |
 | Phase 3-5 | `04-synthesis.md` | 分身份合议 (P3) → 综合裁决 (P4) → 全平台总览 (P5) |
 | Phase 6 | `05-images.md` | **MANDATORY** image plan review (术语一致性, 残留引用, 封面标题匹配, 比例) |
 | Phase 7 | `06-persist.md` | Write fixed articles + corrected `images.md` + `review-verdict.md` to `v<N+1>/` |

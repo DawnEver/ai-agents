@@ -2,7 +2,7 @@
 
 ## Phase 3：分身份合议
 
-Use the `confidence` field from the workflow output:
+Use the `confidence` field from the merge-findings output:
 
 ```
 ═══ 身份A 读者代理人 合议 ═══

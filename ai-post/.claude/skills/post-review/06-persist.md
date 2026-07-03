@@ -6,7 +6,7 @@
 
 Before writing any files, confirm all prior phases completed:
 
-- [ ] Phase 1-2: All identity workflows completed and results collected
+- [ ] Phase 1-2: All identity fan-outs completed and results collected
 - [ ] Phase 3-5: Cross-identity synthesis + per-platform verdicts finalized
 - [ ] Phase 6: Image review completed — `images.md` checked per `05-images.md` checklist, findings noted
 

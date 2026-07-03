@@ -24,7 +24,7 @@ Current version: v<N>
 <diff v1 → vN>
 ```
 
-5. Pass this context: prepend the version history to the article content before passing to the sharp-review workflow, so reviewers can see what changed and won't re-flag already-fixed issues.
+5. Pass this context: prepend the version history to the article content before passing to post-review, so reviewers can see what changed and won't re-flag already-fixed issues.
 
 After collecting version context, invoke the review:
 

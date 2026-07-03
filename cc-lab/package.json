@@ -1,0 +1,15 @@
+{
+  "name": "cc-lab",
+  "private": true,
+  "type": "module",
+  "description": "PTY + claude-tap experiment harness for Claude Code",
+  "engines": {
+    "node": ">=22.5"
+  },
+  "scripts": {
+    "clean": "node scripts/clean-lab.mjs"
+  },
+  "dependencies": {
+    "node-pty": "^1.1.0"
+  }
+}

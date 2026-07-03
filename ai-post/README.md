@@ -9,14 +9,15 @@ Generate platform-adapted social media content from GitHub repositories. Clones 
   → clone → explore + market research (parallel)
   → analysis → brief gate (angles + titles, user confirms)
   → parallel writer agents → image manifest
-  → user review → 三方会审 (powered by sharp-review engine) → final confirm → generate images
+  → user review → 三方会审 (takeover fan-out + sharp-review merge engine) → final confirm → generate images
 /post-publish <platform> → clipboard + browser (separate cmd)
 /post-archive <slug> → archive + style update (separate cmd)
 ```
 
 ## Dependencies
 
-- [sharp-review](https://github.com/anthropics/claude-code) (cc-market plugin) — generalized multi-model review engine. post-review configures it for content review with custom reviewer identities and finding schemas.
+- [takeover](https://github.com/anthropics/claude-code) (cc-market plugin) — multi-model fan-out via the `call_model` MCP tool. post-review calls each reviewer identity's models (Opus + DeepSeek + Codex) directly.
+- [sharp-review](https://github.com/anthropics/claude-code) (cc-market plugin) — provides `merge-findings.js`: dedup + confidence tagging over the raw reviewer findings (no memory write). post-review owns its own persistence.
 
 ## Shared Reference Files
 
