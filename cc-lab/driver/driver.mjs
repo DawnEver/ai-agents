@@ -9,6 +9,7 @@ import { mkdirSync, copyFileSync, existsSync, writeFileSync, createWriteStream, 
 
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const isWin = process.platform === 'win32';
 
@@ -45,6 +46,17 @@ function realConfigDir() {
 }
 
 /**
+ * Locate the cc-market shared/ engine layer (observe-proxy, spawn-child) for the
+ * observe:'proxy' profile. Default: the sibling Sync/claude checkout; override with
+ * CC_MARKET_SHARED for non-standard layouts.
+ */
+function ccMarketSharedDir() {
+  if (process.env.CC_MARKET_SHARED) return process.env.CC_MARKET_SHARED;
+  return resolve(fileURLToPath(new URL('.', import.meta.url)),
+    '..', '..', '..', 'claude', 'cc-market', 'shared');
+}
+
+/**
  * Launch an isolated, authenticated Claude Code session under claude-tap.
  * Returns a session object with five primitives: send/key/waitOutput/waitIdle/close.
  */
@@ -59,9 +71,23 @@ export async function launch(opts = {}) {
     // when the question is genuinely model-specific (and prefer Sonnet over Opus).
     // Pass model:null to launch with the account default.
     model = 'claude-haiku-4-5-20251001',
+    // Observation profile:
+    //   'tap'   (default) — claude-tap MITM into the sqlite trace DB. Vanilla routing
+    //           only, so Foundry provider env is stripped.
+    //   'proxy' — cc-market fabric observe-proxy: child speaks vanilla Anthropic HTTP
+    //           at a local proxy which owns the real upstream/auth/model-alias per
+    //           `provider`; capture lands in <runDir>/http.jsonl. This is how a
+    //           non-vanilla provider (deepseek via Foundry) becomes observable.
+    //   'none'  — no capture: direct-connect with the inherited env (Foundry intact).
+    observe = 'tap',
+    // Provider registry key for observe:'proxy' (claude_env_settings.json).
+    provider = 'deepseek',
   } = opts;
 
   if (!runDir) throw new Error('launch: runDir is required');
+  if (!['tap', 'proxy', 'none'].includes(observe)) {
+    throw new Error(`launch: unknown observe profile "${observe}"`);
+  }
 
   // Inject --model unless the case already specified one (handles both --model val
   // and --model=val forms).
@@ -106,36 +132,55 @@ export async function launch(opts = {}) {
     ),
   );
 
-  // 2. Build the tap command. All non-tap flags are forwarded to claude.
-  const tap = resolveClaudeTap();
-  const tapArgs = [
-    '--tap-no-live',
-    '--tap-no-open',
-    '--tap-no-update-check',
-    '--tap-output-dir', tapDir,
-    '--', ...argv,
-  ];
-
+  // 2. Build the command + env per observe profile.
+  let bin, binArgs, proxy = null;
   const childEnv = {
     ...process.env,
     CLAUDE_CONFIG_DIR: configDir,
     ...env,
   };
 
-  // Strip Foundry-mode env vars inherited from the parent (CCDS/Codex). When
-  // Foundry is active, CC ignores ANTHROPIC_BASE_URL and routes through
-  // ANTHROPIC_FOUNDRY_BASE_URL instead — bypassing claude-tap's proxy entirely.
-  // The child session needs vanilla Anthropic routing so claude-tap can intercept.
-  for (const k of Object.keys(childEnv)) {
-    if (/^ANTHROPIC_FOUNDRY_|^CLAUDE_CODE_USE_FOUNDRY$|^ANTHROPIC_DEFAULT_/.test(k)) {
-      delete childEnv[k];
+  if (observe === 'tap') {
+    // claude-tap wrapper. All non-tap flags are forwarded to claude.
+    bin = resolveClaudeTap();
+    binArgs = [
+      '--tap-no-live',
+      '--tap-no-open',
+      '--tap-no-update-check',
+      '--tap-output-dir', tapDir,
+      '--', ...argv,
+    ];
+    // Strip Foundry-mode env vars inherited from the parent (CCDS/Codex). When
+    // Foundry is active, CC ignores ANTHROPIC_BASE_URL and routes through
+    // ANTHROPIC_FOUNDRY_BASE_URL instead — bypassing claude-tap's proxy entirely.
+    // The child session needs vanilla Anthropic routing so claude-tap can intercept.
+    // (tap-mode-only: the 'proxy' profile is exactly how a Foundry provider stays
+    // observable, and 'none' means direct-connect with the env as-is.)
+    for (const k of Object.keys(childEnv)) {
+      if (/^ANTHROPIC_FOUNDRY_|^CLAUDE_CODE_USE_FOUNDRY$|^ANTHROPIC_DEFAULT_/.test(k)) {
+        delete childEnv[k];
+      }
+    }
+  } else {
+    // Direct claude launch (no tap). The 'proxy' profile borrows the cc-market
+    // fabric engine layer: observe-proxy owns upstream/auth/model, buildChildEnv
+    // shapes the vanilla env, resolveClaudeExe finds the real .exe for ConPTY.
+    const shared = ccMarketSharedDir();
+    const { resolveClaudeExe, buildChildEnv } = await import(pathToFileURL(join(shared, 'spawn-child.mjs')).href);
+    bin = resolveClaudeExe();
+    binArgs = argv;
+    if (observe === 'proxy') {
+      const { startObserveProxy } = await import(pathToFileURL(join(shared, 'observe-proxy.mjs')).href);
+      proxy = await startObserveProxy({ provider, runDir: absRunDir });
+      Object.assign(childEnv, buildChildEnv({ provider, observe: true, proxyUrl: proxy.url }));
+      childEnv.CLAUDE_CONFIG_DIR = configDir; // buildChildEnv starts from provider env
     }
   }
 
   // 3. Spawn under a PTY. Wrap so missing binaries surface clearly.
   let term;
   try {
-    term = spawn(tap, tapArgs, {
+    term = spawn(bin, binArgs, {
       name: 'xterm-256color',
       cols,
       rows,
@@ -143,8 +188,11 @@ export async function launch(opts = {}) {
       env: childEnv,
     });
   } catch (e) {
+    if (proxy) await proxy.close();
     if (e.code === 'ENOENT') {
-      throw new Error(`claude-tap not found: "${tap}". Install it or add ~/.local/bin to PATH.`);
+      throw new Error(observe === 'tap'
+        ? `claude-tap not found: "${bin}". Install it or add ~/.local/bin to PATH.`
+        : `claude not found: "${bin}". Set CLAUDE_CLI_PATH or install claude.`);
     }
     throw e;
   }
@@ -187,6 +235,10 @@ export async function launch(opts = {}) {
     runDir: absRunDir,
     tapDir,
     configDir,
+    /** Observe profile this session was launched with ('tap' | 'proxy' | 'none'). */
+    observe,
+    /** observe:'proxy' capture file (<runDir>/http.jsonl); null otherwise. */
+    jsonlPath: proxy?.jsonlPath ?? null,
     /** claude-tap trace-session UUID (key into the trace DB); null until printed. */
     get tapSessionId() { return tapSessionId; },
     get buffer() { return buffer; },
@@ -269,9 +321,18 @@ export async function launch(opts = {}) {
      */
     async close(graceMs = 8000, { keepCredentials = false } = {}) {
       if (!exited) {
-        try { term.write('\x04'); } catch { /* already gone */ }
+        // Recent CC builds require a double Ctrl-D within a short confirm window
+        // ("Press Ctrl-D again to exit") — send the pair 250ms apart, and retry
+        // the pair while the grace period lasts.
         const start = Date.now();
-        while (!exited && Date.now() - start < graceMs) await sleep(100);
+        while (!exited && Date.now() - start < graceMs) {
+          try { term.write('\x04'); } catch { break; }
+          await sleep(250);
+          if (exited) break;
+          try { term.write('\x04'); } catch { break; }
+          const attempt = Date.now();
+          while (!exited && Date.now() - attempt < 2000) await sleep(100);
+        }
         if (!exited && !isWin) {
           // On Windows, node-pty's ConPTY can crash on term.kill() (AttachConsole
           // failure in conpty_console_list_agent.js). Just wait longer — the child
@@ -290,6 +351,24 @@ export async function launch(opts = {}) {
           ttyLog.once('finish', resolve);
           setTimeout(resolve, 1000); // safety timeout
         });
+      }
+      if (proxy) {
+        try { await proxy.close(); } catch { /* already closed */ }
+      }
+      // Release node-pty's handles once the child is gone — on Windows the
+      // conin/conout sockets + the ConoutConnection worker thread otherwise keep
+      // the event loop alive after a clean exit. term.kill() would release them
+      // but spawns conpty_console_list_agent, which crashes noisily
+      // ("AttachConsole failed") on an already-exited child — so replicate its
+      // teardown minus the console-process-list step (private API, node-pty 1.x).
+      if (exited) {
+        try {
+          const agent = term._agent;
+          agent?._inSocket?.destroy?.();
+          agent?._outSocket?.destroy?.();
+          agent?._conoutSocketWorker?.dispose?.();
+          try { agent?._ptyNative?.kill?.(agent._pty, agent._useConptyDll); } catch { /* already dead */ }
+        } catch { /* best-effort handle release */ }
       }
       if (!keepCredentials) {
         try { rmSync(join(configDir, '.credentials.json'), { force: true }); } catch { /* ignore */ }

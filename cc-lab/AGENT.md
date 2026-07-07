@@ -13,6 +13,19 @@ parent Claude (designs cases, runs driver, reads traces, writes reports)
               (isolated CLAUDE_CONFIG_DIR per run)
 ```
 
+### Observe profiles (`launch({observe})`)
+
+- `'tap'` (default) — the architecture above: claude-tap MITM into the sqlite trace DB.
+  Vanilla Anthropic routing only, so the driver strips Foundry provider env — tap and
+  Foundry are mutually exclusive.
+- `'proxy'` — borrow the cc-market fabric engine layer (`Sync/claude/cc-market/shared`,
+  override via `CC_MARKET_SHARED`): the child speaks vanilla HTTP at a local
+  observe-proxy that owns the real upstream/auth/model-alias for `provider` (e.g.
+  `deepseek`); capture lands in `<runDir>/http.jsonl` (`session.jsonlPath`), read via the
+  shared `observe-reader.mjs` (`loadRows`/`mainTurns`). This is how a **Foundry provider
+  becomes observable** — see `cases/observe-proxy-profile.case.mjs`.
+- `'none'` — direct-connect with the inherited env (Foundry intact), no capture.
+
 ## Evidence layers (assert on the structured ones)
 
 1. **API trace** — authoritative for cache hits, system prompt diffs, /btw requests,
