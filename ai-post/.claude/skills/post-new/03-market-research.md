@@ -3,8 +3,15 @@
 Search for similar repos, trending discussions, and existing content coverage. This runs **before** the analysis (step 04) so the repo analysis can fold market context into article angles.
 
 ## Inputs
-- `ongoing/<slug>/1-research/repo-exploration.md` — step 02 output: repo structure, language, topics
-- Repo metadata from step 01: primary language, topics, description
+- `ongoing/<slug>/1-research/source-exploration.md` — step 02 output: for a code source, structure/language/topics; for a research report, thesis/findings/domain keywords
+- `ongoing/<slug>/1-research/source.md` — the source kind + metadata from step 01
+
+> **Non-code sources**: the goal is unchanged — find prior coverage, live discussion, and the
+> content gap our article fills. Only the framing of Source A shifts. For a **research report**,
+> "similar repos" becomes "related work / competing takes / who else has covered this finding";
+> for a **local codebase with no public presence**, skip the GitHub-alternatives search and lean on
+> Sources B–D (discussions + existing content). Extract search keywords from the report's thesis and
+> domain terms rather than from a primary language.
 
 ## Output
 - `ongoing/<slug>/1-research/market-research.md` — following `templates/market-research-template.md`

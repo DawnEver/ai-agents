@@ -9,7 +9,7 @@ Now spawn sub-agents to generate the articles. Each agent reads the analysis, ma
 Spawn the active platform agents in PARALLEL (single message, multiple Agent tool calls). Pass the slug to each agent.
 
 Pass the slug to each agent. Each agent must:
-1. Read `ongoing/<slug>/1-research/repo-analysis.md`
+1. Read `ongoing/<slug>/1-research/source-analysis.md`
 2. Read `ongoing/<slug>/1-research/market-research.md` — use market context to inform angle selection
 3. Read `ongoing/<slug>/1-research/brief.md` — use the selected title from `## Selected Titles`; do NOT invent a new title
 4. Write the title as an H1 heading (`# <title>`) on the first line of the article

@@ -17,11 +17,13 @@ This gate has three phases: **Phase 0 身份确认 (persona)**, then angle confi
 Before angles, decide who「我」is — this is **identity binding**, not tone. Get it wrong and writers leak a third-party "作者" (e.g.「能看出作者真踩过坑」「翻代码才看懂」) no matter how much the prompt says "第一视角".
 
 1. Read `style/private/author-identity.md` (gitignored personal-info file).
-2. Get the target repo owner / primary git author (`git -C repos/<repo-slug> remote get-url origin`, or gh metadata).
+2. Identify the source's author. Read `ongoing/<slug>/1-research/source.md` for the kind, then:
+   - **github / local-dir (git)**: repo owner / primary git author (`git -C <resolved_path> remote get-url origin`, or gh metadata).
+   - **local-dir (no remote) / local-file (report)**: there is no git owner to match — read the author/publisher captured in `source-analysis.md` Metadata, and lean on **ask the user**.
 3. Decide:
-   - Owner matches an identity in `author-identity.md` → **persona: author** (我 = repo 的设计者本人).
-   - Clearly the user's repo but owner not listed → **ask the user**, then add the alias to `author-identity.md`.
-   - Repo is someone else's and user didn't write it → **persona: deep-user**.
+   - Author matches an identity in `author-identity.md` → **persona: author** (我 = 源项目/报告的作者本人).
+   - Clearly the user's own source but author not listed → **ask the user**, then add the alias to `author-identity.md`.
+   - Source is someone else's and the user didn't write it → **persona: deep-user** (for a research report, this is the usual case — 我 = 读透这份报告的人).
    - **Uncertain → ask the user. Never guess.**
 4. Write `persona: author` (or `deep-user`) into `brief.md`. Writers MUST honor it (see `_writing-craft.md` 身份绑定).
 
@@ -84,15 +86,15 @@ Wait for the user to reply. The user may:
 - Request alternative angles ("小红书有没有更偏情绪的方向？")
 - Adjust scope ("只做微信和知乎")
 
-**This is iterative** — go back and forth until the user is satisfied with all angles. Update `ongoing/<slug>/1-research/repo-analysis.md` after each adjustment, re-present if needed.
+**This is iterative** — go back and forth until the user is satisfied with all angles. Update `ongoing/<slug>/1-research/source-analysis.md` after each adjustment, re-present if needed.
 
-- **If user adjusts angles** → update `repo-analysis.md` Article Angles section, re-present, wait again (loop).
+- **If user adjusts angles** → update `source-analysis.md` Article Angles section, re-present, wait again (loop).
 - **If user specifies a single platform** → update target platforms list, re-present for that platform only.
 - **If user signals they're done with angles** ("可以了" / "进入标题" / "next") → write `brief.md` with confirmed angles and `angles_confirmed: true`, then proceed to Phase 2.
 
 ## Phase 2: Title Selection (Chinese platforms only)
 
-After angles are confirmed, generate titles for each Chinese platform being generated. Titles are derived from the repo analysis — pain points, standout details, key numbers, the project's best insight. Writers will use the selected title as creative direction.
+After angles are confirmed, generate titles for each Chinese platform being generated. Titles are derived from the source analysis — pain points, standout details, key numbers, the source's best insight. Writers will use the selected title as creative direction.
 
 **Title generation rules:**
 - Author is the subject, tool is the instrument. ✅ "我用它3分钟搞定" not ❌ "被它3分钟搞定"

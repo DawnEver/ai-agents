@@ -1,12 +1,12 @@
 # AI-Post
 
-Generate platform-adapted social media content from GitHub repositories. Clones repos locally for deep code exploration, researches market landscape, then spawns platform-specific agents to generate articles for 小红书, 微信公众号, 知乎, and Twitter/X.
+Generate platform-adapted social media content from a **source** — a GitHub repo, a local codebase, or a research report. Explores code (or mines the report), researches the market landscape, then spawns platform-specific agents to generate articles for 小红书, 微信公众号, 知乎, and Twitter/X.
 
 ## Pipeline
 
 ```
-/post-new <github-url> [platform]
-  → clone → explore + market research (parallel)
+/post-new <github-url|local-path> [platform]
+  → resolve source → ingest (explore code / mine report) + market research
   → analysis → brief gate (angles + titles, user confirms)
   → parallel writer agents → image manifest
   → user review → 三方会审 (takeover fan-out + sharp-review merge engine) → final confirm → generate images
@@ -31,7 +31,7 @@ Platform rules are centralized in `templates/_platform-registry.md` (metadata: a
 
 | Command | Description |
 |---------|-------------|
-| `/post-new <url>` | Full pipeline — clone through final confirmation + image generation |
+| `/post-new <github-url\|local-path\|slug> [platform]` | Full pipeline from a source (GitHub repo, local codebase, or research-report file), or resume by `<slug>` — through final confirmation + image generation |
 | `/post-publish <platform>` | Export for publishing (clipboard + guidance) |
 | `/post-archive <slug>` | Archive completed article, update style profile |
 | `/post-review <slug>` | 三方会审 quality review |

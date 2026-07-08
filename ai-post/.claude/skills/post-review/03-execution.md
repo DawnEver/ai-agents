@@ -32,7 +32,7 @@ mcp__plugin_takeover_takeover__call_model({
 ```
 
 - **身份 A（读者代理人）** reviewScope：`开头钩子吸引度(1-5分), 逐段AI味(🟢人味/🟡轻微AI/🔴明显AI), 微幽默密度与位置, 最无聊段落, 句子节奏, 图片alt text与主题一致性`
-- **身份 B（技术核查员）** reviewScope：`代码块语法与可运行性, 安装步骤准确性, 技术术语正确使用, 架构描述与repo-analysis一致性, 性能数据真实性, 依赖包名版本真实性`；其 `userPrompt` 的文章正文后追加 `\n\n---\n\n## Repo Analysis Reference\n\n<repo-analysis.md content>`。
+- **身份 B（技术核查员）** reviewScope：`代码块语法与可运行性, 安装步骤准确性, 技术术语正确使用, 架构/结论描述与source-analysis一致性, 性能数据真实性与可回溯性, 依赖包名版本/引用来源真实性`；其 `userPrompt` 的文章正文后追加 `\n\n---\n\n## Source Analysis Reference\n\n<source-analysis.md content>`。
 
 从每个 reviewer 的响应中提取 `{ "findings": [...] }` JSON。某 reviewer 调用失败或无有效 JSON → 该槽位记为 `null`。
 

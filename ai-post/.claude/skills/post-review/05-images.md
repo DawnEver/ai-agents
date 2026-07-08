@@ -18,7 +18,7 @@ Scan for orphaned image references — images mentioned in `images.md` but no lo
 Cover image prompts must match the article's actual title. If the article title changed between v1 and vN, the cover prompt may be stale.
 
 ### 4. 过时描述
-Architecture diagram prompts that describe v1's design but the article now describes v2. Compare prompt content against the repo-analysis.md reference.
+Architecture diagram prompts that describe v1's design but the article now describes v2. Compare prompt content against the source-analysis.md reference.
 
 ### 5. 比例正确
 Verify aspect ratios match platform requirements per `templates/_platform-registry.md`:

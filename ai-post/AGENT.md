@@ -1,6 +1,6 @@
 # AI-Post
 
-Generate platform-adapted social media content from GitHub repositories. Clone → explore → market research → spawn platform agents → review → publish.
+Generate platform-adapted social media content from a **source** — a GitHub repo, a local codebase, or a research report. Resolve source → ingest (explore code / mine report) → market research → spawn platform agents → review → publish.
 
 ## Architecture
 
@@ -22,7 +22,7 @@ templates/          — generation rules (single source of truth)
   _writing-craft.md — universal writing techniques (anti-AI, connectives, rhythm); sectioned with a top Section Index
   _platform-registry.md — single source of truth for platform metadata
 ongoing/<slug>/     — in-progress (gitignored)
-  1-research/       — repo-exploration, market-research, repo-analysis, brief
+  1-research/       — source (pointer), source-exploration, market-research, source-analysis, brief
   2-draft/vN/       — versioned drafts (v1=AI gen, v2=user edit, v3+=review fixes)
   images/           — generated images
 archived/YYMMDD/<slug>/ — published articles, frozen snapshot (gitignored)
