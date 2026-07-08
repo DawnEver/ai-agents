@@ -72,6 +72,11 @@ parent Claude (designs cases, runs driver, reads traces, writes reports)
   (`send` / `key` / `waitOutput` / `waitIdle` / `ready` / `close`); `ready()` clears
   the startup gate dialogs (folder-trust, external-CLAUDE.md-imports) that appear on
   first launch in a fresh config dir and waits for the input prompt.
+- **Throwaway analysis scripts / dumps go in `.scratch/` (gitignored), never the repo
+  root or `cases/`.** The parent Claude reads the trace DB with one-off scripts
+  (`ana.mjs`, `peek.mjs`, tty dumps) — those are intermediate files, not experiments:
+  write them under `.scratch/` so they stay out of `git status` and never get committed.
+  Only a reusable, self-executing experiment earns a `cases/<name>.case.mjs`.
 - Each run gets a fresh `.lab/<timestamp>-<name>/` with isolated `CLAUDE_CONFIG_DIR`
   (credentials + onboarding state bootstrapped by the driver). `.lab/` is gitignored.
 - **`.lab/` is disposable — clean it after analysis.** Authoritative traces live in the

@@ -16,7 +16,6 @@ import { loadRecords, mainTurns } from '../driver/tap.mjs';
 import { join } from 'node:path';
 
 const runDir = join('.lab', runDirName('thinking-cache'));
-const runDir = join('.lab', `${stamp}-thinking-cache`);
 
 const s = await launch({
   runDir,

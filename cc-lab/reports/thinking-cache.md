@@ -1,9 +1,12 @@
 # thinking-cache — does toggling thinking/effort mid-session break prompt-cache hits?
 
-**Answer: Yes, completely.** Lowering the reasoning **effort** level mid-session
-invalidates the *entire* prompt cache. The next turn reads **zero** cached tokens and
-re-creates the whole ~49k-token prefix — even though the request's system prompt, tools,
-and cache-breakpoint markers are byte-for-byte identical to the previous turn.
+**Answer: Yes on first visit — but it's cache *partitioning*, not a global reset.**
+Switching effort mid-session makes the next turn read from that effort's OWN cache
+namespace: a **first-ever** visit to an effort level cold-misses and re-creates the whole
+prefix (the run below), but switching **back** to a previously-used level **recovers** its
+cache within the TTL. See the **Follow-up** section for the round-trip evidence and the
+refined mechanism; the original single-switch run (cold miss → zero cached tokens) is
+below.
 
 ## Method
 
@@ -51,6 +54,65 @@ Claude Code itself treats an effort switch as a full cache reset. The trace conf
 - `/effort` is a **horizontal slider** (low·medium·high·xhigh·max·ultracode·
   xhigh+workflows), driven by ←/→ and Enter, followed by a Yes/No cache-invalidation
   confirmation. A vertical-menu assumption (Down arrow) is a no-op.
-- Not tested here: whether *raising* effort or a same-level re-confirm also busts the
-  cache, and whether the pre-switch `1h` breakpoints survive to a later switch-back.
-  A follow-up case could switch low→high→low and check for any cache_read recovery.
+- Not tested in the original run: whether *raising* effort also busts the cache, and
+  whether the pre-switch breakpoints survive a switch-back. Both are now answered in the
+  follow-up below.
+
+## Follow-up — effort partitions the cache; round-trips RECOVER (cc 2.1.204)
+
+`cases/thinking-cache-recovery.case.mjs` runs a high→low→high→low round trip in one
+session (default effort is **high** in this build) and reads `output_config.effort` —
+in cc 2.1.204 the effort level is now visible **in the request body** at
+`output_config.effort`, so the old "body byte-identical" no longer holds. The real main
+turns are isolated from the client's `[SUGGESTION MODE …]` autocomplete calls (which
+also carry system+tools+usage and otherwise pollute `mainTurns`).
+
+Run: tap session `7ed02197-3cb7-4781-a306-e187e5ac0cb4`.
+
+| turn | msg | effort | switch | **cache_read** | **cache_create** |
+|------|-----|--------|--------|---------------|-----------------|
+| T1 | apple  | high | (default)     | 50 626 | 9 730 |
+| T2 | banana | low  | high→low      | 50 626 | 10 896 |
+| T3 | cherry | high | low→high (**raise**) | **60 356** | **1 355** |
+| T4 | date   | low  | high→low      | 61 522 | **376** |
+
+The smoking gun: **T3's `cache_read` is ~9 730 higher than T2's — exactly the block T1
+created at high effort.** T2 @ low could not reuse T1's high block (so it created its own
+10 896-token low block); T3 switching back to high **recovered T1's block verbatim**,
+collapsing create to 1 355. T4 back to low likewise recovered T2's low block (create 376).
+If an effort switch globally reset the cache, T3/T4 would each re-create the whole
+prefix (~10k+), not 1–2k.
+
+**Refined conclusion.** An effort switch does **not** globally orphan the cache. Effort
+is a cache-key *dimension*, so each level keeps an **independent** cache namespace:
+switching to effort X **hits** X's cache if it still exists within the (1h) TTL, else
+**cold-misses** and rebuilds. So:
+
+- **(Q1) Raising also "busts" — but only as a cold miss.** low→high (T3) *recovered*
+  rather than rebuilt, because high was already cached. Direction is irrelevant; what
+  matters is whether the target effort's cache is warm.
+- **(Q2) Yes, pre-switch breakpoints survive a switch-away-and-back.** high→low→high
+  recovered the high block (T1→T3); the low block likewise survived high→low→…→low.
+
+This reframes the original run's `cache_read → 0`: that was a **first-ever visit to that
+effort level** (cold miss), not a global "reset." Caveat: the ~50.6k cross-session
+tools+identity prefix stayed a hit through every switch here because dozens of same-day
+runs had already warmed **both** effort levels — the original run cold-missed it precisely
+because it was the first low-effort visit of the day. The clean, same-session recovery
+signal is the session-specific block (T1's 9 730 → recovered at T3), which is unaffected
+by that cross-session confound.
+
+## Notes / pitfalls (follow-up)
+
+- **The cache-invalidation confirm dialog is conditional.** In cc 2.1.204 switching to a
+  *lower* level (→ low) pops the "Change effort level? … Switching to low means the full
+  history gets re-read … 1. Yes, switch to low" dialog; a small change / raise applies
+  directly with just a `⎿ Set effort level to <X>` result line and no dialog. A driver
+  must handle **both** paths (poll: result line → done, dialog → accept).
+- **`/effort` picker-open is racy.** The submit sometimes doesn't render the slider, and
+  then a stray `←` is eaten by the main UI ("← for agents") and navigates to the agents
+  dashboard. Gate arrows on a picker-unique token ("Esc to cancel") and retry, never on
+  `waitIdle`.
+- **Word-concatenation bites the result line.** stripAnsi turns "Set effort level to low"
+  into `Seteffortleveltolow` (spaces are cursor-forward escapes) — match with `\s*`
+  between words. The dialog *title* happens to keep real spaces; the result line does not.
