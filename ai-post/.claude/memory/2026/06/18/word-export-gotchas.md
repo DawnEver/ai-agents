@@ -3,10 +3,6 @@ name: word-export-gotchas
 description: export_article.py (python-docx) gotchas — single run ignores \n, verbatim code/markdown fences, $/$$ formula raw-preservation, currency false-positive
 metadata:
   type: retrospect
-created: 2026-06-18
-accessed: 2026-06-18
-tier: short
-access_count: 0
 ---
 
 # Word Export Gotchas (export_article.py / python-docx)

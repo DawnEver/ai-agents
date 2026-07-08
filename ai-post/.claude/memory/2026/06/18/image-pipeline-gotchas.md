@@ -3,10 +3,6 @@ name: image-pipeline-gotchas
 description: takeover-image / codex imagegen gotchas — sandbox can't write to images/, credit exhaustion, raw-output recovery, mandatory three-layer prompt
 metadata:
   type: retrospect
-created: 2026-06-18
-accessed: 2026-06-18
-tier: short
-access_count: 0
 ---
 
 # Image Pipeline Gotchas (takeover-image + codex imagegen)

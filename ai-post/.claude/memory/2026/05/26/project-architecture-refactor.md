@@ -3,8 +3,6 @@ name: project-architecture-refactor
 description: AI-Post 架构重整 — 渐进式披露拆分 → 消除跨文件重复 → 共享引用文件体系
 metadata:
   type: project
-created: 2026-05-26
-accessed: 2026-06-11
 ---
 
 # AI-Post 架构重整

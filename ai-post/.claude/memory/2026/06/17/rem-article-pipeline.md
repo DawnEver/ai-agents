@@ -3,10 +3,6 @@ name: rem-article-pipeline
 description: post-new run for the rem plugin article + wechat-writer agent-type registration gotcha
 metadata:
   type: project
-created: 2026-06-17
-accessed: 2026-06-17
-tier: short
-access_count: 1
 ---
 
 # rem 文章 pipeline 运行 (2026-06-17)
