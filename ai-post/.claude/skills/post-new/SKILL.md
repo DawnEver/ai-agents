@@ -93,6 +93,10 @@ Re-invoking `/post-new <slug>` resumes from the latest non-empty artifact:
 
 ## Hard Rules
 
+- **⚡ Speed ≠ skipping (root discipline).** Going fast means running steps *concurrently* (parallel recon, parallel writer/reviewer fan-out), NEVER dropping a step, gate, or artifact. Even a hand-assembled / hurried run must still emit every pipeline artifact — `source.md` → `source-exploration.md` → `market-research.md` → `source-analysis.md` → `brief.md` → **`images.md` (step 07)** → `2-draft/vN/<platform>.md` → `review-verdict.md` — and pass gates 05/08/10 + 会审. Prefer speeding up *inside* this skill over bypassing it; a bypass that skips an artifact is a defect, not a shortcut.
+- **Default = ALL platforms.** "写一篇推文/帖子/文章" names a FORMAT, not a platform whitelist — generate for every platform in `_platform-registry.md` unless the user gives an explicit restriction ("只发小红书" / "just Twitter"). When in doubt, generate all and let the user drop platforms at the brief gate. (See 01-clone.md.)
+- **images.md is mandatory (step 07)** — plan the manifest from v1 drafts *before* user review (step 08); every `[IMAGE: ...]` must be tracked there. No publish without it — post-publish re-verifies.
+- **Version chain is strict** — `v1` = AI baseline (never edited in place), `v2` = user edits, `v3+` = review fixes; missing files inherit from the previous version; the latest `vN` IS the final article. Don't edit v1; branch to the next version.
 - **Market research before analysis**: step 03 → 04.
 - **Never skip user gates** (steps 05, 08, 10) — iterate until explicit approval.
 - **Determine persona before writing** (step 05 Phase 0): set `persona: author|deep-user` in `brief.md` from `style/private/author-identity.md`; ask the user when uncertain. Writers bind narrator identity to it, not just tone.
@@ -100,6 +104,16 @@ Re-invoking `/post-new <slug>` resumes from the latest non-empty artifact:
 - **Archive is frozen** — `archived/YYMMDD/<slug>/` never modified except `postmortem.md`.
 - **Fanout is parallel** — step 06 spawns all writers in one message.
 - **Platform metadata**: see `templates/_platform-registry.md` for the single source of truth.
+
+## Going fast (inside the pipeline, not around it)
+
+When speed matters, parallelize the steps — don't bypass them. Every artifact/gate still happens; it just happens concurrently.
+
+- **02+03 recon** — run exploration and market-research reads as concurrent sub-agents; still write `source-exploration.md` + `market-research.md`.
+- **06 writers** — already one parallel fan-out.
+- **07 images** — still author `images.md` from v1 (don't defer it to publish; that's how it gets forgotten).
+- **09 会审** — parallel fan-out + `--fast` (drop Codex), or single-model inline in a pinch — **record the mode in `review-verdict.md`** (see `post-review/03-execution.md`). Sequential fan-out is the #1 cause of an hour-long review.
+- **Manual/hand-assembly** is allowed *only* if you still emit every artifact in the "Speed ≠ skipping" rule above and pass every gate. If you can't guarantee that, drive the skill instead.
 
 ## Slug
 

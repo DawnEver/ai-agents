@@ -10,12 +10,12 @@ allowed-tools:
   - Agent
   - Skill
   - Bash
-  - mcp__plugin_takeover_takeover__call_model
+  - mcp__plugin_fabric_fabric__call
 ---
 
 # /post-review — 三方会审
 
-Two reviewer identities, each independently run by 3 heterogeneous models by default (Opus + DeepSeek + Codex; `--fast` drops to the first 2). Reviewers are fanned out directly via the takeover MCP tool; their findings are merged (dedup + confidence tagging) by sharp-review's `merge-findings.js` engine. post-review handles identity-specific configuration and pipeline integration.
+Two reviewer identities, each independently run by 3 heterogeneous models by default (Opus + DeepSeek + Codex; `--fast` drops to the first 2). Reviewers are fanned out directly via the fabric MCP tool (`mcp__plugin_fabric_fabric__call`); their findings are merged (dedup + confidence tagging) by sharp-review's `merge-findings.js` engine. post-review handles identity-specific configuration and pipeline integration.
 
 ```
 身份A 读者代理人:  [Opus] [DeepSeek V4 Pro] [Codex]  → takeover fan-out → merge-findings → merged findings

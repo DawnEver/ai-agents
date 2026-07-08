@@ -146,7 +146,7 @@ Before finalizing, read every sentence aloud. Grade each paragraph: 🟢 human /
 | Meta-announcement | 这篇文章、本文将、总结一下、总的来说、值得注意的是、综上所述、通过对比可以发现、通过以上分析、需要强调的是、需要承认的是 |
 | Filler adjectives | 显著提升、充分利用、进行操作、相关功能、有效提升 |
 | Hype words | 惊艳、震撼、逆天、神器、revolutionary、game-changing、blazingly fast |
-| AI sentence patterns | "不是A而是B" 重复出现、"不仅…还…" 堆砌、三段对称结构过于工整 |
+| AI sentence patterns | "不是A而是B" 重复出现、"不仅…还…" 堆砌、三段对称结构过于工整、**电报体断句**（为凑简洁丢主谓宾或丢字，如 "API trace 最高，作数"、"稳定地拿到这些数"）、**生硬比喻动词/名词**（用比喻当过渡或强调却不自然，如 "下一节就撞上了"、"还有个更硬的坎"）、**为显口语硬凑的花哨说法**（如 "必须拎出来的水分"） |
 | Vague quantifiers | "大幅提升" → specific number or "我没有测试，但官方声称..." |
 | Formal written style | "通过XX方式进行XX" → 直接说怎么做、"可能会" → "我觉得" |
 | Third-party-author leak (persona: author) | 能看出作者…、看得出作者…、作者是真的…、翻代码才看懂、读源码才发现、看得出…的用心、开发者/设计者（他）想明白了 |
@@ -161,6 +161,11 @@ Before finalizing, read every sentence aloud. Grade each paragraph: 🟢 human /
 | 进行操作 | 直接动词 |
 | 有效提升 | 具体效果 |
 | 解决的是一个边界很清晰的问题 | 具体说什么问题 |
+| API trace 最高，作数 | API trace 可信度最高 |
+| 稳定地拿到这些数 | 稳定地拿到这些数据 |
+| 下一节就撞上了 | 下一节就会讲到 |
+| 还有个更硬的坎 | 还有个不容易注意的坑，卡了我好久 |
+| 必须拎出来的水分 | 必须拎出来说的一个问题 |
 
 ---
 

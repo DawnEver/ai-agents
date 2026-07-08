@@ -1,6 +1,6 @@
 # 02 — Reviewer 配置 & merge-findings 路径
 
-每个身份**默认跑 3 个后端**（Opus + DeepSeek + Codex）—— 名副其实的"三方"会审：三个**异构模型**独立审同一份稿，跨模型分歧才是会审的核心价值（≥2 reviewer 命中 = high-confidence，三方都中 = 铁案，只有一方提 = 待人工判断）。这也对齐 sharp-review 引擎自带的默认 reviewer 集（Codex / DeepSeek / Opus）。`provider`/`model` 直接传给 takeover `call_model`。
+每个身份**默认跑 3 个后端**（Opus + DeepSeek + Codex）—— 名副其实的"三方"会审：三个**异构模型**独立审同一份稿，跨模型分歧才是会审的核心价值（≥2 reviewer 命中 = high-confidence，三方都中 = 铁案，只有一方提 = 待人工判断）。这也对齐 sharp-review 引擎自带的默认 reviewer 集（Codex / DeepSeek / Opus）。`provider`/`model` 直接传给 fabric `call`（`mcp__plugin_fabric_fabric__call`；takeover 已并入 fabric）。
 
 ## 身份 A — 读者代理人（默认 3 个后端）
 
@@ -34,4 +34,4 @@
 2. Otherwise, find the latest installed version under `~/.claude/plugins/cache/cc-market/sharp-review/` and use its `scripts/merge-findings.js`
 3. If neither path resolves to an existing `merge-findings.js`, **abort immediately** with an actionable message — `sharp-review plugin not found — install cc-market/sharp-review` — instead of letting the merge step fail cryptically on a missing script.
 
-> Fan-out 本身不依赖 sharp-review：reviewers 直接由 takeover MCP（`mcp__plugin_takeover_takeover__call_model`）调用，sharp-review 只提供合并引擎。
+> Fan-out 本身不依赖 sharp-review：reviewers 直接由 fabric MCP（`mcp__plugin_fabric_fabric__call`，参数同旧 `call_model`，`userPrompt`→`prompt`）调用，sharp-review 只提供合并引擎。
