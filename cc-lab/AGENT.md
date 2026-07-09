@@ -62,6 +62,14 @@ parent Claude (designs cases, runs driver, reads traces, writes reports)
 - **prompt-anatomy** — tools+identity (~37.5k tok) cache cross-session; the 15.8 KB
   instruction block is cache-orphaned per session by two embedded path lines (cwd +
   scratchpad UUID); dynamic context lives in the message layer.
+- **fork-context-flow** — `/fork` is a worker subagent: inherits parent history at spawn
+  (by reference) then runs forward-isolated. Conversing with it does NOT sync to main;
+  only a `<task-notification>` with the fork's final `<result>` posts back — one **each
+  time the fork stops**. Main never sees the user's message to the fork or its
+  intermediate work. Confirmed by **both** layers: the fork turn (tap + jsonl) carries the
+  user's message token, the next main turn does not. Fork turns ARE tap-visible (same
+  session-id as main); `driver/session.mjs` reads the structured transcripts for
+  convenience, not because tap is blind.
 
 ## Conventions
 
@@ -111,3 +119,13 @@ parent Claude (designs cases, runs driver, reads traces, writes reports)
 - Records are stored **compact**: large fields (tools, big messages) are offloaded to
   the `record_blobs` table and the payload is nested under `.record`. `loadRecords`
   rehydrates them — always read traces through `driver/tap.mjs`, never raw SQL.
+- **A fork/background agent IS captured by tap** — it is a separate child process but
+  inherits the proxy env, so its turns land in the SAME tap session under the SAME
+  `X-Claude-Code-Session-Id` as main (distinguish fork-vs-main by content, e.g. the
+  `<fork-boilerplate>` marker, not by session-id). (An earlier note here wrongly claimed
+  forks "bypass the proxy / are invisible to tap" — that was inferred from runs where the
+  reply never reached the fork; corrected in `reports/fork-context-flow.md`. Untested edge:
+  a background agent that outlives the parent terminal may lose the proxy.) `driver/
+  session.mjs` reads the persisted per-agent jsonl (evidence layer 2) as a convenient
+  structured view. Verify TUI actions by polling that jsonl — the alt-screen buffer echoes
+  typed input, so `waitOutput` on your own text is a false positive.
