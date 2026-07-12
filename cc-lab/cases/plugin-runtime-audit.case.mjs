@@ -9,10 +9,21 @@
 
 import { launch, runDirName } from '../driver/driver.mjs';
 import { loadRecords, mainTurns, summarize, waitForTrace } from '../driver/tap.mjs';
-import { writeFileSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { writeFileSync, readFileSync, mkdirSync, existsSync } from 'node:fs';
+import { join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const runDir = join('.lab', runDirName('plugin-audit'));
+
+// Register fabric MCP in the isolated config so it gets measured
+const absRunDir = resolve(runDir);
+const configDir = join(absRunDir, 'config');
+const fabricMCP = resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..', '..', 'claude', 'cc-market', 'fabric', 'scripts', 'mcp-server.mjs');
+mkdirSync(configDir, { recursive: true });
+writeFileSync(join(absRunDir, 'claude_settings.json'), JSON.stringify({
+  mcpServers: { fabric: { command: 'node', args: [fabricMCP] } },
+}, null, 2));
+console.log('fabric MCP registered');
 
 const s = await launch({
   runDir,
@@ -53,17 +64,51 @@ const usage = first.usage;
 
 // ── System prompt block analysis ──────────────────────────────────────
 
-const systemBlocks = (Array.isArray(first.system) ? first.system : [])
-  .map((b, i) => {
-    const text = typeof b === 'string' ? b : (b.text || '');
-    // Identify plugin-injected content
-    let owner = 'claude-code-builtin';
-    if (text.includes('cc-market') || text.includes('plugin')) owner = 'cc-market';
-    if (text.includes('.claude/rules/rem')) owner = 'rem-rules';
-    if (text.includes('GLOBAL-AGENTS') || text.includes('global instructions')) owner = 'global-agents';
-    if (text.includes('MEMORY.md') || text.includes('Memory Index')) owner = 'memory-index';
-    return { index: i, type: b.type || 'text', chars: text.length, estTok: Math.round(text.length / 3), owner, preview: text.slice(0, 120).replace(/\n/g, ' ') };
-  });
+const INJECTED_SECTIONS = [
+  'Memory Index', 'cc-market is a Separate Git Repo', 'Git Conventions',
+  'GLOBAL-AGENTS.md', 'Hook Behavior', 'Migration Tooling',
+  'No Terminal Window Flash', 'Provider Configuration', 'Skill & Agent File Location',
+  '## Scoped', '## Entries',
+];
+
+function splitInstructionBlock(text) {
+  // Try to find injected sections within the monolithic instructions block
+  const sections = [];
+  let current = { owner: 'cc-builtin', text: '' };
+  const lines = text.split('\n');
+  for (const line of lines) {
+    const header = line.match(/^#{1,4}\s+(.+)/);
+    if (header) {
+      if (current.text) sections.push({ ...current, chars: current.text.length });
+      const title = header[1];
+      const isInjected = INJECTED_SECTIONS.some(s => title.includes(s) || line.includes(s));
+      current = { owner: isInjected ? 'injected-rules' : 'cc-builtin', text: line + '\n', title };
+    } else {
+      current.text += line + '\n';
+    }
+  }
+  if (current.text) sections.push({ ...current, chars: current.text.length });
+  return sections;
+}
+
+const rawSystem = (Array.isArray(first.system) ? first.system : []);
+const systemBlocks = [];
+for (let i = 0; i < rawSystem.length; i++) {
+  const b = rawSystem[i];
+  const text = typeof b === 'string' ? b : (b.text || '');
+  if (i === 2 && text.length > 5000) {
+    // The large instruction block — split into sections
+    const sections = splitInstructionBlock(text);
+    const ccChars = sections.filter(s => s.owner === 'cc-builtin').reduce((s, sec) => s + sec.chars, 0);
+    const ruleChars = sections.filter(s => s.owner === 'injected-rules').reduce((s, sec) => s + sec.chars, 0);
+    systemBlocks.push({ index: i, type: 'instructions', owner: 'cc-builtin', chars: ccChars, estTok: Math.round(ccChars / 3), preview: 'CC built-in instructions' });
+    if (ruleChars > 0) {
+      systemBlocks.push({ index: i, type: 'instructions', owner: 'injected-rules', chars: ruleChars, estTok: Math.round(ruleChars / 3), preview: 'Injected .claude/rules/rem/* + MEMORY.md' });
+    }
+  } else {
+    systemBlocks.push({ index: i, type: b.type || 'text', owner: 'cc-builtin', chars: text.length, estTok: Math.round(text.length / 3), preview: text.slice(0, 120).replace(/\n/g, ' ') });
+  }
+}
 
 // ── Tools schema analysis ─────────────────────────────────────────────
 
