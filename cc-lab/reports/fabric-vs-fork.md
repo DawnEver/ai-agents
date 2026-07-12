@@ -94,11 +94,36 @@ but gets full file-editing and command-execution capability.
 
 5. **Fork's context-by-reference is uniquely efficient for long conversations.** Fabric
    write sessions repay history each turn (turn 3 pays for turns 1+2). Fork inherits once
-   at spawn and runs forward-isolated.
+   at spawn and runs forward-isolated. **Additionally, each write session turn spawns a
+   fresh `claude -p` process, incurring the ~37k token CC harness overhead per turn
+   (zero cache sharing between turns).** Fork avoids this — the harness is cached within
+   the fork's persistent session.
 
 6. **Summary fallback is robust.** Three paths (API HTTP → codex app-server → DeepSeek
    backstop) with truncation as final fallback. A summary failure costs ~$0.001 and falls
    back to 4000-char truncation — not a data-loss scenario.
+
+## Known Issue: Write Session Cache-Miss
+
+Non-codex write sessions (`openWriteSession` in `engine/session.mjs:16-42`) spawn a new
+`claude -p --allowedTools` process per `session_send` call. Each fresh process has **no
+prompt cache** — the CC system prompt (~37k tokens, per prompt-anatomy report) is
+re-charged every turn. At DeepSeek pricing ($0.435/MTok), each turn pays ~$0.016 just
+for the system prompt overhead.
+
+| Turn | User tokens | History tokens | Harness tokens | **Total input** |
+|------|------------|---------------|---------------|-----------------|
+| 1 | 500 | 0 | 37,000 | **37,500** |
+| 2 | 500 | 2,500 | 37,000 | **40,000** |
+| 3 | 500 | 5,000 | 37,000 | **42,500** |
+
+**Fix planned:** Reuse `openSession`'s persistent stream-json child for write sessions
+(add `--allowedTools` to the persistent process; handle tool_use events in the stream-json
+loop). This keeps the CC harness cached across turns (same as normal sessions and forks).
+The per-turn harness overhead drops from 37k to 0 after turn 1.
+
+**Workaround:** For long write sessions, use codex (`provider: "codex"`) — the app-server
+thread retains context natively with no per-turn harness overhead.
 
 ## Files
 
