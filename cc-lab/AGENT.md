@@ -49,34 +49,14 @@ parent Claude (designs cases, runs driver, reads traces, writes reports)
    cursor-forward escapes, so `stripAnsi(buffer)` yields **word-concatenated** text:
    match single tokens, never multi-word phrases.
 
-## Findings (see `reports/`)
-
-- **thinking-cache** — switching `/effort` fully busts the prompt cache (server-side
-  cache-key dimension; body byte-identical).
-- **btw-isolation** — `/btw` is a separate request, forward-isolated from main history,
-  but carries the full tools + main history (not tool-free); steered by a system-reminder.
-- **output-style-layer** — output styles are removed in this build; a `/goal` directive
-  layers into the **message** history (not system prompt) and the cache survives.
-- **env-var-matrix** — `CLAUDE_CODE_MAX_OUTPUT_TOKENS` = API-request layer,
-  `…FORCE_SESSION_PERSISTENCE` = state layer; the two `DISABLE_*` vars are no-ops here.
-- **prompt-anatomy** — tools+identity (~37.5k tok) cache cross-session; the 15.8 KB
-  instruction block is cache-orphaned per session by two embedded path lines (cwd +
-  scratchpad UUID); dynamic context lives in the message layer.
-- **fork-context-flow** — `/fork` is a worker subagent: inherits parent history at spawn
-  (by reference) then runs forward-isolated. Conversing with it does NOT sync to main;
-  only a `<task-notification>` with the fork's final `<result>` posts back — one **each
-  time the fork stops**. Main never sees the user's message to the fork or its
-  intermediate work. Confirmed by **both** layers: the fork turn (tap + jsonl) carries the
-  user's message token, the next main turn does not. Fork turns ARE tap-visible (same
-  session-id as main); `driver/session.mjs` reads the structured transcripts for
-  convenience, not because tap is blind.
-
 ## Conventions
 
 - One experiment = one `cases/<name>.case.mjs`, self-executing, prints its run dir.
 - Analysis is NOT code: the parent Claude reads the trace DB via `driver/tap.mjs`
-  and writes findings
-  to `reports/<name>.md`. Driver stays a thin primitive API
+  and writes findings to `reports/<name>.md`. **Experiment conclusions live ONLY in
+  `reports/` — never copy findings into this file; AGENT.md holds development
+  principles (architecture, conventions, pitfalls) only.** Driver stays a thin
+  primitive API
   (`send` / `key` / `waitOutput` / `waitIdle` / `ready` / `close`); `ready()` clears
   the startup gate dialogs (folder-trust, external-CLAUDE.md-imports) that appear on
   first launch in a fresh config dir and waits for the input prompt.
