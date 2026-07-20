@@ -1,0 +1,8 @@
+{
+  "thresholds": {
+    "wave0": { "lines": 1000000, "files": 10000 },
+    "wave1": { "lines": 1000000, "files": 10000 }
+  },
+  "docsThreshold": 10000,
+  "codebaseIntervalMin": 52560000
+}
