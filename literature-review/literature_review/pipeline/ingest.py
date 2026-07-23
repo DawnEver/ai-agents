@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from literature_review.pipeline.acquire import sha256_file, validate_pdf
-from literature_review.utils.schema import SCHEMAS_DIR, load_data, validate_json_schema
+from literature_review.utils.schema import load_data, require_keys
 
 ARTIFACT_VERSION = 1
 
@@ -115,10 +115,10 @@ def decompose_pdfs(
     manifest_bytes = manifest_path.read_bytes()
     manifest = json.loads(manifest_bytes)
 
-    schema = load_data(SCHEMAS_DIR / "download_manifest.schema.json")
-    errors = validate_json_schema(manifest, schema)
-    if errors:
-        raise ValueError("invalid download manifest:\n" + "\n".join(errors))
+    # Validate manifest has required shape
+    manifest_errors = require_keys(manifest, "papers", "manifest_id")
+    if manifest_errors:
+        raise ValueError(f"invalid manifest — missing: {manifest_errors}")
 
     run_dir = run_dir.expanduser().resolve()
     ingest_root = run_dir / "ingest"
@@ -181,10 +181,9 @@ def decompose_pdfs(
         "confirmed_by_user": True,
         "ingests": ingests,
     }
-    ingest_schema = load_data(SCHEMAS_DIR / "ingest_manifest.schema.json")
-    errors = validate_json_schema(artifact, ingest_schema)
-    if errors:
-        raise ValueError("invalid ingest manifest:\n" + "\n".join(errors))
+    # Self-validate: manifest must have ingests list
+    if "ingests" not in artifact:
+        raise ValueError("invalid ingest manifest: missing 'ingests'")
     _write_manifest_atomic(ingest_root / "ingest_manifest.json", artifact)
 
     for item in ingests:

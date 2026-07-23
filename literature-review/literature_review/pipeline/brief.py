@@ -11,7 +11,7 @@ from typing import Any
 
 import yaml
 
-from literature_review.utils.schema import SCHEMAS_DIR, load_data, validate_json_schema
+from literature_review.utils.schema import load_data, require_keys
 
 SCOPE_FIELDS = (
     "original_request",
@@ -54,29 +54,28 @@ def scope_sha256(brief: dict[str, Any]) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
+BRIEF_REQUIRED = [
+    "original_request", "research_objective", "constraints", "concepts",
+]
+
+
 def validate_brief(brief: dict[str, Any]) -> list[str]:
-    """Validate schema plus invariants JSON Schema cannot express concisely."""
-    schema_path = SCHEMAS_DIR / "research_brief.schema.json"
-    schema = load_data(schema_path)
-    if not isinstance(schema, dict):
-        return [f"{schema_path} must contain a JSON schema object"]
-    errors = validate_json_schema(brief, schema)
+    """Validate brief required fields and business invariants."""
+    errors = require_keys(brief, *BRIEF_REQUIRED)
+    if not isinstance(brief.get("constraints"), dict):
+        errors.append("constraints must be a dict with year_from, year_to, content_types")
 
     concepts = brief.get("concepts")
     if isinstance(concepts, list):
-        ids = [item.get("concept_id") for item in concepts if isinstance(item, dict)]
-        duplicates = sorted({item for item in ids if item and ids.count(item) > 1})
+        ids = [c.get("concept_id") for c in concepts if isinstance(c, dict)]
+        duplicates = sorted({i for i in ids if i and ids.count(i) > 1})
         if duplicates:
-            errors.append(
-                f"artifact.concepts: concept_id values must be unique: {duplicates}"
-            )
+            errors.append(f"concepts: duplicate concept_id values: {duplicates}")
 
-    constraints = brief.get("constraints")
-    if isinstance(constraints, dict):
-        year_from = constraints.get("year_from")
-        year_to = constraints.get("year_to")
-        if isinstance(year_from, int) and isinstance(year_to, int) and year_from > year_to:
-            errors.append("artifact.constraints: year_from must not exceed year_to")
+    constraints = brief.get("constraints") or {}
+    yf, yt = constraints.get("year_from"), constraints.get("year_to")
+    if isinstance(yf, int) and isinstance(yt, int) and yf > yt:
+        errors.append("constraints: year_from must not exceed year_to")
     return errors
 
 

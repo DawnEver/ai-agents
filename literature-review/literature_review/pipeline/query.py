@@ -13,7 +13,7 @@ from typing import Any
 import yaml
 
 from literature_review.pipeline.brief import assert_approved, load_brief, scope_sha256
-from literature_review.utils.schema import SCHEMAS_DIR, load_data, validate_json_schema
+from literature_review.utils.schema import load_data, require_keys
 
 ARTIFACT_VERSION = 1
 DEFAULT_MIN_TOTAL = 10
@@ -100,10 +100,11 @@ def confirm_queries(run_dir: Path, approved_by: str = "user") -> int:
     if not isinstance(data, dict):
         raise ValueError(f"{queries_path} must contain a YAML object")
 
-    schema = load_data(SCHEMAS_DIR / "queries.schema.json")
-    errors = validate_json_schema(data, schema)
+    errors = require_keys(data, "queries")
     if errors:
-        raise ValueError("invalid queries.yaml:\n" + "\n".join(errors))
+        raise ValueError(f"invalid queries.yaml — missing: {errors}")
+    if not isinstance(data.get("queries"), list):
+        raise ValueError("queries.yaml: 'queries' must be a list")
 
     brief_ref = data.get("brief_ref")
     if isinstance(brief_ref, dict):

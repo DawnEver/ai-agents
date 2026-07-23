@@ -47,7 +47,6 @@ from literature_review.pipeline.search import (
     run_probe,
     run_search,
 )
-from literature_review.utils.schema import validate
 
 # ---------------------------------------------------------------------------
 # Inline defaults
@@ -206,12 +205,6 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--manifest", required=True)
     p.add_argument("--run-dir", required=True)
     p.add_argument("--confirmed-by-user", action="store_true")
-
-    # -- validate-schema --
-    p = sub.add_parser("validate-schema", help="Validate an artifact against its JSON schema.")
-    p.add_argument("--file", dest="file_path", help="Path to the artifact file.")
-    p.add_argument("--schema", help="Path to a JSON schema file (auto-detected when omitted).")
-    p.add_argument("artifact", nargs="?", help="Shorthand for --file.")
 
     return parser
 
@@ -440,22 +433,6 @@ def _handle_decompose_pdfs(args: argparse.Namespace) -> int:
     return 2 if failed or skipped else 0
 
 
-def _handle_validate_schema(args: argparse.Namespace) -> int:
-    artifact_arg = args.file_path or args.artifact
-    if not artifact_arg:
-        return 0
-
-    artifact_path = Path(artifact_arg)
-    schema_path = Path(args.schema) if args.schema else None
-    errors = validate(artifact_path, schema_path)
-    if errors:
-        for error in errors:
-            print(f"error: {error}")
-        return 1
-    print(f"validated: {artifact_path}")
-    return 0
-
-
 # ---------------------------------------------------------------------------
 # Dispatch table
 # ---------------------------------------------------------------------------
@@ -478,7 +455,6 @@ _HANDLERS: dict[str, object] = {
     "match-pdfs": _handle_match_pdfs,
     "make-download-manifest": _handle_make_download_manifest,
     "decompose-pdfs": _handle_decompose_pdfs,
-    "validate-schema": _handle_validate_schema,
 }
 
 

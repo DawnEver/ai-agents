@@ -9,8 +9,8 @@ Claude Code agent for systematic literature reviews — discover, screen, acquir
 git clone <this-repo-url>
 cd literature-review
 
-# 2. Install Python dependencies (includes paper_pdf_ingest from GitHub)
-pip install -r requirements.txt
+# 2. Install in editable mode
+pip install -e .
 
 # 3. Install Playwright browser binaries (required for IEEE search + PDF acquisition)
 python -m playwright install chromium
@@ -41,3 +41,11 @@ python -m playwright install chromium
 | 9 | `09-zotero.md` | Zotero bridge bidirectional sync (Phase 3) |
 
 **Core principle**: Brief before query. Query before search. Gate before acquire. Ingest requires explicit confirm. No opinion without reading the paper.
+
+## References
+
+This project builds on and integrates ideas from:
+
+- [github.com/FENGSY1/_literture_review](https://github.com/FENGSY1/_literture_review) — Original IEEE literature scout prototype, approval-gate pattern, SHA-256 provenance chain
+- [github.com/DawnEver/review-agent](https://github.com/DawnEver/review-agent) — AI-powered batch literature review: PDF extraction → litellm → structured CSV output
+- [github.com/DawnEver/paper_pdf_ingest](https://github.com/DawnEver/paper_pdf_ingest) — PDF-to-markdown decomposition engine used by the ingest step
