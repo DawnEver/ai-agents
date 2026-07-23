@@ -9,15 +9,11 @@ Claude Code agent for reviewing academic papers. Ingest a PDF, profile the liter
 git clone https://github.com/DawnEver/manuscript-review.git
 cd manuscript-review
 
-# 2. Clone the ingest library
-git clone https://github.com/DawnEver/paper_pdf_ingest.git
-
-# 3. Create shared venv and install the library
-python -m venv ~/.local/share/manuscript-review-venv
-~/.local/share/manuscript-review-venv/bin/pip install -e paper_pdf_ingest/
+# 2. Install Python dependencies (includes paper_pdf_ingest from GitHub)
+pip install -r requirements.txt
 ```
 
-The pipeline's ingest step calls `scripts/ingest.py`, which delegates to `paper_pdf_ingest`.
+The pipeline's ingest step calls `scripts/ingest.py`, which delegates to the installed `paper_pdf_ingest` package.
 
 ## Commands
 
@@ -71,7 +67,7 @@ style/profile.md        — synthesised voice + 10-sample rolling window (gitign
 critiques-library/      — deduped angle library (gitignored)
 templates/              — literature-template, critiques-template, summary-template,
                           default-angles, reviewer-voice, polish-checklist, ingest-errors
-paper_pdf_ingest/       — standalone git repo: PDF→markdown library (install with pip install -e)
+requirements.txt        — Python deps (paper_pdf_ingest installed via git)
 ```
 
 ## Design notes

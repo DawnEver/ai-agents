@@ -1,0 +1,28 @@
+# Runtime artifacts (like manuscript-review's ongoing/archived)
+workspaces/
+
+# External dependency
+paper_pdf_ingest/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+
+# Browser profiles (must live outside repo)
+.browser_profiles/
+
+# PDFs
+*.pdf
+
+# Lenses (user data, keep template only)
+lenses/*
+!lenses/_template.yaml
+
+# Temp
+.tmp/
+
+# OS
+Thumbs.db
+Desktop.ini

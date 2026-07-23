@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:literature-review:download_manifest",
+  "title": "Literature Review Download Manifest",
+  "type": "object",
+  "required": [
+    "artifact_version",
+    "manifest_type",
+    "generated_at",
+    "papers"
+  ],
+  "properties": {
+    "artifact_version": {
+      "$ref": "urn:literature-review:_common#/$defs/artifactVersion"
+    },
+    "manifest_type": {
+      "const": "download_manifest"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "approved_brief_sha256": {
+      "$ref": "urn:literature-review:_common#/$defs/sha256Hash"
+    },
+    "papers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "candidate_id",
+          "title",
+          "pdf_path",
+          "sha256"
+        ],
+        "properties": {
+          "candidate_id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "doi": { "type": "string" },
+          "article_number": { "type": "string" },
+          "provider": {
+            "$ref": "urn:literature-review:_common#/$defs/provider"
+          },
+          "pdf_path": { "type": "string", "minLength": 1 },
+          "pdf_bytes": { "type": "integer", "minimum": 0 },
+          "sha256": {
+            "$ref": "urn:literature-review:_common#/$defs/sha256Hash"
+          },
+          "acquisition_method": { "type": "string", "minLength": 1 },
+          "acquired_at": { "type": "string", "format": "date-time" },
+          "screening_reason": { "type": "string" },
+          "reading_questions": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

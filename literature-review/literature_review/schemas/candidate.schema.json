@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:literature-review:candidate",
+  "title": "Literature Review Candidate",
+  "type": "object",
+  "required": [
+    "candidate_id",
+    "title",
+    "source_provider"
+  ],
+  "properties": {
+    "candidate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_provider": {
+      "$ref": "urn:literature-review:_common#/$defs/provider"
+    },
+    "doi": {
+      "type": "string"
+    },
+    "authors": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "venue": {
+      "type": "string"
+    },
+    "volume": {
+      "type": ["string", "integer"]
+    },
+    "issue": {
+      "type": ["string", "integer"]
+    },
+    "pages": {
+      "type": "string"
+    },
+    "publication_year": {
+      "type": "integer",
+      "minimum": 1900
+    },
+    "content_type": {
+      "$ref": "urn:literature-review:_common#/$defs/contentType"
+    },
+    "abstract": {
+      "type": "string"
+    },
+    "keywords": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "citation_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "html_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "pdf_url": {
+      "type": "string",
+      "format": "uri"
+    },
+    "query_id": {
+      "type": "string"
+    },
+    "page": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "rank": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "search_expression": {
+      "type": "string"
+    },
+    "artifact_version": {
+      "$ref": "urn:literature-review:_common#/$defs/artifactVersion"
+    },
+    "provider_raw": {
+      "type": "object",
+      "properties": {
+        "article_number": { "type": "string" },
+        "arxiv_id": { "type": "string" },
+        "semantic_scholar_id": { "type": "string" },
+        "crossref_id": { "type": "string" }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

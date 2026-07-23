@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:literature-review:workspace",
+  "title": "Literature Review Workspace",
+  "type": "object",
+  "required": ["workspace_id", "name"],
+  "properties": {
+    "workspace_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "zotero": {
+      "type": "object",
+      "properties": {
+        "collection_key": { "type": "string" },
+        "group_id": { "type": "string" },
+        "sync_notes": { "type": "boolean" },
+        "sync_attachments": { "type": "boolean" },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "defaults": {
+      "type": "object",
+      "properties": {
+        "year_from": { "type": "integer", "minimum": 1900 },
+        "year_to": { "type": "integer", "minimum": 1900 },
+        "content_types": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "preferred_venues": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "lenses": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "providers": {
+      "type": "array",
+      "items": { "$ref": "urn:literature-review:_common#/$defs/provider" },
+      "uniqueItems": true
+    },
+    "subtopics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path"],
+        "properties": {
+          "path": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "pdf_store": {
+      "type": "object",
+      "properties": {
+        "base_path": { "type": "string", "minLength": 1 },
+        "pattern": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "parent": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:literature-review:paper_card",
+  "title": "Literature Review Paper Card (Phase 2)",
+  "type": "object",
+  "required": [
+    "candidate_id",
+    "title",
+    "verdict",
+    "confidence",
+    "one_sentence",
+    "technical_core",
+    "evidence",
+    "limitations",
+    "research_use"
+  ],
+  "properties": {
+    "candidate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["deep-read", "targeted-read", "archive"]
+    },
+    "confidence": {
+      "$ref": "urn:literature-review:_common#/$defs/confidence"
+    },
+    "one_sentence": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Single-sentence summary of the paper's contribution"
+    },
+    "technical_core": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1,
+      "description": "Key technical concepts, methods, or findings"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["claim", "source", "locator"],
+        "properties": {
+          "claim": { "type": "string", "minLength": 1 },
+          "source": { "type": "string", "minLength": 1 },
+          "locator": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      },
+      "description": "Evidence table mapping claims to sources and page/figure locators"
+    },
+    "limitations": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Identified limitations of the paper"
+    },
+    "research_use": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "note"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "adapt",
+              "compare",
+              "baseline",
+              "cite",
+              "discard",
+              "background",
+              "method_ref",
+              "gap_identify"
+            ]
+          },
+          "note": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      },
+      "description": "How this paper will be used in the literature review"
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Concrete next step based on this paper"
+    },
+    "open_questions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Questions that remain unclear after reading"
+    }
+  },
+  "additionalProperties": false
+}

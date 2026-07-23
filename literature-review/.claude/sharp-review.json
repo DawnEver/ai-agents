@@ -1,0 +1,6 @@
+{
+  "thresholds": {
+    "wave0": { "lines": 1000, "files": 15 },
+    "wave1": { "lines": 3000, "files": 40 }
+  }
+}

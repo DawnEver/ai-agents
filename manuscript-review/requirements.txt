@@ -1,0 +1,1 @@
+paper_pdf_ingest @ git+https://github.com/DawnEver/paper_pdf_ingest.git

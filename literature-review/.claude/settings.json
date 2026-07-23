@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Read(*/literature-review/**)",
+      "Write(*/literature-review/workspaces/**)",
+      "Write(*/literature-review/.claude/**)",
+      "Write(*/literature-review/templates/**)",
+      "Glob(*/literature-review/**)",
+      "Grep(*/literature-review/**)"
+    ]
+  }
+}

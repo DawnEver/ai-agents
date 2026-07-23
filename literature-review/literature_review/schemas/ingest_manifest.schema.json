@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:literature-review:ingest_manifest",
+  "title": "Literature Review Ingest Manifest",
+  "type": "object",
+  "required": [
+    "artifact_version",
+    "manifest_type",
+    "generated_at",
+    "source_manifest",
+    "source_manifest_sha256",
+    "ingests"
+  ],
+  "properties": {
+    "artifact_version": {
+      "$ref": "urn:literature-review:_common#/$defs/artifactVersion"
+    },
+    "manifest_type": { "const": "ingest_manifest" },
+    "generated_at": { "type": "string", "format": "date-time" },
+    "source_manifest": { "type": "string", "minLength": 1 },
+    "source_manifest_sha256": {
+      "$ref": "urn:literature-review:_common#/$defs/sha256Hash"
+    },
+    "confirmed_by_user": { "const": true },
+    "ingests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["candidate_id", "pdf_path", "output_path", "status"],
+        "properties": {
+          "candidate_id": { "type": "string", "minLength": 1 },
+          "pdf_path": { "type": "string", "minLength": 1 },
+          "output_path": { "type": "string", "minLength": 1 },
+          "status": {
+            "type": "string",
+            "enum": ["succeeded", "failed", "skipped"]
+          },
+          "error": { "type": "string", "minLength": 1 },
+          "paper_md": { "type": "string", "minLength": 1 },
+          "index_md": { "type": "string", "minLength": 1 },
+          "page_markdown": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "figures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["path", "caption"],
+              "properties": {
+                "path": { "type": "string", "minLength": 1 },
+                "caption": { "type": "string" }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": { "status": { "enum": ["failed", "skipped"] } },
+              "required": ["status"]
+            },
+            "then": { "required": ["error"] }
+          },
+          {
+            "if": {
+              "properties": { "status": { "const": "succeeded" } },
+              "required": ["status"]
+            },
+            "then": { "not": { "required": ["error"] } }
+          }
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

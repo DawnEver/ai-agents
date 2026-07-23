@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:literature-review:_common",
+  "title": "Literature Review Shared Definitions",
+  "$defs": {
+    "artifactVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "sha256Hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "provider": {
+      "type": "string",
+      "enum": ["ieee_xplore", "arxiv", "semantic_scholar", "crossref"]
+    },
+    "contentType": {
+      "type": "string",
+      "enum": ["Journals", "Conferences", "Early Access", "Books", "Standards", "Preprint", "Other"]
+    },
+    "approval": {
+      "type": "object",
+      "required": ["approved", "approved_at", "approved_by"],
+      "properties": {
+        "approved": { "type": "boolean" },
+        "approved_at": { "type": ["string", "null"], "format": "date-time" },
+        "approved_by": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "downloadPriority": {
+      "type": "string",
+      "enum": ["none", "low", "medium", "high"]
+    }
+  }
+}
