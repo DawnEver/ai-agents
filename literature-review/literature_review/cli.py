@@ -10,24 +10,16 @@ from pathlib import Path
 import yaml
 
 from literature_review import __version__
-from literature_review.browser.download import (
+from literature_review.acquire.download import (
     DEFAULT_LIMIT,
     AccessBlockedError,
-    acquire_pdfs,
-)
-from literature_review.browser.login import (
     COMPLETION_MODES,
     DEFAULT_BROWSER_CHANNEL,
     DEFAULT_NETWORK_MODE,
     SUPPORTED_BROWSER_CHANNELS,
     SUPPORTED_NETWORK_MODES,
+    acquire_pdfs,
     open_login,
-)
-from literature_review.pipeline.acquire import (
-    approve_download_queue,
-    match_pdfs,
-    write_download_manifest,
-    write_download_queue,
 )
 from literature_review.pipeline.brief import confirm_brief, load_brief, validate_brief
 from literature_review.pipeline.ingest import decompose_pdfs
@@ -37,11 +29,11 @@ from literature_review.pipeline.query import (
     confirm_queries,
     evaluate_queries,
 )
-from literature_review.pipeline.screen import (
+from literature_review.review.screen import (
     import_agent_screening,
     write_screening_packet,
 )
-from literature_review.pipeline.search import (
+from literature_review.search.engine import (
     get_provider,
     run_dedupe_rank,
     run_probe,

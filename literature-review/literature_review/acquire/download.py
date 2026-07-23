@@ -1,22 +1,95 @@
-"""Download approved PDFs using an authenticated persistent browser profile."""
+"""PDF acquisition — browser login + download for approved candidates."""
 
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
+import re
+import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
-from literature_review.browser.login import (
-    DEFAULT_BROWSER_CHANNEL,
-    DEFAULT_NETWORK_MODE,
-    PROFILE_MARKER,
-    _launch_options,
-    _start_playwright,
-    _validate_dedicated_profile,
-)
-from literature_review.pipeline.acquire import safe_filename, sha256_file, validate_pdf
+# ---------------------------------------------------------------------------
+# Playwright setup (inlined from deleted browser/login.py)
+# ---------------------------------------------------------------------------
+
+DEFAULT_BROWSER_CHANNEL = "chromium"
+DEFAULT_NETWORK_MODE = "direct"
+SUPPORTED_BROWSER_CHANNELS = {"chromium", "chrome"}
+SUPPORTED_NETWORK_MODES = {"direct", "system"}
+COMPLETION_MODES = {"browser-close", "stdin", "none"}
+PROFILE_MARKER = ".lit-review-profile"
+IEEE_HOME = "https://ieeexplore.ieee.org/"
+
+
+def _start_playwright():
+    from playwright.sync_api import sync_playwright
+    return sync_playwright().start()
+
+
+def _launch_options(channel: str = "chromium", network_mode: str = "direct"):
+    opts: dict[str, Any] = {"headless": False}
+    if channel == "chrome":
+        opts["channel"] = "chrome"
+    if network_mode == "direct":
+        opts["args"] = ["--no-proxy-server"]
+    return opts
+
+
+def _validate_dedicated_profile(profile: Path) -> None:
+    marker = profile / PROFILE_MARKER
+    if not marker.is_file() and any(profile.iterdir()):
+        raise ValueError(f"profile exists but is not a recognized browser profile: {profile}")
+
+
+def open_login(profile: Path, url: str = IEEE_HOME, browser_channel: str = "chromium",
+               completion: str = "browser-close", network_mode: str = "direct") -> int:
+    profile.mkdir(parents=True, exist_ok=True)
+    _validate_dedicated_profile(profile)
+    (profile / PROFILE_MARKER).touch()
+    pw = _start_playwright()
+    try:
+        browser = pw.chromium.launch_persistent_context(
+            user_data_dir=str(profile), **_launch_options(browser_channel, network_mode),
+        )
+        page = browser.new_page()
+        page.goto(url)
+        if completion == "stdin":
+            input("Press Enter after login...")
+        elif completion == "browser-close":
+            print("Close the browser window when done.")
+            page.wait_for_event("close", timeout=0)
+        browser.close()
+    finally:
+        pw.stop()
+    print(f"logged-in: {profile}")
+    return 0
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def safe_filename(value: str) -> str:
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", value).strip("_")[:120]
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def validate_pdf(path: Path) -> None:
+    if not path.is_file():
+        raise ValueError(f"PDF does not exist: {path}")
+    with path.open("rb") as f:
+        if f.read(5) != b"%PDF-":
+            raise ValueError(f"invalid PDF signature: {path}")
 
 DEFAULT_LIMIT = 10
 HARD_LIMIT = 20
