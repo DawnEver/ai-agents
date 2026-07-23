@@ -162,7 +162,7 @@ Later rounds had no diff changes, so the profile may be correct, but there is no
 
 ---
 
-### [SR-20260622-012] [INFO] .claude/sharp-review/2026-06-04.md — Sharp-review archive contains cross-project findings (paper-review, ai-post) that belong in the parent repo, not reply-email
+### [SR-20260622-012] [INFO] .claude/sharp-review/2026-06-04.md — Sharp-review archive contains cross-project findings (manuscript-review, ai-post) that belong in the parent repo, not reply-email
 
 - **Category:** Feature
 - **Status:** RESOLVED (2026-06-23)

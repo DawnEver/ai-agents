@@ -1,6 +1,6 @@
 ---
 name: pipeline-upgrade-ongoing-archive-market-research
-description: ai-post pipeline upgraded with paper-review patterns — market research step, ongoing/archive dirs, resume table
+description: ai-post pipeline upgraded with manuscript-review patterns — market research step, ongoing/archive dirs, resume table
 metadata:
   type: project
 ---
@@ -9,9 +9,9 @@ metadata:
 
 ## What Changed
 
-Upgraded the ai-post pipeline following paper-review's mature patterns:
+Upgraded the ai-post pipeline following manuscript-review's mature patterns:
 
-1. **New step 03 — Market Research**: WebSearch for similar repos, trending discussions, existing content coverage, and content gap analysis BEFORE writing analysis. Outputs `market-research.md` that feeds the brief gate. "Market research before analysis" (like paper-review's "literature before consensus").
+1. **New step 03 — Market Research**: WebSearch for similar repos, trending discussions, existing content coverage, and content gap analysis BEFORE writing analysis. Outputs `market-research.md` that feeds the brief gate. "Market research before analysis" (like manuscript-review's "literature before consensus").
 
 2. **Directory restructure**: `articles/<slug>/` → `ongoing/<slug>/` with numbered phases (`1-research/`, `2-draft/`, `3-final/`), then `archived/YYMMDD/<slug>/` on completion. All intermediate files persist on disk (gitignored).
 

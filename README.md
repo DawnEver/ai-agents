@@ -8,5 +8,5 @@ My daily-use Claude Code skills and agents.
 |-----------|---------|
 | `reply-email/` | Draft and archive email replies (`/reply-email`) |
 | `ai-post/` | — |
-| `paper-review/` | Academic paper review pipeline (`/paper-review`) |
+| `manuscript-review/` | Academic paper review pipeline (`/manuscript-review`) |
 | `cc-lab/` | PTY + claude-tap experiment harness for observing Claude Code behavior (see `cc-lab/PLAN.md`) |
