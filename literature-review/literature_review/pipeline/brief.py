@@ -9,9 +9,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
+import rtoml
 
-from literature_review.utils.schema import load_data, require_keys
+from literature_review.utils.schema import dump_data, load_data, require_keys
 
 SCOPE_FIELDS = (
     "original_request",
@@ -108,8 +108,5 @@ def confirm_brief(path: Path, approved_by: str = "user") -> dict[str, Any]:
     if errors:
         raise ValueError("invalid confirmed research brief:\n" + "\n".join(errors))
 
-    path.write_text(
-        yaml.safe_dump(brief, sort_keys=False, allow_unicode=True),
-        encoding="utf-8",
-    )
+    dump_data(brief, path)
     return brief

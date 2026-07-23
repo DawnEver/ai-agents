@@ -10,7 +10,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-from literature_review.ai.client import chat, chat_structured, get_model
 from literature_review.models import Evidence, PaperCard, ResearchBrief, ResearchUse
 
 
@@ -93,6 +92,8 @@ def review_paper(
     Returns:
         PaperCard with structured review output.
     """
+    from literature_review.ai.client import chat_structured
+
     model_key = model_spec or "gemini-2.5-flash"
     prompt = _build_user_prompt(paper_text, brief)
     raw = chat_structured(model_key, system=_SYSTEM_PROMPT, prompt=prompt)

@@ -7,7 +7,7 @@ import json
 import sys
 from pathlib import Path
 
-import yaml
+import rtoml
 
 from literature_review import __version__
 from literature_review.acquire.download import (
@@ -217,7 +217,7 @@ def _handle_validate_brief(args: argparse.Namespace) -> int:
             return 2
         print(f"valid: {brief_path}")
         return 0
-    except (OSError, ValueError, yaml.YAMLError) as error:
+    except (OSError, ValueError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
 
@@ -227,7 +227,7 @@ def _handle_confirm_brief(args: argparse.Namespace) -> int:
         confirm_brief(Path(args.run_dir) / "research_brief.yaml", args.approved_by)
         print(f"confirmed: {Path(args.run_dir) / 'research_brief.yaml'}")
         return 0
-    except (OSError, ValueError, yaml.YAMLError) as error:
+    except (OSError, ValueError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
 
@@ -235,7 +235,7 @@ def _handle_confirm_brief(args: argparse.Namespace) -> int:
 def _handle_confirm_queries(args: argparse.Namespace) -> int:
     try:
         return confirm_queries(Path(args.run_dir), args.approved_by)
-    except (OSError, ValueError, yaml.YAMLError) as error:
+    except (OSError, ValueError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
 

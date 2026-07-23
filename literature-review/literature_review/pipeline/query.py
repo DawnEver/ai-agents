@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
+import rtoml
 
 from literature_review.pipeline.brief import assert_approved, load_brief, scope_sha256
 from literature_review.utils.schema import load_data, require_keys
@@ -70,7 +70,7 @@ def require_approved_plan(plan: dict[str, Any], queries_path: Path | None = None
     if queries_path is None:
         raise ValueError("queries path is required to validate the approved research brief")
 
-    relative = str(brief_ref.get("path") or "research_brief.yaml")
+    relative = str(brief_ref.get("path") or "research_brief.toml")
     brief_path = (queries_path.resolve().parent / relative).resolve()
     try:
         brief_path.relative_to(queries_path.resolve().parent)
@@ -91,8 +91,8 @@ def require_approved_plan(plan: dict[str, Any], queries_path: Path | None = None
 
 
 def confirm_queries(run_dir: Path, approved_by: str = "user") -> int:
-    """Validate and approve a queries.yaml plan against its research brief."""
-    queries_path = run_dir / "queries.yaml"
+    """Validate and approve a queries.toml plan against its research brief."""
+    queries_path = run_dir / "queries.toml"
     if not queries_path.exists():
         raise FileNotFoundError(f"{queries_path} does not exist")
 
@@ -108,7 +108,7 @@ def confirm_queries(run_dir: Path, approved_by: str = "user") -> int:
 
     brief_ref = data.get("brief_ref")
     if isinstance(brief_ref, dict):
-        brief_path = run_dir / str(brief_ref.get("path") or "research_brief.yaml")
+        brief_path = run_dir / str(brief_ref.get("path") or "research_brief.toml")
         brief = load_brief(brief_path)
         assert_approved(brief)
         current_scope = scope_sha256(brief)
@@ -137,7 +137,7 @@ def confirm_queries(run_dir: Path, approved_by: str = "user") -> int:
         "queries_sha256": query_plan_sha256(data),
     }
     queries_path.write_text(
-        yaml.safe_dump(data, sort_keys=False, allow_unicode=True), encoding="utf-8"
+        rtoml.dumps(data), encoding="utf-8"
     )
     return 0
 
@@ -280,5 +280,5 @@ def _write_evaluation_artifact(
         "thresholds": {"min_total": min_total, "max_total": max_total},
         "suggestions": evaluations,
     }
-    with (out_dir / "query_refinement_suggestions.yaml").open("w", encoding="utf-8") as handle:
-        yaml.safe_dump(artifact, handle, sort_keys=False, allow_unicode=False)
+    with (out_dir / "query_refinement_suggestions.toml").open("w", encoding="utf-8") as handle:
+        rtoml.dump(artifact, handle)

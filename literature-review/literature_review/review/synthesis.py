@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from literature_review.ai.client import chat_structured
 from literature_review.models import PaperCard
 
 _SYNTHESIS_SYSTEM = """\
@@ -41,6 +40,7 @@ def compare_papers(cards: list[PaperCard], model_spec: str | None = None) -> str
 
     prompt = "## Paper Summaries\n\n" + "\n\n".join(summaries)
     model_key = model_spec or "gemini-2.5-flash"
+    from literature_review.ai.client import chat_structured
     result = chat_structured(model_key, system=_SYNTHESIS_SYSTEM, prompt=prompt)
     return result or "Synthesis failed."
 

@@ -70,6 +70,16 @@ def get_model(key: str) -> ModelSpec:
 # Chat interface (from ReviewAgent ai_chat_response.py)
 # ---------------------------------------------------------------------------
 
+def _ensure_litellm():
+    """Lazy-import litellm; raise a helpful error if not installed."""
+    try:
+        from litellm import completion  # noqa: F401
+    except ImportError:
+        raise ImportError(
+            "litellm is required for AI features. Install with: pip install literature-review[ai]"
+        ) from None
+
+
 def chat(model: ModelSpec | str, messages: list[dict[str, str]]) -> str | None:
     """Send messages to an LLM via litellm and return assistant text.
 
