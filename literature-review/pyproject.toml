@@ -10,7 +10,6 @@ requires-python = ">=3.12"
 dependencies = [
     "rtoml>=0.11",
     "playwright>=1.61",
-    "pypdf>=6.14",
     "paper-pdf-ingest @ git+https://github.com/DawnEver/paper_pdf_ingest.git",
 ]
 

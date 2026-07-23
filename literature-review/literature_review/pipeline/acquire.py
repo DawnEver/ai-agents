@@ -257,9 +257,13 @@ def _pdf_search_text(path: Path) -> str:
     raw = path.read_bytes()
     chunks = [raw[:250_000].decode("latin-1", errors="ignore")]
     try:
-        from pypdf import PdfReader
-        reader = PdfReader(path)
-        chunks.extend((page.extract_text() or "") for page in reader.pages[:2])
+        import fitz  # pymupdf — provided by paper_pdf_ingest
+        doc = fitz.open(str(path))
+        try:
+            for page in doc[:2]:
+                chunks.append(page.get_text())
+        finally:
+            doc.close()
     except Exception:
         pass
     return "\n".join(chunks).lower()

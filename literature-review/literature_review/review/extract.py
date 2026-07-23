@@ -8,8 +8,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from PyPDF2 import PdfReader
-from PyPDF2.errors import PdfReadError
+import fitz  # pymupdf — provided by paper_pdf_ingest
 
 # Canonical section headers in academic papers, ordered by typical appearance.
 _SECTION_PATTERNS = [
@@ -25,17 +24,14 @@ _SECTION_PATTERNS = [
 
 
 def extract_text_from_pdf(pdf_path: Path) -> str:
-    """Extract all textual content from a PDF file using PyPDF2."""
-    text_parts: list[str] = []
+    """Extract all textual content from a PDF using pymupdf."""
     try:
-        with Path(pdf_path).open("rb") as fh:
-            reader = PdfReader(fh)
-            for page in reader.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text_parts.append(page_text)
-        return "\n".join(text_parts)
-    except (PdfReadError, OSError):
+        doc = fitz.open(str(pdf_path))
+        try:
+            return "\n".join(page.get_text() for page in doc)
+        finally:
+            doc.close()
+    except Exception:
         return ""
 
 
