@@ -16,9 +16,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from literature_review.utils.state import mark_step
+
+if TYPE_CHECKING:
+    from literature_review.models import PaperCard
 
 
 # ---------------------------------------------------------------------------
@@ -525,10 +528,6 @@ def run_synthesize(
     """
     from literature_review.review.synthesis import compare_papers
 
-    reading_dir = topic_dir / "reading"
-    if not reading_dir.exists():
-        raise FileNotFoundError(f"No reading directory: {reading_dir}. Deep-read papers first.")
-
     cards = _load_cards(topic_dir, paper_ids)
     if not cards:
         raise ValueError("No paper cards found. Deep-read some papers first.")
@@ -546,12 +545,12 @@ def run_synthesize(
 # 6. Export & stats (wires orphaned render + plot)
 # ---------------------------------------------------------------------------
 
-def _load_cards(topic_dir: Path, paper_ids: list[str] | None = None) -> list[Any]:
+def _load_cards(topic_dir: Path, paper_ids: list[str] | None = None) -> list[PaperCard]:
     """Load PaperCards from reading/*.json as fully typed dataclasses."""
     from literature_review.models import PaperCard
 
     reading_dir = topic_dir / "reading"
-    cards: list[Any] = []
+    cards: list[PaperCard] = []
     if not reading_dir.exists():
         return cards
     for card_path in sorted(reading_dir.glob("*_card.json")):
@@ -717,10 +716,15 @@ def run_stats(
         try:
             from literature_review.export.plot import plot_year_distribution, plot_venue_distribution
             from literature_review.models import Candidate
-            candidates = [
-                Candidate.from_dict({"candidate_id": "", "source_provider": "", "title": "", **c})
-                for c in _read_jsonl(ranked_path)
-            ]
+            candidates = []
+            skipped_rows = 0
+            for c in _read_jsonl(ranked_path):
+                try:
+                    candidates.append(Candidate.from_dict(c))
+                except (ValueError, TypeError):
+                    skipped_rows += 1
+            if skipped_rows:
+                stats["plot_rows_skipped"] = skipped_rows
             plot_dir = _ensure(topic_dir / "export" / "plots")
             plot_year_distribution(candidates, plot_dir / "year_distribution.png")
             plot_venue_distribution(candidates, plot_dir / "venue_distribution.png")

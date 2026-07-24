@@ -23,10 +23,11 @@ from literature_review.providers.base import (
     ProbeResult,
     ProviderError,
     SearchResult,
+    polite_user_agent,
 )
 
 BASE_URL = "https://dblp.org/search/publ/api"
-USER_AGENT = "LiteratureReview/1.0 (mailto:research@example.com)"
+USER_AGENT = polite_user_agent()
 
 # DBLP venue type mapping — used to classify content_type
 VENUE_PATTERNS: dict[str, str] = {

@@ -20,10 +20,11 @@ from literature_review.providers.base import (
     ProbeResult,
     ProviderError,
     SearchResult,
+    polite_user_agent,
 )
 
 BASE_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
-USER_AGENT = "LiteratureReview/1.0 (mailto:research@example.com)"
+USER_AGENT = polite_user_agent()
 
 # Fields to request from the API — keep lean for performance
 SEARCH_FIELDS = "title,abstract,year,authors,venue,citationCount,externalIds,url,publicationTypes,fieldsOfStudy"

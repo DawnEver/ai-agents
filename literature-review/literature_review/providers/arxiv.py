@@ -23,10 +23,11 @@ from literature_review.providers.base import (
     ProbeResult,
     ProviderError,
     SearchResult,
+    polite_user_agent,
 )
 
 BASE_URL = "http://export.arxiv.org/api/query"
-USER_AGENT = "LiteratureReview/1.0 (mailto:research@example.com)"
+USER_AGENT = polite_user_agent()
 
 # arXiv API namespace
 ARXIV_NS = "http://www.w3.org/2005/Atom"

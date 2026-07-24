@@ -35,6 +35,14 @@ class ProbeResult:
     failure_reason: str | None = None
 
 
+def polite_user_agent() -> str:
+    """User-Agent for API etiquette; set LIT_REVIEW_CONTACT to identify yourself."""
+    import os
+
+    contact = os.environ.get("LIT_REVIEW_CONTACT", "").strip()
+    return f"LiteratureReview/1.0 (mailto:{contact})" if contact else "LiteratureReview/1.0"
+
+
 class ProviderError(RuntimeError):
     """Base error for provider operations."""
 
@@ -65,19 +73,38 @@ class BaseProvider(ABC):
     # Maximum attempts per page in search_paginated (>=1); exponential backoff.
     max_retries: int = 3
 
+    #: HTTP statuses worth retrying (timeouts, rate limits, server errors)
+    _TRANSIENT_STATUSES = frozenset({408, 425, 429, 500, 502, 503, 504})
+
+    @classmethod
+    def _is_transient(cls, error: Exception) -> bool:
+        """Only network-level failures and retryable HTTP statuses qualify.
+
+        Permanent failures (bad API key, malformed query, 4xx other than
+        408/425/429) must fail fast instead of burning backoff sleeps.
+        """
+        status = None
+        response = getattr(error, "response", None)  # requests.HTTPError
+        if response is not None:
+            status = getattr(response, "status_code", None)
+        if isinstance(error, ProviderError):
+            status = error.details.get("status", status)
+        if status is not None:
+            return status in cls._TRANSIENT_STATUSES
+        return isinstance(error, (TimeoutError, ConnectionError))
+
     def _search_with_retries(self, *args: Any, **kwargs: Any) -> SearchResult:
-        """Call :meth:`search` with exponential backoff on transient errors."""
+        """Call :meth:`search`, retrying transient errors with backoff."""
         attempts = max(1, int(self.max_retries))
         base_delay = self.request_delay or 1.0
-        last_error: Exception | None = None
         for attempt in range(attempts):
             try:
                 return self.search(*args, **kwargs)
             except Exception as error:
-                last_error = error
-                if attempt < attempts - 1:
-                    time.sleep(base_delay * (2 ** attempt))
-        raise last_error  # type: ignore[misc]  # attempts >= 1 guarantees it's set
+                if attempt >= attempts - 1 or not self._is_transient(error):
+                    raise
+                time.sleep(base_delay * (2 ** attempt))
+        raise AssertionError("unreachable")
 
     @property
     @abstractmethod

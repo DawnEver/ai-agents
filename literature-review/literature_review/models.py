@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import dataclasses
+import types
 import typing
 from dataclasses import dataclass, field, asdict
+from functools import lru_cache
 from typing import Any, get_args, get_origin, get_type_hints
 
 
@@ -12,11 +14,17 @@ from typing import Any, get_args, get_origin, get_type_hints
 # Serialization base — typed round-trip across JSON boundaries
 # ---------------------------------------------------------------------------
 
+@lru_cache(maxsize=None)
+def _class_hints(cls: type) -> dict[str, Any]:
+    """Resolved type hints per class, cached — from_dict runs per record."""
+    return get_type_hints(cls)
+
+
 def _coerce(tp: Any, value: Any):
     """Coerce a JSON value toward the annotated field type (best effort)."""
     origin = get_origin(tp)
-    if origin in (typing.Union, __import__("types").UnionType):
-        # e.g. int | None — coerce against the first non-None member
+    if origin in (typing.Union, types.UnionType):
+        # Models only use `X | None`; coerce against the sole non-None member
         for arg in get_args(tp):
             if arg is not type(None):
                 return _coerce(arg, value)
@@ -51,12 +59,22 @@ class Serde:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]):
-        hints = get_type_hints(cls)
+        hints = _class_hints(cls)
         kwargs: dict[str, Any] = {}
+        missing: list[str] = []
         for f in dataclasses.fields(cls):  # type: ignore[arg-type]
             if f.name not in data or data[f.name] is None:
-                continue  # let the field default apply
+                # Let the field default apply; required fields have none
+                if (f.default is dataclasses.MISSING
+                        and f.default_factory is dataclasses.MISSING):
+                    missing.append(f.name)
+                continue
             kwargs[f.name] = _coerce(hints.get(f.name, Any), data[f.name])
+        if missing:
+            raise ValueError(
+                f"{cls.__name__}.from_dict: required field(s) missing or null: "
+                + ", ".join(missing)
+            )
         return cls(**kwargs)
 
 
