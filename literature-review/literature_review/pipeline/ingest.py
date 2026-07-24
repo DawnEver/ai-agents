@@ -23,6 +23,15 @@ def _safe_component(value: str, fallback: str) -> str:
     return component[:80] or fallback
 
 
+def ingest_output_dir(topic_dir: Path, candidate_id: str) -> Path:
+    """Canonical decomposition output directory for a candidate.
+
+    Single source of truth for the slug so cache checks and readers agree
+    with what :func:`decompose_pdfs` actually writes (case-folded slug).
+    """
+    return topic_dir / "ingest" / _safe_component(str(candidate_id), "paper")
+
+
 def _validate_ingest_output(output_dir: Path) -> None:
     required = [
         output_dir / "0-raw.pdf",
@@ -106,8 +115,12 @@ def decompose_pdfs(
     manifest_path: Path,
     run_dir: Path,
     confirmed_by_user: bool,
+    candidate_ids: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Decompose every validated PDF only after explicit user confirmation."""
+    """Decompose validated PDFs only after explicit user confirmation.
+
+    When *candidate_ids* is given, only those papers are processed.
+    """
     if not confirmed_by_user:
         raise ValueError("PDF decomposition requires explicit user confirmation")
 
@@ -125,12 +138,17 @@ def decompose_pdfs(
     ingest_root.mkdir(parents=True, exist_ok=True)
 
     ingests: list[dict[str, Any]] = []
-    candidate_ids = [str(p["candidate_id"]) for p in manifest["papers"]]
-    if len(candidate_ids) != len(set(candidate_ids)):
+    all_ids = [str(p["candidate_id"]) for p in manifest["papers"]]
+    if len(all_ids) != len(set(all_ids)):
         raise ValueError("download manifest contains duplicate candidate_id values")
 
+    papers = manifest["papers"]
+    if candidate_ids is not None:
+        wanted = {str(c) for c in candidate_ids}
+        papers = [p for p in papers if str(p["candidate_id"]) in wanted]
+
     used: set[str] = set()
-    for paper in manifest["papers"]:
+    for paper in papers:
         cid = str(paper["candidate_id"])
         slug_name = _safe_component(cid, "paper")
         if slug_name in used:

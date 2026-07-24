@@ -50,7 +50,7 @@ python -m playwright install chromium
 literature_review/           — Python package
   cli.py                     — unified CLI (12 commands)
   models.py                  — all dataclass models
-  providers/                 — literature source adapters (IEEE + abstract base)
+  providers/                 — literature source adapters (IEEE, arXiv, S2, DBLP) + registry
   pipeline/                  — orchestrator + step implementations
   review/                    — screen, reader, synthesis, extract
   search/                    — query engine, dedup
@@ -87,7 +87,10 @@ workspaces/                  — per-topic research contexts
 
 | Provider | Status | Search | PDF Acquire |
 |----------|--------|--------|-------------|
-| IEEE Xplore | Phase 1 | REST API | Playwright (script-first) |
-| arXiv | Planned | Planned | Planned |
-| Semantic Scholar | Planned | N/A (metadata) | N/A |
+| IEEE Xplore | Available | REST API | Playwright (script-first) |
+| arXiv | Available | REST API | Direct PDF |
+| Semantic Scholar | Available | REST API | Open-access PDF when exposed |
+| DBLP | Available | REST API | N/A (metadata) |
 | CrossRef | Planned | N/A (metadata) | N/A |
+
+Multi-provider runs are isolated on disk: probe results under `search/probe/<provider>/`, raw pages under `search/search/raw/<provider>/`, records as `records_<provider>.jsonl`. Aggregated candidates land in `search/all_candidates.jsonl` before dedupe. Set `LIT_REVIEW_ROOT` (or run anywhere inside the project) — the CLI resolves the root holding `workspaces/` automatically.

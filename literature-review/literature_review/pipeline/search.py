@@ -13,17 +13,8 @@ from typing import Any
 from literature_review.providers.base import BaseProvider
 
 
-# ---------------------------------------------------------------------------
-# Provider factory
-# ---------------------------------------------------------------------------
-
-
-def get_provider(name: str) -> BaseProvider:
-    """Return a literature-source provider by name."""
-    if name in ("ieee", "ieee_xplore"):
-        from literature_review.providers.ieee import IeeeXploreProvider
-        return IeeeXploreProvider()
-    raise ValueError(f"unknown provider: {name}")
+# Provider factory lives in the providers package; re-exported for callers.
+from literature_review.providers import get_provider  # noqa: F401
 
 
 # ---------------------------------------------------------------------------
@@ -132,10 +123,13 @@ def run_probe(
     if not enabled:
         raise ValueError("queries.toml does not contain any enabled queries")
 
-    probe_dir = out_dir / "probe"
+    # Namespace per provider so multi-provider runs never overwrite each other.
+    probe_dir = out_dir / "probe" / provider.provider_name
     probe_dir.mkdir(parents=True, exist_ok=True)
 
+    import time as _time
     exit_code = 0
+    req_delay = getattr(provider, "request_delay", None)
     for query in enabled:
         qid = str(query.get("query_id", "")).strip()
         expression = _query_expression(query)
@@ -167,6 +161,8 @@ def run_probe(
                 **result_row, "first_titles": "",
             })
             exit_code = 1
+            if req_delay:
+                _time.sleep(req_delay)
             continue
 
         # Write raw response
@@ -195,6 +191,8 @@ def run_probe(
             **audit_base, "status": "success", "result_count": result.total_count,
         })
         print(f"{qid}: total={result.total_count}; titles={len(result.sample_titles)}")
+        if req_delay:
+            _time.sleep(req_delay)
 
     return exit_code
 
@@ -215,8 +213,12 @@ def run_search(
     allow_unapproved_plan: bool = False,
     evaluation_path: Path | None = None,
     timeout_seconds: int = 30,
-) -> int:
-    """Run bounded full metadata searches for eligible queries."""
+) -> tuple[int, list[dict[str, Any]]]:
+    """Run bounded full metadata searches for eligible queries.
+
+    Returns (exit_code, normalized_records). All on-disk artifacts are
+    namespaced per provider so multi-provider runs cannot collide.
+    """
     from literature_review.pipeline.query import query_plan_sha256, require_approved_plan
     from literature_review.utils.schema import load_data
 
@@ -268,6 +270,7 @@ def run_search(
 
     search_dir = out_dir / "search"
     search_dir.mkdir(parents=True, exist_ok=True)
+    prov_name = provider.provider_name
 
     records_out: list[dict[str, Any]] = []
     audits: list[dict[str, Any]] = []
@@ -303,9 +306,9 @@ def run_search(
                 "failure_reason": result.failure_reason,
             })
 
-            # Write raw response
+            # Write raw response (namespaced per provider)
             if result.raw_response:
-                raw_dir = search_dir / "raw"
+                raw_dir = search_dir / "raw" / prov_name
                 raw_dir.mkdir(parents=True, exist_ok=True)
                 (raw_dir / f"{qid}_page_{result.page_number:03d}.json").write_text(
                     json.dumps(result.raw_response, indent=2, ensure_ascii=True),
@@ -325,6 +328,7 @@ def run_search(
                     record, query_id=qid, rank=rank,
                     page=result.page_number, search_expression=expression,
                 )
+                candidate.setdefault("source_provider", prov_name)
                 candidate.update({
                     "query_purpose": query.get("purpose", ""),
                     "page_position": position,
@@ -332,26 +336,26 @@ def run_search(
                 })
                 records_out.append(candidate)
 
-    # Write output artifacts
+    # Write output artifacts (namespaced per provider)
     if records_out:
-        with (search_dir / "records.jsonl").open("w", encoding="utf-8") as handle:
+        with (search_dir / f"records_{prov_name}.jsonl").open("w", encoding="utf-8") as handle:
             for row in records_out:
                 handle.write(json.dumps(row, ensure_ascii=True) + "\n")
 
-    with (search_dir / "search_audit.log").open("w", encoding="utf-8") as handle:
+    with (search_dir / f"search_audit_{prov_name}.log").open("w", encoding="utf-8") as handle:
         for audit in audits:
             handle.write(json.dumps(audit, ensure_ascii=True) + "\n")
 
     fields = [
-        "candidate_id", "query_id", "page", "page_position",
+        "candidate_id", "source_provider", "query_id", "page", "page_position",
         "result_position", "search_expression", "title", "article_number", "doi",
     ]
-    with (search_dir / "records.csv").open("w", encoding="utf-8", newline="") as handle:
+    with (search_dir / f"records_{prov_name}.csv").open("w", encoding="utf-8", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(records_out)
 
-    return exit_code
+    return exit_code, records_out
 
 
 # ---------------------------------------------------------------------------

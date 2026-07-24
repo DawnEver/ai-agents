@@ -51,7 +51,7 @@ def _write_jsonl(path: Path, rows: list[dict[str, Any]]) -> Path:
 def run_search(
     topic_dir: Path,
     *,
-    provider: str = "ieee",
+    provider: str | list[str] | None = None,
     max_pages: int = 5,
     rows_per_page: int = 25,
     delay_seconds: float = 1.0,
@@ -62,7 +62,8 @@ def run_search(
 
     Args:
         topic_dir: Path to workspaces/<slug>/
-        provider: Provider name (default 'ieee')
+        provider: Provider name(s) (e.g. 'ieee', 'semantic_scholar', or ['ieee', 'arxiv']).
+                  If None, reads providers from workspace.toml. Default 'ieee'.
         max_pages: Maximum pages per query for full search
         probe_only: If True, stop after probe (for query adjustment)
         skip_probe: If True, skip probe and go straight to full search
@@ -76,7 +77,27 @@ def run_search(
     from literature_review.utils.schema import load_data
 
     mark_step(topic_dir, "search", "in_progress")
-    prov: BaseProvider = get_provider(provider)
+
+    # Resolve providers: explicit arg > workspace.toml > default ['ieee']
+    if provider is None:
+        ws_path = topic_dir / "workspace.toml"
+        if ws_path.exists():
+            ws_data = load_data(ws_path)
+            provider = ws_data.get("providers", ["ieee_xplore"])
+        else:
+            provider = ["ieee_xplore"]
+    if isinstance(provider, str):
+        provider = [provider]
+
+    prov_instances: list[BaseProvider] = []
+    for name in provider:
+        try:
+            prov_instances.append(get_provider(name))
+        except ValueError:
+            print(f"  skip unknown provider: {name}")
+
+    if not prov_instances:
+        raise ValueError(f"No valid providers found from: {provider}")
 
     brief_path = topic_dir / "research_brief.toml"
     queries_path = topic_dir / "queries.toml"
@@ -91,19 +112,35 @@ def run_search(
         "candidates_count": 0,
         "screening_packet_path": None,
         "records_path": None,
+        "providers_used": [p.provider_name for p in prov_instances],
+        "failures": [],
     }
 
-    # --- Probe ---
+    def _record_failure(provider_name: str, stage: str, error: Exception) -> None:
+        result["failures"].append({"provider": provider_name, "stage": stage, "error": str(error)})
+        print(f"    {stage} failed [{provider_name}]: {error}")
+
+    # --- Probe (each provider) ---
     if not skip_probe:
         print("=== Probe ===")
         probe_dir = _ensure(search_dir / "probe")
-        _ = run_probe(
-            queries_path=queries_path,
-            out_dir=search_dir,
-            provider=prov,
-            allow_unapproved_plan=True,  # no SHA-256 gate in new architecture
-        )
-        result["probe_results"] = str(probe_dir / "probe_summary.csv")
+        import time as _time
+        for prov in prov_instances:
+            print(f"  Provider: {prov.provider_name}")
+            try:
+                _ = run_probe(
+                    queries_path=queries_path,
+                    out_dir=search_dir,
+                    provider=prov,
+                    allow_unapproved_plan=True,
+                )
+            except Exception as exc:
+                _record_failure(prov.provider_name, "probe", exc)
+            # Respect provider's rate limit delay
+            delay = getattr(prov, "request_delay", None)
+            if delay:
+                _time.sleep(delay * 0.5)  # per-query delay already inside run_probe
+        result["probe_results"] = str(probe_dir)
 
         if probe_only:
             mark_step(topic_dir, "search", "probed",
@@ -111,86 +148,52 @@ def run_search(
                       probe_results=result["probe_results"])
             return result
 
-        # Evaluate probe results
+        # Evaluate probe results per provider (advisory; probe files are
+        # namespaced under probe/<provider>/ so they never overwrite each other)
         from literature_review.pipeline.query import evaluate_queries
-        evaluate_queries(
-            queries_path=queries_path,
-            probe_results_path=probe_dir,
-            out_dir=search_dir / "evaluation",
-        )
+        for prov in prov_instances:
+            probe_results_file = probe_dir / prov.provider_name / "probe_results.jsonl"
+            if not probe_results_file.exists():
+                continue
+            try:
+                evaluate_queries(
+                    queries_path=queries_path,
+                    probe_results_path=probe_results_file,
+                    out_dir=search_dir / "evaluation" / prov.provider_name,
+                )
+            except Exception as exc:
+                _record_failure(prov.provider_name, "evaluate", exc)
 
-    # --- Full search ---
+    # --- Full search (each provider; normalized records returned in memory) ---
     print("=== Full Search ===")
-    queries_search_dir = _ensure(search_dir / "queries")
-    _run_search(
-        queries_path=queries_path,
-        out_dir=search_dir,
-        provider=prov,
-        max_pages=max_pages,
-        rows_per_page=rows_per_page,
-        delay_seconds=delay_seconds,
-        allow_unapproved_plan=True,
-        evaluation_path=search_dir / "evaluation" / "query_refinement_suggestions.toml" if not skip_probe else None,
-    )
-
-    # --- Normalize candidates ---
-    print("=== Normalize ===")
-    plan = load_data(queries_path)
-    query_list = plan.get("queries", []) if isinstance(plan, dict) else []
     all_candidates: list[dict[str, Any]] = []
 
-    for query in query_list:
-        if not isinstance(query, dict) or not query.get("enabled", True):
-            continue
-        qid = str(query.get("query_id", ""))
-        raw_dir = search_dir / "search" / "raw"
-        if raw_dir.exists():
-            for raw_file in sorted(raw_dir.glob(f"{qid}_page_*.json")):
-                raw_data = json.loads(raw_file.read_text(encoding="utf-8"))
-                records = raw_data.get("records", []) if isinstance(raw_data, dict) else raw_data
-                if not isinstance(records, list):
-                    continue
-                # Extract page number from filename
-                import re
-                page_match = re.search(r"page_(\d+)", raw_file.name)
-                page = int(page_match.group(1)) if page_match else 1
-                for i, record in enumerate(records, 1):
-                    if isinstance(record, dict):
-                        candidate = prov.normalize_record(
-                            record, query_id=qid,
-                            rank=(page - 1) * rows_per_page + i,
-                            page=page, search_expression=str(query.get("expression", "")),
-                        )
-                        all_candidates.append(candidate)
+    for prov in prov_instances:
+        print(f"  Provider: {prov.provider_name}")
+        try:
+            code, records = _run_search(
+                queries_path=queries_path,
+                out_dir=search_dir,
+                provider=prov,
+                max_pages=max_pages,
+                rows_per_page=rows_per_page,
+                delay_seconds=delay_seconds,
+                allow_unapproved_plan=True,
+            )
+            if code != 0:
+                _record_failure(prov.provider_name, "search",
+                                RuntimeError("one or more queries failed (see audit log)"))
+            all_candidates.extend(records)
+        except Exception as exc:
+            _record_failure(prov.provider_name, "search", exc)
 
-        # Also check per-query normalized files
-        norm_dir = queries_search_dir / qid
-        if norm_dir.exists():
-            for nf in norm_dir.glob("normalized_*.jsonl"):
-                all_candidates.extend(_read_jsonl(nf))
-
-    if all_candidates:
-        _write_jsonl(search_dir / "queries" / "all_candidates.jsonl", all_candidates)
+    all_cand_path = search_dir / "all_candidates.jsonl"
+    _write_jsonl(all_cand_path, all_candidates)
 
     # --- Deduplicate & rank ---
     print("=== Deduplicate & Rank ===")
-    input_paths = []
-    all_cand_path = search_dir / "queries" / "all_candidates.jsonl"
-    if all_cand_path.exists():
-        input_paths.append(all_cand_path)
-    # Also collect from per-query directories
-    for qdir in queries_search_dir.iterdir():
-        if qdir.is_dir():
-            for nf in qdir.glob("normalized_*.jsonl"):
-                input_paths.append(nf)
-
-    if input_paths:
-        run_dedupe_rank(input_paths, search_dir)
-    else:
-        # Fallback: use records.jsonl from full search
-        records_path = search_dir / "search" / "records.jsonl"
-        if records_path.exists():
-            run_dedupe_rank([records_path], search_dir)
+    if all_candidates:
+        run_dedupe_rank([all_cand_path], search_dir)
 
     result["records_path"] = str(search_dir / "candidates_ranked.jsonl")
     result["candidates_count"] = len(_read_jsonl(search_dir / "candidates_ranked.jsonl"))
@@ -205,7 +208,9 @@ def run_search(
 
     mark_step(topic_dir, "search", "done",
               candidates_count=result["candidates_count"],
-              screening_packet_path=result["screening_packet_path"])
+              screening_packet_path=result["screening_packet_path"],
+              providers_used=result["providers_used"],
+              failures=result["failures"])
 
     return result
 
@@ -338,12 +343,12 @@ def run_ingest(
     Returns:
         Dict with keys: succeeded, failed, skipped, pending
     """
-    from literature_review.pipeline.ingest import decompose_pdfs
+    from literature_review.pipeline import ingest as ingest_mod
 
     mark_step(topic_dir, "ingest", "in_progress")
 
     manifest_path = topic_dir / "handoff" / "download_manifest.json"
-    ingest_dir = _ensure(topic_dir / "ingest")
+    _ensure(topic_dir / "ingest")
 
     if not manifest_path.exists():
         raise FileNotFoundError(f"{manifest_path} not found. Run acquire step first.")
@@ -351,25 +356,27 @@ def run_ingest(
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     papers = manifest.get("papers", [])
 
-    # Check cache
-    succeeded, failed, skipped, pending = [], [], [], []
+    # Check cache (canonical slugged output dir, same as decompose_pdfs writes)
+    cached, not_requested, pending = [], [], []
     for paper in papers:
         cid = str(paper["candidate_id"])
-        output_dir = ingest_dir / cid
+        output_dir = ingest_mod.ingest_output_dir(topic_dir, cid)
         if output_dir.exists() and (output_dir / "1-paper-text" / "paper.md").exists():
-            skipped.append(cid)
+            cached.append(cid)
         elif paper_ids is None or cid in paper_ids:
             pending.append(cid)
         else:
-            skipped.append(cid)  # user didn't request this one
+            not_requested.append(cid)
 
     result = {
-        "succeeded": len(succeeded),
-        "failed": len(failed),
-        "skipped": len(skipped),
+        "succeeded": 0,
+        "failed": 0,
+        "skipped": len(cached) + len(not_requested),
+        "cached": len(cached),
+        "not_requested": len(not_requested),
         "pending": len(pending),
         "pending_ids": pending,
-        "skipped_ids": skipped,
+        "cached_ids": cached,
     }
 
     if dry_run:
@@ -377,13 +384,15 @@ def run_ingest(
         return result
 
     if not pending:
-        print(f"All papers already decomposed ({len(skipped)} cached).")
+        print(f"Nothing to decompose ({len(cached)} cached, {len(not_requested)} not requested).")
         mark_step(topic_dir, "ingest", "done", **result)
         return result
 
-    # Decompose only pending papers
-    print(f"Decomposing {len(pending)} papers ({len(skipped)} cached, skipped)...")
-    artifact = decompose_pdfs(manifest_path, topic_dir, confirmed_by_user=True)
+    # Decompose only the pending papers
+    print(f"Decomposing {len(pending)} papers ({len(cached)} cached, {len(not_requested)} not requested)...")
+    artifact = ingest_mod.decompose_pdfs(
+        manifest_path, topic_dir, confirmed_by_user=True, candidate_ids=pending,
+    )
 
     # Re-count after decomposition
     final_succeeded = sum(1 for i in artifact.get("ingests", []) if i["status"] == "succeeded")
@@ -393,7 +402,7 @@ def run_ingest(
     result.update({
         "succeeded": final_succeeded,
         "failed": final_failed,
-        "skipped": final_skipped + len(skipped),
+        "skipped": final_skipped + len(cached) + len(not_requested),
     })
 
     mark_step(topic_dir, "ingest", "done", **result)
@@ -426,8 +435,9 @@ def run_read(
     from literature_review.review.reader import review_paper
     from literature_review.utils.schema import load_data
 
-    # Load the decomposed paper text
-    ingest_dir = topic_dir / "ingest" / candidate_id
+    # Load the decomposed paper text (canonical slugged dir)
+    from literature_review.pipeline.ingest import ingest_output_dir
+    ingest_dir = ingest_output_dir(topic_dir, candidate_id)
     paper_md = ingest_dir / "1-paper-text" / "paper.md"
     if not paper_md.exists():
         raise FileNotFoundError(f"Paper not decomposed: {paper_md}. Run ingest step first.")
@@ -455,7 +465,8 @@ def run_read(
     # Load lens if specified
     lens_data: dict[str, Any] | None = None
     if lens:
-        lens_path = Path("lenses") / f"{lens}.toml"
+        from literature_review.utils.paths import find_root
+        lens_path = find_root() / "lenses" / f"{lens}.toml"
         if lens_path.exists():
             lens_data = load_data(lens_path)
 
@@ -551,6 +562,55 @@ def run_synthesize(
 # 6. Export & stats (wires orphaned render + plot)
 # ---------------------------------------------------------------------------
 
+_BIBTEX_SPECIALS = {"&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#", "_": r"\_"}
+
+
+def _bibtex_escape(value: Any) -> str:
+    text = str(value or "")
+    text = text.replace("\\", r"\textbackslash{}")
+    for char, repl in _BIBTEX_SPECIALS.items():
+        text = text.replace(char, repl)
+    return text
+
+
+def _candidate_metadata(topic_dir: Path) -> dict[str, dict[str, Any]]:
+    """Index ranked candidates by candidate_id (including merged aliases)."""
+    meta: dict[str, dict[str, Any]] = {}
+    for row in _read_jsonl(topic_dir / "search" / "candidates_ranked.jsonl"):
+        for cid in {str(row.get("candidate_id", "")), *map(str, row.get("merged_candidate_ids", []))}:
+            if cid:
+                meta.setdefault(cid, row)
+    return meta
+
+
+def _bibtex_entry(card: Any, meta: dict[str, Any]) -> str:
+    is_journal = "journal" in str(meta.get("content_type", "")).lower() or not meta.get("content_type")
+    entry_type = "article" if is_journal else "inproceedings"
+    venue_field = "journal" if is_journal else "booktitle"
+
+    key = _re_bib_key(card.candidate_id)
+    fields: list[tuple[str, Any]] = [
+        ("title", card.title or meta.get("title", "")),
+        ("author", " and ".join(meta.get("authors", []))),
+        ("year", meta.get("publication_year", "")),
+        (venue_field, meta.get("venue", "")),
+        ("doi", meta.get("doi", "")),
+        ("note", card.one_sentence),
+    ]
+    lines = [f"@{entry_type}{{{key},"]
+    for name, value in fields:
+        if value:
+            # DOIs must stay verbatim (underscores are legal there)
+            rendered = str(value) if name == "doi" else _bibtex_escape(value)
+            lines.append(f"  {name} = {{{rendered}}},")
+    lines.append("}")
+    return "\n".join(lines)
+
+
+def _re_bib_key(candidate_id: str) -> str:
+    import re
+    return re.sub(r"[^A-Za-z0-9:_-]+", "-", str(candidate_id)).strip("-") or "paper"
+
 def run_export(
     topic_dir: Path,
     *,
@@ -590,13 +650,9 @@ def run_export(
         out.write_text(json.dumps([c.__dict__ for c in cards], indent=2, ensure_ascii=True, default=str), encoding="utf-8")
     elif format == "bibtex":
         out = export_dir / "references.bib"
-        entries = []
-        for card in cards:
-            entries.append(f"@article{{{card.candidate_id},\n"
-                          f"  title = {{{card.title}}},\n"
-                          f"  note = {{{card.one_sentence}}},\n"
-                          f"}}")
-        out.write_text("\n\n".join(entries), encoding="utf-8")
+        meta = _candidate_metadata(topic_dir)
+        entries = [_bibtex_entry(card, meta.get(card.candidate_id, {})) for card in cards]
+        out.write_text("\n\n".join(entries) + "\n", encoding="utf-8")
     else:  # markdown
         from literature_review.export.render import paper_card_to_markdown
         out = export_dir / "papers.md"

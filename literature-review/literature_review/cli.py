@@ -20,7 +20,8 @@ from literature_review.acquire.download import (
     open_login,
 )
 from literature_review.review.screen import import_agent_screening
-from literature_review.search.engine import get_provider, run_dedupe_rank, run_probe
+from literature_review.pipeline.search import get_provider, run_dedupe_rank, run_probe
+from literature_review.utils.paths import find_root
 
 # ---------------------------------------------------------------------------
 # Defaults
@@ -51,7 +52,7 @@ Post-acquisition (choose what you need):
 
 def _topic_dir(slug: str) -> Path:
     """Resolve a topic slug to its workspace directory."""
-    d = Path("workspaces") / slug
+    d = find_root() / "workspaces" / slug
     if not d.exists():
         print(f"error: workspace not found: {d}", file=sys.stderr)
         print("Run: lit-review init <topic>", file=sys.stderr)
@@ -80,7 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
     # === Pipeline: search ===
     p = sub.add_parser("search", help="End-to-end: queries -> probe -> search -> dedupe -> screening packet.")
     p.add_argument("--topic", required=True, help="Topic slug (workspaces/<slug>).")
-    p.add_argument("--provider", default="ieee", help="Literature source provider.")
+    p.add_argument("--provider", action="append", help="Literature source provider (repeatable; default: all from workspace.toml).")
     p.add_argument("--max-pages", type=int, default=5)
     p.add_argument("--rows-per-page", type=int, default=DEFAULT_PAGE_SIZE)
     p.add_argument("--delay", type=float, default=1.0, help="Seconds between pages.")
@@ -162,7 +163,7 @@ def _handle_init(args: argparse.Namespace) -> int:
     from datetime import datetime, timezone
 
     slug = re.sub(r"[^a-z0-9]+", "-", args.topic.lower()).strip("-")
-    ws_dir = Path("workspaces") / slug
+    ws_dir = find_root() / "workspaces" / slug
 
     if ws_dir.exists():
         print(f"Workspace already exists: {ws_dir}")
@@ -178,6 +179,11 @@ def _handle_init(args: argparse.Namespace) -> int:
         f'description = ""\n'
         f'created_at = "{datetime.now(timezone.utc).isoformat()}"\n'
         f'\n'
+        f'lenses = []\n'
+        f'providers = ["ieee_xplore"]\n'
+        f'pdf_store = ""\n'
+        f'parent = ""\n'
+        f'\n'
         f'[zotero]\n'
         f'collection_key = ""\n'
         f'group_id = ""\n'
@@ -190,11 +196,6 @@ def _handle_init(args: argparse.Namespace) -> int:
         f'year_to = 2026\n'
         f'content_types = ["Journals", "Conferences"]\n'
         f'preferred_venues = []\n'
-        f'\n'
-        f'lenses = []\n'
-        f'providers = ["ieee_xplore"]\n'
-        f'pdf_store = ""\n'
-        f'parent = ""\n'
     )
     (ws_dir / "workspace.toml").write_text(toml_content, encoding="utf-8")
     print(f"Created workspace: {ws_dir}")
@@ -207,7 +208,7 @@ def _handle_search(args: argparse.Namespace) -> int:
         from literature_review.pipeline.orchestrator import run_search as do_search
         result = do_search(
             td,
-            provider=args.provider,
+            provider=args.provider if args.provider else None,
             max_pages=args.max_pages,
             rows_per_page=args.rows_per_page,
             delay_seconds=args.delay,
@@ -215,6 +216,11 @@ def _handle_search(args: argparse.Namespace) -> int:
             skip_probe=args.skip_probe,
         )
         print(f"search: candidates={result.get('candidates_count', 0)}")
+        failures = result.get("failures") or []
+        for f in failures:
+            print(f"warning: {f['provider']} {f['stage']} failed: {f['error']}", file=sys.stderr)
+        if failures and not result.get("candidates_count"):
+            return 1
         return 0
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)

@@ -58,6 +58,13 @@ class BaseProvider(ABC):
     interface without knowing provider-specific HTTP details.
     """
 
+    # Override in subclasses to control per-request delays (seconds).
+    # 0 or None means no added delay.
+    request_delay: float | None = None
+
+    # Maximum retries for transient failures (rate limits, network errors).
+    max_retries: int = 3
+
     @property
     @abstractmethod
     def provider_name(self) -> str:
