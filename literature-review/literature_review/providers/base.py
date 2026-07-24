@@ -62,8 +62,22 @@ class BaseProvider(ABC):
     # 0 or None means no added delay.
     request_delay: float | None = None
 
-    # Maximum retries for transient failures (rate limits, network errors).
+    # Maximum attempts per page in search_paginated (>=1); exponential backoff.
     max_retries: int = 3
+
+    def _search_with_retries(self, *args: Any, **kwargs: Any) -> SearchResult:
+        """Call :meth:`search` with exponential backoff on transient errors."""
+        attempts = max(1, int(self.max_retries))
+        base_delay = self.request_delay or 1.0
+        last_error: Exception | None = None
+        for attempt in range(attempts):
+            try:
+                return self.search(*args, **kwargs)
+            except Exception as error:
+                last_error = error
+                if attempt < attempts - 1:
+                    time.sleep(base_delay * (2 ** attempt))
+        raise last_error  # type: ignore[misc]  # attempts >= 1 guarantees it's set
 
     @property
     @abstractmethod
@@ -103,7 +117,7 @@ class BaseProvider(ABC):
         """
         results: list[SearchResult] = []
         for page in range(1, max_pages + 1):
-            result = self.search(
+            result = self._search_with_retries(
                 expression, query_id,
                 page_number=page, rows_per_page=rows_per_page,
                 **kwargs,

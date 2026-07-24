@@ -63,7 +63,8 @@ def run_search(
     Args:
         topic_dir: Path to workspaces/<slug>/
         provider: Provider name(s) (e.g. 'ieee', 'semantic_scholar', or ['ieee', 'arxiv']).
-                  If None, reads providers from workspace.toml. Default 'ieee'.
+                  If None, reads providers from workspace.toml, falling back
+                  to ['ieee_xplore'] when the file is absent.
         max_pages: Maximum pages per query for full search
         probe_only: If True, stop after probe (for query adjustment)
         skip_probe: If True, skip probe and go straight to full search
@@ -124,7 +125,6 @@ def run_search(
     if not skip_probe:
         print("=== Probe ===")
         probe_dir = _ensure(search_dir / "probe")
-        import time as _time
         for prov in prov_instances:
             print(f"  Provider: {prov.provider_name}")
             try:
@@ -136,10 +136,6 @@ def run_search(
                 )
             except Exception as exc:
                 _record_failure(prov.provider_name, "probe", exc)
-            # Respect provider's rate limit delay
-            delay = getattr(prov, "request_delay", None)
-            if delay:
-                _time.sleep(delay * 0.5)  # per-query delay already inside run_probe
         result["probe_results"] = str(probe_dir)
 
         if probe_only:
@@ -148,19 +144,23 @@ def run_search(
                       probe_results=result["probe_results"])
             return result
 
-        # Evaluate probe results per provider (advisory; probe files are
-        # namespaced under probe/<provider>/ so they never overwrite each other)
+        # Evaluate probe results per provider — advisory output for the agent
+        # to review query breadth; full search does not gate on it. Paths are
+        # surfaced in result['evaluation_paths'].
         from literature_review.pipeline.query import evaluate_queries
+        result["evaluation_paths"] = {}
         for prov in prov_instances:
             probe_results_file = probe_dir / prov.provider_name / "probe_results.jsonl"
             if not probe_results_file.exists():
                 continue
             try:
+                eval_dir = search_dir / "evaluation" / prov.provider_name
                 evaluate_queries(
                     queries_path=queries_path,
                     probe_results_path=probe_results_file,
-                    out_dir=search_dir / "evaluation" / prov.provider_name,
+                    out_dir=eval_dir,
                 )
+                result["evaluation_paths"][prov.provider_name] = str(eval_dir)
             except Exception as exc:
                 _record_failure(prov.provider_name, "evaluate", exc)
 

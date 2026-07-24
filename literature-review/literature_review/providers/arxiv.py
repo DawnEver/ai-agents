@@ -29,9 +29,9 @@ BASE_URL = "http://export.arxiv.org/api/query"
 USER_AGENT = "LiteratureReview/1.0 (mailto:research@example.com)"
 
 # arXiv API namespace
-ARXIV_NS = "http://www.w3.org.org/2005/Atom"
+ARXIV_NS = "http://www.w3.org/2005/Atom"
 OPENSEARCH_NS = "http://a9.com/-/spec/opensearch/1.1/"
-ARXIV_NS_SHORT = "{http://arxiv.org/schemas/atom}"
+ARXIV_NS_SHORT = "http://arxiv.org/schemas/atom"
 
 
 def _as_text(value: Any) -> str:
@@ -189,6 +189,9 @@ class ArxivProvider(BaseProvider):
     Uses the free arXiv REST API (Atom XML). No authentication required.
     Best for CS theory preprints across cs.DM, cs.DS, cs.CC, math.CO.
     """
+
+    # arXiv API etiquette: no more than one request every 3 seconds
+    request_delay = 3.0
 
     @property
     def provider_name(self) -> str:
