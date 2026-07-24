@@ -5,10 +5,8 @@
       "Bash(ls:*)",
       "Bash(mkdir:*)",
       "Read(*/literature-review/**)",
-      "Write(*/literature-review/workspaces/**)",
-      "Write(*/literature-review/.claude/**)",
-      "Write(*/literature-review/templates/**)",
-      "Glob(*/literature-review/**)",
+      "Edit(*/literature-review/workspaces/**)",
+      "Edit(*/literature-review/.claude/**)",
       "Grep(*/literature-review/**)"
     ]
   }

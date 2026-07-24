@@ -9,14 +9,14 @@
       "Bash(mv:*)",
       "Bash(cp:*)",
       "Read(*/manuscript-review/**)",
-      "Write(*/manuscript-review/ongoing/**)",
-      "Write(*/manuscript-review/archived/**)",
-      "Write(*/manuscript-review/style/**)",
-      "Write(*/manuscript-review/critiques-library/**)",
-      "Write(*/manuscript-review/.claude/**)",
-      "Write(*/manuscript-review/templates/**)",
-      "Write(*/manuscript-review/CLAUDE.md)",
-      "Glob(*/manuscript-review/**)",
+      "Edit(*/manuscript-review/ongoing/**)",
+      "Edit(*/manuscript-review/archived/**)",
+      "Edit(*/manuscript-review/style/**)",
+      "Edit(*/manuscript-review/critiques-library/**)",
+      "Edit(*/manuscript-review/.claude/**)",
+      "Edit(*/manuscript-review/templates/**)",
+      "Edit(*/manuscript-review/CLAUDE.md)",
+      "Read(*/manuscript-review/**)",
       "Grep(*/manuscript-review/**)"
     ]
   }
