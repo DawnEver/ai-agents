@@ -106,6 +106,25 @@ class BaseProvider(ABC):
                 time.sleep(base_delay * (2 ** attempt))
         raise AssertionError("unreachable")
 
+    def adapt_expression(self, expression: str) -> str:
+        """Transform a generic Boolean expression into provider-specific syntax.
+
+        The default is pass-through (IEEE-style Boolean).
+        Override for providers with different search syntax (S2, arXiv, DBLP).
+        """
+        return expression
+
+    def extract_records(self, raw_data: dict[str, Any]) -> list[dict[str, Any]]:
+        """Extract record list from a raw provider response dict.
+
+        Default assumes ``{"records": [...]}`` (IEEE format).
+        Override for providers with different envelope keys (e.g. S2 uses ``data``).
+        """
+        records = raw_data.get("records", raw_data.get("articles"))
+        if isinstance(records, list):
+            return [r for r in records if isinstance(r, dict)]
+        return []
+
     @property
     @abstractmethod
     def provider_name(self) -> str:

@@ -1,10 +1,11 @@
-# Step 03 — PDF acquisition (script-first, batch)
+# Step 03 — PDF acquisition
 
-纯脚本批量获取 PDF。Agent 只介入一次：分析认证需求。
+Script-first batch PDF acquisition with multi-scenario access handling.
+For detailed paywall methodology → see `03-acquire-paywall.md` (progressive disclosure).
 
 ## Core principle
 
-**Agent analyzes auth once → User configures once → Script downloads all in batch.**
+**Agent auto-clicks. User only intervenes when manual login is unavoidable.**
 
 ## Steps
 
@@ -12,27 +13,50 @@
    ```bash
    lit-review acquire --topic <slug> --queue-only
    ```
-   Shows queue at `workspaces/<slug>/download/download_queue.csv`. User reviews.
 
-2. **Approve candidates** and download:
+2. **Classify access scenario** (agent does this once per paper):
+
+   | Scenario | Detection | Method |
+   |----------|-----------|--------|
+   | **arXiv preprint** | `arxiv_id` in provider_raw | Direct HTTP download |
+   | **Open Access** | OpenAlex `is_oa=true` | Download from `oa_url` |
+   | **Campus IP** | `128.243.*` or `*.nottingham.ac.uk` | Direct access or headed Chrome |
+   | **VPN** | User says VPN is on | Same as campus IP |
+   | **Off-campus / paywall** | OA check fails + no campus IP | `lit-review login --profile <name>` then headed Chrome |
+   | **CAPTCHA wall** | Page body has "captcha" / "verify you are human" | Real Chrome (`channel="chrome"`) with existing sessions |
+
+3. **Download (auto-click where possible)**:
    ```bash
-   lit-review acquire --topic <slug> --candidate-id <id1> --candidate-id <id2> ...
+   lit-review acquire --topic <slug> [--profile <name>] [--headed]
    ```
-   If no `--candidate-id` is given, all `include` decisions are auto-approved.
+   - `--headed`: visible Chrome with auto-click on PDF buttons
+   - Without `--headed`: headless with saved browser profile
+   - Real Chrome (`channel="chrome"`) reuses your existing publisher sessions
 
-3. **Analyze auth** (agent does this ONCE):
-   - Which publishers need authentication?
-   - What method? (cookie/session, API key, institutional proxy)
-   - If browser login needed:
-     ```bash
-     lit-review login --profile ieee
-     ```
-     Profiles live at `%LOCALAPPDATA%/literature-review/browser-profiles/` — outside repo.
-
-4. **Download with auth** (script handles all):
-   ```bash
-   lit-review acquire --topic <slug> --profile <profile-path>
-   ```
-   Sequential downloads with polite delays. All failures logged.
+4. **Match & manifest**: script matches downloaded PDFs to queue entries.
 
 5. **Report**: X downloaded, Y failed, Z matched. Proceed to step 04.
+
+## Manual fallback
+
+If auto-click fails, the script opens the paper URL in visible Chrome.
+User clicks "View PDF" once; the file is auto-saved to the download directory.
+
+## Paywall decision tree
+
+```
+Paper to acquire
+  │
+  ├─ arXiv preprint? → direct HTTP download (free, fast, legal)
+  │
+  ├─ Open Access? (OpenAlex API) → download from oa_url
+  │
+  ├─ Author preprint? → search arXiv by author + title keywords
+  │
+  ├─ Campus IP / VPN? → headed Chrome with auto-click
+  │
+  ├─ Off-campus with institutional access?
+  │     └─ lit-review login → headed Chrome with saved profile
+  │
+  └─ Fully closed? → skip, note in audit log
+```

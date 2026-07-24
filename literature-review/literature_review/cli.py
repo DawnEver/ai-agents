@@ -328,8 +328,13 @@ def _handle_stats(args: argparse.Namespace) -> int:
 
 
 def _handle_login(args: argparse.Namespace) -> int:
+    profile = Path(args.profile)
+    if not profile.is_absolute():
+        import os
+        base = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
+        profile = Path(base) / "literature-review" / "browser-profiles" / args.profile
     return open_login(
-        Path(args.profile), args.url,
+        profile, args.url,
         browser_channel=args.browser_channel,
         completion=args.completion,
         network_mode=args.network_mode,

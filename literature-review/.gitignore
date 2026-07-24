@@ -21,8 +21,11 @@ lenses/*
 !lenses/_template.yaml
 
 # Temp
+playground/
 .tmp/
 
 # OS
 Thumbs.db
 Desktop.ini
+
+.env

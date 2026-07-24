@@ -132,11 +132,12 @@ def run_probe(
     req_delay = getattr(provider, "request_delay", None)
     for query in enabled:
         qid = str(query.get("query_id", "")).strip()
-        expression = _query_expression(query)
+        raw_expression = _query_expression(query)
+        expression = provider.adapt_expression(raw_expression)
         timestamp = datetime.now(timezone.utc).isoformat()
         audit_base = {
             "timestamp": timestamp, "backend": provider.provider_name,
-            "query_id": qid, "page_number": 1, "search_expression": expression,
+            "query_id": qid, "page_number": 1, "search_expression": raw_expression,
         }
 
         try:
@@ -278,7 +279,8 @@ def run_search(
 
     for query in enabled:
         qid = str(query.get("query_id", ""))
-        expression = _query_expression(query)
+        raw_expression = _query_expression(query)
+        expression = provider.adapt_expression(raw_expression)
 
         try:
             results = provider.search_paginated(

@@ -98,16 +98,40 @@ def _build_url(
     return f"{BASE_URL}?{urlencode(params, quote_via=quote)}"
 
 
+def _s2_api_key() -> str | None:
+    """Return the Semantic Scholar API key if configured, or None.
+
+    Checks: S2_API_KEY env, LIT_REVIEW_S2_API_KEY env, then
+    .env file in project root (key=S2_API_KEY or LITERATURE_REVIEW_S2_API_KEY).
+    """
+    import os
+    from pathlib import Path
+    key = os.environ.get("S2_API_KEY") or os.environ.get("LIT_REVIEW_S2_API_KEY")
+    if key:
+        return key
+    # Try reading from .env in project root
+    env_file = Path(__file__).resolve().parent.parent.parent / ".env"
+    if env_file.exists():
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line.startswith("#") or "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            if k.strip() in ("S2_API_KEY", "LITERATURE_REVIEW_S2_API_KEY"):
+                return v.strip().strip('"').strip("'")
+    return None
+
+
 def _api_get(url: str, timeout_seconds: int = 30) -> dict[str, Any]:
     """Execute a GET request to the Semantic Scholar API."""
-    request = Request(
-        url,
-        method="GET",
-        headers={
-            "User-Agent": USER_AGENT,
-            "Accept": "application/json",
-        },
-    )
+    headers: dict[str, str] = {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json",
+    }
+    api_key = _s2_api_key()
+    if api_key:
+        headers["x-api-key"] = api_key
+    request = Request(url, method="GET", headers=headers)
     try:
         with urlopen(request, timeout=timeout_seconds) as response:
             body_text = response.read().decode("utf-8", errors="replace")
@@ -154,8 +178,40 @@ class SemanticScholarProvider(BaseProvider):
     rate limits are very restrictive (~1 req/sec burst).
     """
 
-    request_delay = 3.0   # seconds between requests (free tier)
-    max_retries = 2
+    request_delay = 1.5   # 1 req/sec S2 policy + safety margin
+    max_retries = 3
+
+    def extract_records(self, raw_data: dict[str, Any]) -> list[dict[str, Any]]:
+        """S2 uses ``data`` envelope instead of ``records``."""
+        data = raw_data.get("data")
+        if isinstance(data, list):
+            return [r for r in data if isinstance(r, dict)]
+        return []
+
+    def adapt_expression(self, expression: str) -> str:
+        """Convert generic Boolean to S2 keyword search.
+
+        S2 supports: +term -term "phrase" (no AND/OR/parentheses).
+        We extract quoted phrases and meaningful keywords, joining as implicit AND.
+        """
+        import re
+        phrases = re.findall(r'"([^"]+)"', expression)
+        cleaned = re.sub(r'\b(AND|OR|NOT)\b', ' ', expression, flags=re.IGNORECASE)
+        cleaned = re.sub(r'[()]', ' ', cleaned)
+        words = re.findall(r'[a-zA-Z][a-zA-Z0-9*\-]*', cleaned)
+        seen: set[str] = set()
+        parts: list[str] = []
+        for p in phrases:
+            key = p.lower()
+            if key not in seen:
+                parts.append(f'"{p}"')
+                seen.add(key)
+        for w in words:
+            key = w.lower()
+            if key not in seen and len(w) > 2:
+                parts.append(w)
+                seen.add(key)
+        return ' '.join(parts)
 
     @property
     def provider_name(self) -> str:
@@ -315,11 +371,18 @@ class SemanticScholarProvider(BaseProvider):
         if authors:
             candidate["authors"] = authors
 
-        # Fields of study → keywords
+        # Fields of study → keywords (can be list of dicts or list of strings)
         fos = record.get("fieldsOfStudy") or record.get("s2FieldsOfStudy")
-        if isinstance(fos, list):
-            candidate["keywords"] = [
-                _as_text(f.get("category") or f) for f in fos
-            ]
+        if isinstance(fos, list) and fos:
+            keywords = []
+            for f in fos:
+                if isinstance(f, dict):
+                    kw = _as_text(f.get("category") or f.get("name") or "")
+                else:
+                    kw = _as_text(f)
+                if kw:
+                    keywords.append(kw)
+            if keywords:
+                candidate["keywords"] = keywords
 
         return candidate
