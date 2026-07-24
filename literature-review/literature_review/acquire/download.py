@@ -283,6 +283,119 @@ def _playwright_downloader(
     return download, close
 
 
+def acquire_headed(
+    papers: list[dict[str, str]],
+    pdf_dir: Path,
+    *,
+    browser_channel: str = "chrome",
+    timeout_per_paper: int = 60,
+) -> list[dict[str, Any]]:
+    """Download PDFs via headed (visible) real Chrome with auto-click.
+
+    Opens the user's REAL Chrome with existing sessions/cookies — no CAPTCHA.
+    For each paper: navigates to URL, auto-clicks PDF download button,
+    saves to *pdf_dir*.
+
+    Args:
+        papers: List of {"label": "name", "url": "https://..."} dicts
+        pdf_dir: Where to save PDFs
+        browser_channel: "chrome" (real Chrome) or "chromium" (Playwright)
+        timeout_per_paper: Seconds to wait for download click per paper
+
+    Returns:
+        List of {"label": ..., "url": ..., "status": "ok|failed", "path": ...}
+    """
+    import time as _time
+    from playwright.sync_api import sync_playwright
+
+    pdf_dir.mkdir(parents=True, exist_ok=True)
+    results: list[dict[str, Any]] = []
+
+    with sync_playwright() as pw:
+        ctx = pw.chromium.launch_persistent_context(
+            user_data_dir="",
+            headless=False,
+            channel=browser_channel,
+            accept_downloads=True,
+            args=["--no-first-run", "--no-default-browser-check"],
+        )
+
+        for paper in papers:
+            label = str(paper.get("label", "paper"))
+            url = str(paper.get("url", ""))
+            print(f"\n  {label}")
+            print(f"    {url[:120]}")
+
+            page = ctx.new_page()
+            download_occurred: list[str] = []
+
+            def on_download(download):
+                path = str(pdf_dir / f"{label}.pdf")
+                download.save_as(path)
+                download_occurred.append(path)
+
+            page.on("download", on_download)
+
+            try:
+                page.goto(url, wait_until="domcontentloaded", timeout=30000)
+                page.wait_for_timeout(3000)
+                print(f"    Page: {page.title()[:80]}")
+
+                # Find PDF link href on the page
+                pdf_href = None
+                for sel in [
+                    "a:has-text('PDF')",
+                    "a:has-text('View PDF')",
+                    "a[href*='.pdf']",
+                    ".pdf-link",
+                    "a.int-view:has-text('PDF')",
+                    "a[href*='stampPDF']",
+                    "a[href*='/pdf/']",
+                ]:
+                    try:
+                        el = page.query_selector(sel)
+                        if el and el.is_visible():
+                            pdf_href = el.get_attribute("href") or ""
+                            print(f"    Link: {sel} -> {pdf_href[:120]}")
+                            break
+                    except Exception:
+                        continue
+
+                # Fetch PDF binary via browser's authenticated session
+                if pdf_href:
+                    from urllib.parse import urljoin
+                    full_url = urljoin(page.url, pdf_href)
+                    print(f"    GET {full_url[:120]}")
+                    api_resp = page.context.request.get(full_url, timeout=60000)
+                    body = api_resp.body()
+                    if api_resp.status == 200 and body[:4] == b'%PDF':
+                        path = str(pdf_dir / f"{label}.pdf")
+                        with open(path, 'wb') as f:
+                            f.write(body)
+                        download_occurred.append(path)
+                        print(f"    OK {len(body)/1024:.0f} KB")
+                    else:
+                        print(f"    HTTP {api_resp.status}, PDF={body[:4]==b'%PDF'}")
+                else:
+                    print(f"    No PDF link found on page")
+
+            except Exception as e:
+                print(f"    Error: {e}")
+            finally:
+                page.close()
+
+            if download_occurred:
+                size_kb = Path(download_occurred[0]).stat().st_size / 1024
+                print(f"    -> {size_kb:.0f} KB")
+                results.append({"label": label, "url": url, "status": "ok", "path": download_occurred[0]})
+            else:
+                results.append({"label": label, "url": url, "status": "failed", "path": ""})
+
+        ctx.close()
+
+    return results
+
+
 def acquire_pdfs(
     queue_path: Path,
     run_dir: Path,
