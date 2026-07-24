@@ -82,8 +82,8 @@ def run_search(
     if provider is None:
         ws_path = topic_dir / "workspace.toml"
         if ws_path.exists():
-            ws_data = load_data(ws_path)
-            provider = ws_data.get("providers", ["ieee_xplore"])
+            from literature_review.models import Workspace
+            provider = Workspace.from_dict(load_data(ws_path)).providers
         else:
             provider = ["ieee_xplore"]
     if isinstance(provider, str):
@@ -453,14 +453,8 @@ def run_read(
     # Load brief for criteria context
     brief_path = topic_dir / "research_brief.toml"
     brief_data = load_data(brief_path) if brief_path.exists() else {}
-    brief = ResearchBrief(
-        brief_id=str(brief_data.get("brief_id", "")),
-        original_request=str(brief_data.get("original_request", "")),
-        research_objective=str(brief_data.get("research_objective", "")),
-        inclusion_criteria=brief_data.get("inclusion_criteria", []),
-        exclusion_criteria=brief_data.get("exclusion_criteria", []),
-        concepts=[],  # Simplified — core reading doesn't need full concept taxonomy
-    )
+    brief = ResearchBrief.from_dict({"brief_id": "", "original_request": "",
+                                     "research_objective": "", **brief_data})
 
     # Load lens if specified
     lens_data: dict[str, Any] | None = None
@@ -496,9 +490,8 @@ def run_read(
     )
 
     # Write output
-    from dataclasses import asdict as _asdict
     reading_dir = _ensure(topic_dir / "reading")
-    card_dict: dict[str, Any] = _asdict(card)  # type: ignore[arg-type]
+    card_dict: dict[str, Any] = card.to_dict()
     card_path = reading_dir / f"{candidate_id}_card.json"
     card_path.write_text(json.dumps(card_dict, indent=2, ensure_ascii=True, default=str), encoding="utf-8")
 
@@ -530,22 +523,13 @@ def run_synthesize(
     Returns:
         Synthesis text (markdown)
     """
-    from literature_review.models import PaperCard
     from literature_review.review.synthesis import compare_papers
 
     reading_dir = topic_dir / "reading"
     if not reading_dir.exists():
         raise FileNotFoundError(f"No reading directory: {reading_dir}. Deep-read papers first.")
 
-    cards: list[PaperCard] = []
-    for card_path in sorted(reading_dir.glob("*_card.json")):
-        cid = card_path.stem.replace("_card", "")
-        if paper_ids and cid not in paper_ids:
-            continue
-        card_data = json.loads(card_path.read_text(encoding="utf-8"))
-        cards.append(PaperCard(**{k: v for k, v in card_data.items()
-                                   if k in PaperCard.__dataclass_fields__}))
-
+    cards = _load_cards(topic_dir, paper_ids)
     if not cards:
         raise ValueError("No paper cards found. Deep-read some papers first.")
 
@@ -561,6 +545,22 @@ def run_synthesize(
 # ---------------------------------------------------------------------------
 # 6. Export & stats (wires orphaned render + plot)
 # ---------------------------------------------------------------------------
+
+def _load_cards(topic_dir: Path, paper_ids: list[str] | None = None) -> list[Any]:
+    """Load PaperCards from reading/*.json as fully typed dataclasses."""
+    from literature_review.models import PaperCard
+
+    reading_dir = topic_dir / "reading"
+    cards: list[Any] = []
+    if not reading_dir.exists():
+        return cards
+    for card_path in sorted(reading_dir.glob("*_card.json")):
+        cid = card_path.stem.replace("_card", "")
+        if paper_ids and cid not in paper_ids:
+            continue
+        cards.append(PaperCard.from_dict(json.loads(card_path.read_text(encoding="utf-8"))))
+    return cards
+
 
 _BIBTEX_SPECIALS = {"&": r"\&", "%": r"\%", "$": r"\$", "#": r"\#", "_": r"\_"}
 
@@ -628,18 +628,8 @@ def run_export(
         Path to exported file
     """
     from literature_review.export.render import cards_to_csv
-    from literature_review.models import PaperCard
 
-    reading_dir = topic_dir / "reading"
-    cards: list[PaperCard] = []
-    for card_path in sorted(reading_dir.glob("*_card.json")):
-        cid = card_path.stem.replace("_card", "")
-        if paper_ids and cid not in paper_ids:
-            continue
-        card_data = json.loads(card_path.read_text(encoding="utf-8"))
-        cards.append(PaperCard(**{k: v for k, v in card_data.items()
-                                   if k in PaperCard.__dataclass_fields__}))
-
+    cards = _load_cards(topic_dir, paper_ids)
     export_dir = _ensure(topic_dir / "export")
 
     if format == "csv":
@@ -647,7 +637,7 @@ def run_export(
         cards_to_csv(cards, out)
     elif format == "json":
         out = export_dir / "papers.json"
-        out.write_text(json.dumps([c.__dict__ for c in cards], indent=2, ensure_ascii=True, default=str), encoding="utf-8")
+        out.write_text(json.dumps([c.to_dict() for c in cards], indent=2, ensure_ascii=True, default=str), encoding="utf-8")
     elif format == "bibtex":
         out = export_dir / "references.bib"
         meta = _candidate_metadata(topic_dir)
@@ -727,20 +717,10 @@ def run_stats(
         try:
             from literature_review.export.plot import plot_year_distribution, plot_venue_distribution
             from literature_review.models import Candidate
-            candidates = []
-            for c in _read_jsonl(ranked_path):
-                try:
-                    candidates.append(Candidate(
-                        candidate_id=str(c.get("candidate_id", "")),
-                        source_provider=str(c.get("source_provider", "")),
-                        title=str(c.get("title", "")),
-                        abstract=str(c.get("abstract", "")),
-                        venue=str(c.get("venue", "")),
-                        publication_year=c.get("publication_year"),
-                        doi=str(c.get("doi", "")),
-                    ))
-                except Exception:
-                    pass
+            candidates = [
+                Candidate.from_dict({"candidate_id": "", "source_provider": "", "title": "", **c})
+                for c in _read_jsonl(ranked_path)
+            ]
             plot_dir = _ensure(topic_dir / "export" / "plots")
             plot_year_distribution(candidates, plot_dir / "year_distribution.png")
             plot_venue_distribution(candidates, plot_dir / "venue_distribution.png")

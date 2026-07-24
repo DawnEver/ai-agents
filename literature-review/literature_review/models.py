@@ -2,9 +2,62 @@
 
 from __future__ import annotations
 
+import dataclasses
+import typing
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
-from typing import Any
+from typing import Any, get_args, get_origin, get_type_hints
+
+
+# ---------------------------------------------------------------------------
+# Serialization base — typed round-trip across JSON boundaries
+# ---------------------------------------------------------------------------
+
+def _coerce(tp: Any, value: Any):
+    """Coerce a JSON value toward the annotated field type (best effort)."""
+    origin = get_origin(tp)
+    if origin in (typing.Union, __import__("types").UnionType):
+        # e.g. int | None — coerce against the first non-None member
+        for arg in get_args(tp):
+            if arg is not type(None):
+                return _coerce(arg, value)
+        return value
+    if origin is list and isinstance(value, list):
+        (sub,) = get_args(tp) or (Any,)
+        return [_coerce(sub, v) for v in value]
+    if dataclasses.is_dataclass(tp) and isinstance(value, dict):
+        return tp.from_dict(value)  # type: ignore[union-attr]
+    if tp is int and not isinstance(value, bool):
+        try:
+            return int(value)
+        except (TypeError, ValueError):
+            return value
+    if tp is float:
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return value
+    return value
+
+
+class Serde:
+    """Mixin: tolerant dict round-trip for dataclass models.
+
+    ``from_dict`` ignores unknown keys, applies field defaults for missing or
+    null values, and rebuilds nested dataclasses (including inside lists).
+    """
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)  # type: ignore[call-overload]
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]):
+        hints = get_type_hints(cls)
+        kwargs: dict[str, Any] = {}
+        for f in dataclasses.fields(cls):  # type: ignore[arg-type]
+            if f.name not in data or data[f.name] is None:
+                continue  # let the field default apply
+            kwargs[f.name] = _coerce(hints.get(f.name, Any), data[f.name])
+        return cls(**kwargs)
 
 
 # ---------------------------------------------------------------------------
@@ -12,7 +65,7 @@ from typing import Any
 # ---------------------------------------------------------------------------
 
 @dataclass
-class Approval:
+class Approval(Serde):
     approved: bool = False
     approved_at: str | None = None
     approved_by: str | None = None
@@ -24,7 +77,7 @@ class Approval:
 # ---------------------------------------------------------------------------
 
 @dataclass
-class ZoteroBinding:
+class ZoteroBinding(Serde):
     collection_key: str = ""
     group_id: str | None = None
     sync_notes: bool = True
@@ -33,7 +86,7 @@ class ZoteroBinding:
 
 
 @dataclass
-class WorkspaceConstraints:
+class WorkspaceConstraints(Serde):
     year_from: int = 2018
     year_to: int = 2026
     content_types: list[str] = field(default_factory=lambda: ["Journals", "Conferences"])
@@ -41,7 +94,7 @@ class WorkspaceConstraints:
 
 
 @dataclass
-class Workspace:
+class Workspace(Serde):
     workspace_id: str
     name: str
     description: str = ""
@@ -59,7 +112,7 @@ class Workspace:
 # ---------------------------------------------------------------------------
 
 @dataclass
-class Concept:
+class Concept(Serde):
     concept_id: str
     role: str  # must | should | context | evidence | exclude
     term: str
@@ -70,7 +123,7 @@ class Concept:
 
 
 @dataclass
-class ResearchBrief:
+class ResearchBrief(Serde):
     brief_id: str
     original_request: str
     research_objective: str
@@ -95,13 +148,23 @@ class ResearchBrief:
         }
         return d
 
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> "ResearchBrief":
+        # Accept both the flat layout and the nested 'constraints' layout
+        constraints = data.get("constraints")
+        if isinstance(constraints, dict):
+            data = {**data, **{k: constraints[k] for k in
+                               ("year_from", "year_to", "content_types", "preferred_venues")
+                               if k in constraints}}
+        return super().from_dict(data)
+
 
 # ---------------------------------------------------------------------------
 # Candidate & Screening
 # ---------------------------------------------------------------------------
 
 @dataclass
-class Candidate:
+class Candidate(Serde):
     candidate_id: str
     source_provider: str
     title: str
@@ -123,7 +186,7 @@ class Candidate:
 
 
 @dataclass
-class ScreeningDecision:
+class ScreeningDecision(Serde):
     candidate_id: str
     decision: str  # include | maybe | exclude
     confidence: float = 0.0
@@ -139,7 +202,7 @@ class ScreeningDecision:
 # ---------------------------------------------------------------------------
 
 @dataclass
-class QueryItem:
+class QueryItem(Serde):
     query_id: str
     purpose: str
     provider: str = "ieee_xplore"
@@ -153,7 +216,7 @@ class QueryItem:
 
 
 @dataclass
-class QueryPlan:
+class QueryPlan(Serde):
     queries: list[QueryItem] = field(default_factory=list)
     brief_ref: dict[str, str] = field(default_factory=dict)
     approval: Approval | None = None
@@ -164,7 +227,7 @@ class QueryPlan:
 # ---------------------------------------------------------------------------
 
 @dataclass
-class DownloadItem:
+class DownloadItem(Serde):
     candidate_id: str
     title: str
     pdf_path: str = ""
@@ -177,7 +240,7 @@ class DownloadItem:
 
 
 @dataclass
-class DownloadManifest:
+class DownloadManifest(Serde):
     manifest_id: str
     run_id: str
     papers: list[DownloadItem] = field(default_factory=list)
@@ -185,7 +248,7 @@ class DownloadManifest:
 
 
 @dataclass
-class IngestItem:
+class IngestItem(Serde):
     candidate_id: str
     pdf_path: str
     output_path: str
@@ -198,7 +261,7 @@ class IngestItem:
 
 
 @dataclass
-class IngestManifest:
+class IngestManifest(Serde):
     source_manifest: str
     source_manifest_sha256: str = ""
     confirmed_by_user: bool = False
@@ -210,20 +273,20 @@ class IngestManifest:
 # ---------------------------------------------------------------------------
 
 @dataclass
-class Evidence:
+class Evidence(Serde):
     claim: str
     source: str = ""    # path to markdown file
     locator: str = ""   # e.g. "Fig. 8, Table II"
 
 
 @dataclass
-class ResearchUse:
+class ResearchUse(Serde):
     type: str  # adapt | compare | baseline | cite | discard
     note: str = ""
 
 
 @dataclass
-class PaperCard:
+class PaperCard(Serde):
     candidate_id: str
     title: str
     verdict: str = "targeted-read"  # deep-read | targeted-read | archive
@@ -242,7 +305,7 @@ class PaperCard:
 # ---------------------------------------------------------------------------
 
 @dataclass
-class ScoreBreakdown:
+class ScoreBreakdown(Serde):
     relevance: int = 0
     methodology: int = 0
     novelty: int = 0
@@ -250,7 +313,7 @@ class ScoreBreakdown:
 
 
 @dataclass
-class QueueItem:
+class QueueItem(Serde):
     candidate_id: str
     title: str
     verdict: str = "targeted-read"
@@ -261,7 +324,7 @@ class QueueItem:
 
 
 @dataclass
-class ReadingQueue:
+class ReadingQueue(Serde):
     research_need: str
     papers: list[QueueItem] = field(default_factory=list)
     top_picks: list[str] = field(default_factory=list)

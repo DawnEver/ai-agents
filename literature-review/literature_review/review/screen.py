@@ -9,7 +9,7 @@ import csv, json
 from pathlib import Path
 from typing import Any
 
-from literature_review.models import Candidate
+from literature_review.models import Candidate, ScreeningDecision
 
 _META = ("title", "publication_year", "publication_title", "doi", "html_url", "pdf_url")
 _LISTS = ("inclusion_reasons", "exclusion_reasons", "uncertainties")
@@ -74,18 +74,18 @@ def _validate(row: dict[str, Any], has_abstract: bool) -> dict[str, Any]:
         raise ValueError(f"{cid}: confidence must be 0-1")
     p = str(row.get("download_priority", "")).strip().lower()
     if p not in _PRIORITIES: raise ValueError(f"{cid}: download_priority must be none, low, medium, or high")
-    norm: dict[str, Any] = {"artifact_version": 1, "candidate_id": cid,
-                             "decision": d, "confidence": cf,
-                             "abstract_available": has_abstract, "download_priority": p}
+    lists: dict[str, list[str]] = {}
     for f in _LISTS:
         vals = row.get(f)
         if not isinstance(vals, list) or any(not isinstance(v, str) or not v.strip() for v in vals):
             raise ValueError(f"{cid}: {f} must be an array of non-empty strings")
-        norm[f] = [v.strip() for v in vals]
+        lists[f] = [v.strip() for v in vals]
     if not has_abstract:
         if d == "include": raise ValueError(f"{cid}: missing abstract cannot be included")
-        if not norm["uncertainties"]: raise ValueError(f"{cid}: missing abstract requires at least one uncertainty")
-    return norm
+        if not lists["uncertainties"]: raise ValueError(f"{cid}: missing abstract requires at least one uncertainty")
+    decision = ScreeningDecision(candidate_id=cid, decision=d, confidence=float(cf),
+                                 abstract_available=has_abstract, download_priority=p, **lists)
+    return {"artifact_version": 1, **decision.to_dict()}
 
 
 def import_agent_screening(candidates_path: Path, batch_paths: list[Path], out_dir: Path) -> int:
