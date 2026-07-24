@@ -1,328 +1,345 @@
-"""Unified CLI entry point for Literature Review."""
+"""Unified CLI entry point for Literature Review.
+
+Macro commands for the 4-phase pipeline + post-acquisition capabilities.
+Agent calls high-level commands; CLI handles mechanical steps internally.
+"""
 
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
-import rtoml
-
 from literature_review import __version__
 from literature_review.acquire.download import (
-    DEFAULT_LIMIT,
-    AccessBlockedError,
     COMPLETION_MODES,
     DEFAULT_BROWSER_CHANNEL,
     DEFAULT_NETWORK_MODE,
     SUPPORTED_BROWSER_CHANNELS,
     SUPPORTED_NETWORK_MODES,
-    acquire_pdfs,
     open_login,
 )
-from literature_review.pipeline.brief import confirm_brief, load_brief, validate_brief
-from literature_review.pipeline.ingest import decompose_pdfs
-from literature_review.pipeline.query import (
-    DEFAULT_MAX_TOTAL,
-    DEFAULT_MIN_TOTAL,
-    confirm_queries,
-    evaluate_queries,
-)
-from literature_review.review.screen import (
-    import_agent_screening,
-    write_screening_packet,
-)
-from literature_review.search.engine import (
-    get_provider,
-    run_dedupe_rank,
-    run_probe,
-    run_search,
-)
+from literature_review.review.screen import import_agent_screening
+from literature_review.search.engine import get_provider, run_dedupe_rank, run_probe
 
 # ---------------------------------------------------------------------------
-# Inline defaults
+# Defaults
 # ---------------------------------------------------------------------------
 SEARCH_CONFIG = {"default_page_size": 25, "max_pages_per_query": 5}
 DEFAULT_PAGE_SIZE = 25
 
 
-RECOMMENDED_WORKFLOW = """Recommended agent-orchestrated workflow:
+RECOMMENDED_WORKFLOW = """Recommended workflow:
 
-1. Agent writes research_brief.yaml and presents concepts to the user.
-2. validate-brief, then confirm-brief after the first explicit approval.
-3. Agent writes queries.yaml and presents final Boolean expressions.
-4. confirm-queries after the second explicit approval.
-5. probe, evaluate-queries, search, and dedupe-rank.
-6. make-screening-packet, then import-agent-screening.
-7. make-download-queue and approve-download-queue for selected papers.
-8. Stop. Run browser-login/acquire-pdf only after a separate download request.
-9. After manifest creation, ask separately before running decompose-pdfs.
+  lit-review init <topic>         Create workspace
+  lit-review search --topic <s>   Queries -> probe -> search -> dedupe -> screening packet
+  lit-review acquire --topic <s>  Queue -> auth -> download -> match -> manifest
+  lit-review ingest --topic <s>   On-demand PDF decomposition with cache reuse
+
+Post-acquisition (choose what you need):
+  lit-review read --topic <s> --paper <id>   Deep-read with optional domain lens
+  lit-review synthesize --topic <s>          Cross-paper synthesis
+  lit-review export --topic <s>              Export cards to markdown/CSV/BibTeX
+  lit-review stats --topic <s> [--plots]     Summary statistics + charts
+  lit-review login                           Browser login for publisher auth
 """
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _topic_dir(slug: str) -> Path:
+    """Resolve a topic slug to its workspace directory."""
+    d = Path("workspaces") / slug
+    if not d.exists():
+        print(f"error: workspace not found: {d}", file=sys.stderr)
+        print("Run: lit-review init <topic>", file=sys.stderr)
+        raise SystemExit(2)
+    return d
 
 
 # ---------------------------------------------------------------------------
 # Parser
 # ---------------------------------------------------------------------------
 
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="lit-review",
-        description="Literature Review — agent-orchestrated systematic literature review pipeline.",
+        description="Literature Review - systematic literature review pipeline.",
         epilog=RECOMMENDED_WORKFLOW,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument(
-        "--version", action="version", version=f"Literature Review {__version__}"
-    )
+    parser.add_argument("--version", action="version", version=f"Literature Review {__version__}")
     sub = parser.add_subparsers(dest="command")
 
-    # -- validate-brief --
-    p = sub.add_parser("validate-brief", help="Validate a research brief before user review.")
-    p.add_argument("--brief", required=True)
+    # === Pipeline: init ===
+    p = sub.add_parser("init", help="Create a new workspace for a topic.")
+    p.add_argument("topic", help="Topic name or slug.")
 
-    # -- confirm-brief --
-    p = sub.add_parser("confirm-brief", help="Record user approval of research scope and concepts.")
-    p.add_argument("--run-dir", required=True)
-    p.add_argument("--approved-by", default="user")
-
-    # -- confirm-queries --
-    p = sub.add_parser("confirm-queries", help="Record user approval of final Boolean queries.")
-    p.add_argument("--run-dir", required=True)
-    p.add_argument("--approved-by", default="user")
-
-    # -- probe --
-    p = sub.add_parser("probe", help="Probe page 1 for each enabled query via a provider.")
-    p.add_argument("--queries", required=True)
-    p.add_argument("--out", required=True)
-    p.add_argument("--provider", default="ieee")
-    p.add_argument("--query-id")
-    p.add_argument("--allow-unapproved-plan", action="store_true")
-
-    # -- evaluate-queries --
-    p = sub.add_parser("evaluate-queries", help="Evaluate probe result counts and emit refinement suggestions.")
-    p.add_argument("--queries", required=True)
-    p.add_argument("--probe-results", required=True)
-    p.add_argument("--samples")
-    p.add_argument("--out", required=True)
-    p.add_argument("--min-total", type=int, default=DEFAULT_MIN_TOTAL)
-    p.add_argument("--max-total", type=int, default=DEFAULT_MAX_TOTAL)
-
-    # -- search --
-    p = sub.add_parser("search", help="Run bounded full metadata searches for eligible queries.")
-    p.add_argument("--queries", required=True)
-    p.add_argument("--out", required=True)
-    p.add_argument("--provider", default="ieee")
-    p.add_argument("--query-id")
-    p.add_argument("--max-pages", type=int, default=int(SEARCH_CONFIG.get("max_pages_per_query", 5)))
+    # === Pipeline: search ===
+    p = sub.add_parser("search", help="End-to-end: queries -> probe -> search -> dedupe -> screening packet.")
+    p.add_argument("--topic", required=True, help="Topic slug (workspaces/<slug>).")
+    p.add_argument("--provider", default="ieee", help="Literature source provider.")
+    p.add_argument("--max-pages", type=int, default=5)
     p.add_argument("--rows-per-page", type=int, default=DEFAULT_PAGE_SIZE)
-    p.add_argument("--delay-seconds", type=float, default=1.0)
-    p.add_argument("--evaluation", required=True, help="Path to query_refinement_suggestions.yaml.")
-    p.add_argument("--allow-unapproved-plan", action="store_true")
+    p.add_argument("--delay", type=float, default=1.0, help="Seconds between pages.")
+    p.add_argument("--probe-only", action="store_true", help="Stop after probe for query adjustment.")
+    p.add_argument("--skip-probe", action="store_true", help="Skip probe, go straight to full search.")
 
-    # -- normalize-candidates --
-    p = sub.add_parser("normalize-candidates", help="Normalize raw provider records into candidate artifacts.")
-    p.add_argument("--raw", required=True)
-    p.add_argument("--query-id", required=True)
+    # === Pipeline: acquire ===
+    p = sub.add_parser("acquire", help="End-to-end: queue -> auth -> download -> match -> manifest.")
+    p.add_argument("--topic", required=True, help="Topic slug.")
+    p.add_argument("--profile", help="Browser profile path for authenticated download.")
+    p.add_argument("--candidate-id", action="append", help="Approve specific candidate (repeatable).")
+    p.add_argument("--approved-by", default="user")
+    p.add_argument("--queue-only", action="store_true", help="Only build the download queue.")
+
+    # === Pipeline: ingest ===
+    p = sub.add_parser("ingest", help="On-demand PDF decomposition with cache reuse.")
+    p.add_argument("--topic", required=True, help="Topic slug.")
+    p.add_argument("--paper", action="append", dest="paper_ids", help="Specific candidate ID (repeatable).")
+    p.add_argument("--dry-run", action="store_true", help="Show what would be decomposed without doing it.")
+
+    # === Agent support: import-screening ===
+    p = sub.add_parser("import-screening", help="Validate and merge agent-authored screening batches.")
+    p.add_argument("--topic", required=True, help="Topic slug.")
+    p.add_argument("--batch", action="append", required=True, help="Path to batch result JSONL (repeatable).")
+
+    # === Post-acquisition: read ===
+    p = sub.add_parser("read", help="Deep-read a paper with optional domain lens.")
+    p.add_argument("--topic", required=True, help="Topic slug.")
+    p.add_argument("--paper", required=True, help="Candidate ID to read.")
+    p.add_argument("--lens", help="Domain lens name (e.g. power_electronics).")
+    p.add_argument("--model", help="Model override for AI reading.")
+
+    # === Post-acquisition: synthesize ===
+    p = sub.add_parser("synthesize", help="Cross-paper synthesis from reading cards.")
+    p.add_argument("--topic", required=True, help="Topic slug.")
+    p.add_argument("--paper", action="append", dest="paper_ids", help="Specific candidate IDs (repeatable).")
+    p.add_argument("--model", help="Model override.")
+
+    # === Post-acquisition: export ===
+    p = sub.add_parser("export", help="Export paper cards to various formats.")
+    p.add_argument("--topic", required=True, help="Topic slug.")
+    p.add_argument("--format", default="markdown", choices=["markdown", "csv", "bibtex", "json"])
+    p.add_argument("--paper", action="append", dest="paper_ids", help="Specific candidate IDs (repeatable).")
+
+    # === Post-acquisition: stats ===
+    p = sub.add_parser("stats", help="Summary statistics for the review.")
+    p.add_argument("--topic", required=True, help="Topic slug.")
+    p.add_argument("--plots", action="store_true", help="Generate matplotlib plots.")
+
+    # === Utility: login ===
+    p = sub.add_parser("login", help="Open a publisher site in a browser for authentication.")
+    p.add_argument("--profile", default="ieee", help="Browser profile name.")
+    p.add_argument("--url", default="https://ieeexplore.ieee.org/")
+    p.add_argument("--browser-channel", choices=sorted(SUPPORTED_BROWSER_CHANNELS), default=DEFAULT_BROWSER_CHANNEL)
+    p.add_argument("--completion", choices=sorted(COMPLETION_MODES), default="browser-close")
+    p.add_argument("--network-mode", choices=sorted(SUPPORTED_NETWORK_MODES), default=DEFAULT_NETWORK_MODE)
+
+    # === Micro-commands (kept for debugging / advanced use) ===
+    p = sub.add_parser("probe", help="[Advanced] Probe queries against a provider.")
+    p.add_argument("--queries", required=True)
     p.add_argument("--out", required=True)
     p.add_argument("--provider", default="ieee")
-    p.add_argument("--page", type=int, default=1)
+    p.add_argument("--query-id")
 
-    # -- dedupe-rank --
-    p = sub.add_parser("dedupe-rank", help="Deduplicate and rank candidate JSONL files.")
-    p.add_argument("--input", required=True, action="append", help="JSONL input; repeat for multiple files.")
+    p = sub.add_parser("dedupe-rank", help="[Advanced] Deduplicate and rank candidate JSONL files.")
+    p.add_argument("--input", required=True, action="append")
     p.add_argument("--out", required=True)
-
-    # -- make-screening-packet --
-    p = sub.add_parser("make-screening-packet", help="Create an abstract-only screening packet.")
-    p.add_argument("--candidates", required=True)
-    p.add_argument("--out", required=True)
-
-    # -- import-agent-screening --
-    p = sub.add_parser("import-agent-screening", help="Validate and merge agent-authored screening batches.")
-    p.add_argument("--candidates", required=True)
-    p.add_argument("--batch", action="append", required=True)
-    p.add_argument("--out", required=True)
-
-    # -- make-download-queue --
-    p = sub.add_parser("make-download-queue", help="Generate an unapproved PDF download queue.")
-    p.add_argument("--screening", required=True)
-    p.add_argument("--out", required=True)
-    p.add_argument("--confirmed-by-user", action="store_true")
-
-    # -- approve-download-queue --
-    p = sub.add_parser("approve-download-queue", help="Approve selected queue entries.")
-    p.add_argument("--queue", required=True)
-    p.add_argument("--candidate-id", action="append", required=True)
-    p.add_argument("--approved-by", required=True)
-
-    # -- browser-login --
-    p = sub.add_parser("browser-login", help="Open a provider site in a dedicated browser profile for login.")
-    p.add_argument("--profile", required=True)
-    p.add_argument("--url", default="https://ieeexplore.ieee.org/")
-    p.add_argument(
-        "--browser-channel", choices=sorted(SUPPORTED_BROWSER_CHANNELS), default=DEFAULT_BROWSER_CHANNEL
-    )
-    p.add_argument("--completion", choices=sorted(COMPLETION_MODES), default="browser-close")
-    p.add_argument(
-        "--network-mode", choices=sorted(SUPPORTED_NETWORK_MODES), default=DEFAULT_NETWORK_MODE
-    )
-
-    # -- acquire-pdf --
-    p = sub.add_parser("acquire-pdf", help="Download approved PDFs using an authenticated browser profile.")
-    p.add_argument("--queue", required=True)
-    p.add_argument("--run-dir", required=True)
-    p.add_argument("--profile", required=True)
-    p.add_argument("--limit", type=int, default=DEFAULT_LIMIT)
-    p.add_argument(
-        "--browser-channel", choices=sorted(SUPPORTED_BROWSER_CHANNELS), default=DEFAULT_BROWSER_CHANNEL
-    )
-    p.add_argument(
-        "--network-mode", choices=sorted(SUPPORTED_NETWORK_MODES), default=DEFAULT_NETWORK_MODE
-    )
-
-    # -- match-pdfs --
-    p = sub.add_parser("match-pdfs", help="Match downloaded or manually dropped PDFs to the approved queue.")
-    p.add_argument("--queue", required=True)
-    p.add_argument("--run-dir", required=True)
-
-    # -- make-download-manifest --
-    p = sub.add_parser("make-download-manifest", help="Validate matched PDFs and stop at the handoff gate.")
-    p.add_argument("--matches", required=True)
-    p.add_argument("--out", required=True)
-
-    # -- decompose-pdfs --
-    p = sub.add_parser("decompose-pdfs", help="Decompose a validated PDF manifest after user confirmation.")
-    p.add_argument("--manifest", required=True)
-    p.add_argument("--run-dir", required=True)
-    p.add_argument("--confirmed-by-user", action="store_true")
 
     return parser
 
 
 # ---------------------------------------------------------------------------
-# Handlers — one per subcommand, each returns an exit code
+# Handlers
 # ---------------------------------------------------------------------------
 
+def _handle_init(args: argparse.Namespace) -> int:
+    """Create workspace directory and workspace.toml."""
+    import re
+    from datetime import datetime, timezone
 
-def _handle_validate_brief(args: argparse.Namespace) -> int:
-    brief_path = Path(args.brief)
-    try:
-        brief = load_brief(brief_path)
-        errors = validate_brief(brief)
-        if errors:
-            for error in errors:
-                print(f"error: {error}", file=sys.stderr)
-            return 2
-        print(f"valid: {brief_path}")
+    slug = re.sub(r"[^a-z0-9]+", "-", args.topic.lower()).strip("-")
+    ws_dir = Path("workspaces") / slug
+
+    if ws_dir.exists():
+        print(f"Workspace already exists: {ws_dir}")
         return 0
-    except (OSError, ValueError, ValueError) as error:
-        print(f"error: {error}", file=sys.stderr)
-        return 2
+
+    ws_dir.mkdir(parents=True, exist_ok=True)
+    for sub in ("search", "screening", "download", "handoff", "ingest", "reading", "notes", "export"):
+        (ws_dir / sub).mkdir(exist_ok=True)
+
+    toml_content = (
+        f'workspace_id = "{slug}"\n'
+        f'name = "{args.topic}"\n'
+        f'description = ""\n'
+        f'created_at = "{datetime.now(timezone.utc).isoformat()}"\n'
+        f'\n'
+        f'[zotero]\n'
+        f'collection_key = ""\n'
+        f'group_id = ""\n'
+        f'sync_notes = true\n'
+        f'sync_attachments = false\n'
+        f'tags = []\n'
+        f'\n'
+        f'[defaults]\n'
+        f'year_from = 2018\n'
+        f'year_to = 2026\n'
+        f'content_types = ["Journals", "Conferences"]\n'
+        f'preferred_venues = []\n'
+        f'\n'
+        f'lenses = []\n'
+        f'providers = ["ieee_xplore"]\n'
+        f'pdf_store = ""\n'
+        f'parent = ""\n'
+    )
+    (ws_dir / "workspace.toml").write_text(toml_content, encoding="utf-8")
+    print(f"Created workspace: {ws_dir}")
+    return 0
 
 
-def _handle_confirm_brief(args: argparse.Namespace) -> int:
+def _handle_search(args: argparse.Namespace) -> int:
+    td = _topic_dir(args.topic)
     try:
-        confirm_brief(Path(args.run_dir) / "research_brief.yaml", args.approved_by)
-        print(f"confirmed: {Path(args.run_dir) / 'research_brief.yaml'}")
+        from literature_review.pipeline.orchestrator import run_search as do_search
+        result = do_search(
+            td,
+            provider=args.provider,
+            max_pages=args.max_pages,
+            rows_per_page=args.rows_per_page,
+            delay_seconds=args.delay,
+            probe_only=args.probe_only,
+            skip_probe=args.skip_probe,
+        )
+        print(f"search: candidates={result.get('candidates_count', 0)}")
         return 0
-    except (OSError, ValueError, ValueError) as error:
-        print(f"error: {error}", file=sys.stderr)
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
         return 2
 
 
-def _handle_confirm_queries(args: argparse.Namespace) -> int:
+def _handle_acquire(args: argparse.Namespace) -> int:
+    td = _topic_dir(args.topic)
     try:
-        return confirm_queries(Path(args.run_dir), args.approved_by)
-    except (OSError, ValueError, ValueError) as error:
-        print(f"error: {error}", file=sys.stderr)
+        from literature_review.pipeline.orchestrator import run_acquire as do_acquire
+        result = do_acquire(
+            td,
+            profile=args.profile,
+            queue_only=args.queue_only,
+            candidate_ids=args.candidate_id,
+            approved_by=args.approved_by,
+        )
+        print(f"acquire: downloaded={result.get('downloaded', 0)}, manifest={result.get('manifest_path', 'none')}")
+        return 0
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
         return 2
+
+
+def _handle_ingest(args: argparse.Namespace) -> int:
+    td = _topic_dir(args.topic)
+    try:
+        from literature_review.pipeline.orchestrator import run_ingest as do_ingest
+        result = do_ingest(
+            td,
+            paper_ids=args.paper_ids,
+            dry_run=args.dry_run,
+        )
+        if args.dry_run:
+            print(f"ingest (dry-run): pending={result.get('pending', 0)}, cached={result.get('skipped', 0)}")
+        else:
+            print(f"ingest: ok={result.get('succeeded', 0)}, fail={result.get('failed', 0)}, skip={result.get('skipped', 0)}")
+        return 0
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
+def _handle_import_screening(args: argparse.Namespace) -> int:
+    td = _topic_dir(args.topic)
+    candidates_path = td / "search" / "candidates_ranked.jsonl"
+    out_path = td / "screening" / "screening_stage1.jsonl"
+    if not candidates_path.exists():
+        print(f"error: {candidates_path} not found. Run search first.", file=sys.stderr)
+        return 2
+    try:
+        return import_agent_screening(candidates_path, [Path(p) for p in args.batch], out_path)
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
+def _handle_read(args: argparse.Namespace) -> int:
+    td = _topic_dir(args.topic)
+    try:
+        from literature_review.pipeline.orchestrator import run_read as do_read
+        card = do_read(td, args.paper, lens=args.lens, model=args.model)
+        print(f"read: verdict={card.get('verdict', '?')}, confidence={card.get('confidence', 0):.0%}")
+        return 0
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
+def _handle_synthesize(args: argparse.Namespace) -> int:
+    td = _topic_dir(args.topic)
+    try:
+        from literature_review.pipeline.orchestrator import run_synthesize as do_synth
+        synthesis = do_synth(td, paper_ids=args.paper_ids, model=args.model)
+        print(synthesis[:500] + ("..." if len(synthesis) > 500 else ""))
+        return 0
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
+def _handle_export(args: argparse.Namespace) -> int:
+    td = _topic_dir(args.topic)
+    try:
+        from literature_review.pipeline.orchestrator import run_export as do_export
+        out = do_export(td, format=args.format, paper_ids=args.paper_ids)
+        print(f"exported: {out}")
+        return 0
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
+def _handle_stats(args: argparse.Namespace) -> int:
+    td = _topic_dir(args.topic)
+    try:
+        from literature_review.pipeline.orchestrator import run_stats as do_stats
+        stats = do_stats(td, plots=args.plots)
+        import json
+        print(json.dumps(stats, indent=2, ensure_ascii=True, default=str))
+        return 0
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
+def _handle_login(args: argparse.Namespace) -> int:
+    return open_login(
+        Path(args.profile), args.url,
+        browser_channel=args.browser_channel,
+        completion=args.completion,
+        network_mode=args.network_mode,
+    )
 
 
 def _handle_probe(args: argparse.Namespace) -> int:
     try:
         provider = get_provider(args.provider)
         return run_probe(
-            queries_path=Path(args.queries),
-            out_dir=Path(args.out),
-            provider=provider,
-            query_id=args.query_id,
-            allow_unapproved_plan=args.allow_unapproved_plan,
+            queries_path=Path(args.queries), out_dir=Path(args.out),
+            provider=provider, query_id=args.query_id,
+            allow_unapproved_plan=True,
         )
-    except ValueError as error:
-        print(f"error: {error}", file=sys.stderr)
-        return 2
-
-
-def _handle_evaluate_queries(args: argparse.Namespace) -> int:
-    return evaluate_queries(
-        queries_path=Path(args.queries),
-        probe_results_path=Path(args.probe_results),
-        out_dir=Path(args.out),
-        min_total=args.min_total,
-        max_total=args.max_total,
-        samples_path=Path(args.samples) if args.samples else None,
-    )
-
-
-def _handle_search(args: argparse.Namespace) -> int:
-    try:
-        provider = get_provider(args.provider)
-        return run_search(
-            queries_path=Path(args.queries),
-            out_dir=Path(args.out),
-            provider=provider,
-            max_pages=args.max_pages,
-            rows_per_page=args.rows_per_page,
-            delay_seconds=args.delay_seconds,
-            query_id=args.query_id,
-            allow_unapproved_plan=args.allow_unapproved_plan,
-            evaluation_path=Path(args.evaluation) if args.evaluation else None,
-        )
-    except ValueError as error:
-        print(f"error: {error}", file=sys.stderr)
-        return 2
-
-
-def _handle_normalize_candidates(args: argparse.Namespace) -> int:
-    """Normalize raw provider-specific records into the common candidate format."""
-    import json as _json
-
-    provider = get_provider(args.provider)
-    raw_path = Path(args.raw)
-    out_dir = Path(args.out)
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    try:
-        # Read raw JSON (expects {"records": [...]} or bare array)
-        raw_data = _json.loads(raw_path.read_text(encoding="utf-8"))
-        if isinstance(raw_data, dict):
-            records = raw_data.get("records", [])
-        elif isinstance(raw_data, list):
-            records = raw_data
-        else:
-            raise ValueError(f"{raw_path} must contain a JSON object with 'records' or a JSON array")
-
-        if not isinstance(records, list):
-            raise ValueError(f"{raw_path} records field must be a list")
-
-        out_path = out_dir / f"normalized_{args.query_id}.jsonl"
-        count = 0
-        with out_path.open("w", encoding="utf-8") as handle:
-            for i, record in enumerate(records, start=1):
-                if not isinstance(record, dict):
-                    continue
-                candidate = provider.normalize_record(
-                    record, query_id=args.query_id,
-                    rank=i, page=args.page, search_expression="",
-                )
-                handle.write(_json.dumps(candidate, ensure_ascii=True) + "\n")
-                count += 1
-        print(f"normalized {count} candidates from {raw_path}")
-        return 0
-    except Exception as error:
-        print(f"error: {error}", file=sys.stderr)
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
         return 2
 
 
@@ -330,123 +347,23 @@ def _handle_dedupe_rank(args: argparse.Namespace) -> int:
     return run_dedupe_rank([Path(p) for p in args.input], Path(args.out))
 
 
-def _handle_make_screening_packet(args: argparse.Namespace) -> int:
-    return write_screening_packet(Path(args.candidates), Path(args.out))
-
-
-def _handle_import_agent_screening(args: argparse.Namespace) -> int:
-    try:
-        return import_agent_screening(
-            Path(args.candidates),
-            [Path(p) for p in args.batch],
-            Path(args.out),
-        )
-    except (OSError, ValueError, json.JSONDecodeError) as error:
-        print(f"error: {error}", file=sys.stderr)
-        return 2
-
-
-def _handle_make_download_queue(args: argparse.Namespace) -> int:
-    try:
-        return write_download_queue(
-            screening_path=Path(args.screening),
-            out_dir=Path(args.out),
-            confirmed_by_user=args.confirmed_by_user,
-        )
-    except ValueError as error:
-        print(f"error: {error}", file=sys.stderr)
-        return 2
-
-
-def _handle_approve_download_queue(args: argparse.Namespace) -> int:
-    try:
-        count = approve_download_queue(
-            Path(args.queue), args.candidate_id, args.approved_by
-        )
-        print(f"approved={count}")
-        return 0
-    except (OSError, ValueError, json.JSONDecodeError) as error:
-        print(f"error: {error}", file=sys.stderr)
-        return 2
-
-
-def _handle_browser_login(args: argparse.Namespace) -> int:
-    return open_login(
-        Path(args.profile),
-        args.url,
-        browser_channel=args.browser_channel,
-        completion=args.completion,
-        network_mode=args.network_mode,
-    )
-
-
-def _handle_acquire_pdf(args: argparse.Namespace) -> int:
-    try:
-        rows = acquire_pdfs(
-            Path(args.queue),
-            Path(args.run_dir),
-            limit=args.limit,
-            profile=Path(args.profile),
-            browser_channel=args.browser_channel,
-            network_mode=args.network_mode,
-        )
-        print(f"downloaded={len(rows)}")
-        return 0
-    except (ValueError, AccessBlockedError, OSError) as error:
-        print(f"error: {error}", file=sys.stderr)
-        return 2
-
-
-def _handle_match_pdfs(args: argparse.Namespace) -> int:
-    result = match_pdfs(Path(args.queue), Path(args.run_dir))
-    print(
-        f"matched={result['matched_count']}; "
-        f"manual_review={len(result['manual_review'])}"
-    )
-    return 0
-
-
-def _handle_make_download_manifest(args: argparse.Namespace) -> int:
-    return write_download_manifest(Path(args.matches), Path(args.out))
-
-
-def _handle_decompose_pdfs(args: argparse.Namespace) -> int:
-    try:
-        artifact = decompose_pdfs(
-            Path(args.manifest), Path(args.run_dir), args.confirmed_by_user,
-        )
-    except (OSError, ValueError, json.JSONDecodeError) as error:
-        print(f"error: {error}", file=sys.stderr)
-        return 2
-
-    succeeded = sum(1 for item in artifact["ingests"] if item["status"] == "succeeded")
-    failed = sum(1 for item in artifact["ingests"] if item["status"] == "failed")
-    skipped = sum(1 for item in artifact["ingests"] if item["status"] == "skipped")
-    return 2 if failed or skipped else 0
-
-
 # ---------------------------------------------------------------------------
-# Dispatch table
+# Dispatch
 # ---------------------------------------------------------------------------
 
 _HANDLERS: dict[str, object] = {
-    "validate-brief": _handle_validate_brief,
-    "confirm-brief": _handle_confirm_brief,
-    "confirm-queries": _handle_confirm_queries,
-    "probe": _handle_probe,
-    "evaluate-queries": _handle_evaluate_queries,
+    "init": _handle_init,
     "search": _handle_search,
-    "normalize-candidates": _handle_normalize_candidates,
+    "acquire": _handle_acquire,
+    "ingest": _handle_ingest,
+    "import-screening": _handle_import_screening,
+    "read": _handle_read,
+    "synthesize": _handle_synthesize,
+    "export": _handle_export,
+    "stats": _handle_stats,
+    "login": _handle_login,
+    "probe": _handle_probe,
     "dedupe-rank": _handle_dedupe_rank,
-    "make-screening-packet": _handle_make_screening_packet,
-    "import-agent-screening": _handle_import_agent_screening,
-    "make-download-queue": _handle_make_download_queue,
-    "approve-download-queue": _handle_approve_download_queue,
-    "browser-login": _handle_browser_login,
-    "acquire-pdf": _handle_acquire_pdf,
-    "match-pdfs": _handle_match_pdfs,
-    "make-download-manifest": _handle_make_download_manifest,
-    "decompose-pdfs": _handle_decompose_pdfs,
 }
 
 

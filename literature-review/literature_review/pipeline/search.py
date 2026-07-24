@@ -122,7 +122,7 @@ def run_probe(
 
     query_list = plan.get("queries", [])
     if not isinstance(query_list, list) or not query_list:
-        raise ValueError("queries.yaml does not contain any queries")
+        raise ValueError("queries.toml does not contain any queries")
 
     enabled = [q for q in query_list if isinstance(q, dict) and q.get("enabled") is True]
     if query_id:
@@ -130,7 +130,7 @@ def run_probe(
         if not enabled:
             raise ValueError(f"enabled query id not found: {query_id}")
     if not enabled:
-        raise ValueError("queries.yaml does not contain any enabled queries")
+        raise ValueError("queries.toml does not contain any enabled queries")
 
     probe_dir = out_dir / "probe"
     probe_dir.mkdir(parents=True, exist_ok=True)
@@ -232,7 +232,7 @@ def run_search(
 
     query_list = plan.get("queries", [])
     if not isinstance(query_list, list):
-        raise ValueError("queries.yaml does not contain any queries")
+        raise ValueError("queries.toml does not contain any queries")
 
     enabled = [q for q in query_list if isinstance(q, dict) and q.get("enabled") is True]
     if query_id:

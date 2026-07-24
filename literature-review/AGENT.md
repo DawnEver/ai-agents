@@ -1,70 +1,78 @@
 # Literature-Review
 
-Claude Code agent for systematic literature reviews. Discover papers from multiple academic sources, screen abstracts with AI, acquire PDFs, decompose them into markdown, deep-read with domain-specific lenses, and sync paper notes to Zotero.
+Claude Code agent for systematic literature reviews. Discover papers from multiple academic sources, screen abstracts with AI, acquire PDFs via script, decompose on demand, and choose from deep-reading, synthesis, Zotero sync, or bibliography export.
 
 ## Setup
 
 ```bash
-# Install Python dependencies (includes paper_pdf_ingest from GitHub)
 pip install -r requirements.txt
-
-# Install Playwright browser binaries (required for IEEE search + PDF acquisition)
 python -m playwright install chromium
 ```
 
-The ingest step (`scripts/pdf_decompose.py`) calls the `ingest` CLI provided by `paper_pdf_ingest`.
-
 ## Architecture
 
-`/literature-review:new <topic>` walks a 10-step pipeline — see `.claude/skills/literature-review/SKILL.md` for the step table.
-Progressive disclosure: each step reads its sub-file from `.claude/skills/literature-review/{00..09}-*.md`.
+`/literature-review:new <topic>` guides a 4-step core pipeline + flexible options menu.
+
+**Core principle**: Define → Search → Acquire → Ingest → user chooses what to do next. Not linear, not forced.
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/literature-review:new <topic>` | Main pipeline. Re-invoking with a topic resumes from the latest non-empty artifact (see SKILL.md resume table). |
-| `/literature-review:rerun <step> <topic>` | Re-run any single step against an existing workspace/run. |
+| `lit-review init <topic>` | Create workspace + workspace.toml |
+| `lit-review search --topic <slug>` | End-to-end: queries → probe → search → dedupe → screening packet |
+| `lit-review acquire --topic <slug>` | End-to-end: queue → auth → download → match → manifest |
+| `lit-review ingest --topic <slug>` | On-demand PDF decomposition with cache reuse |
+| `lit-review import-screening --topic <slug> --batch ...` | Import agent-authored screening decisions |
+| `lit-review read --topic <slug> --paper <id> [--lens <name>]` | Deep-read a paper with optional domain lens |
+| `lit-review synthesize --topic <slug>` | Cross-paper synthesis from reading cards |
+| `lit-review export --topic <slug> [--format ...]` | Export paper cards to markdown/csv/bibtex/json |
+| `lit-review stats --topic <slug> [--plots]` | Summary statistics + charts |
+| `lit-review login [--profile ...]` | Browser login for publisher authentication |
 
 ## Pipeline
 
-Full step-by-step: see `.claude/skills/literature-review/SKILL.md` pipeline table. The orchestrator walks 00→09 in order.
-
-**Core principle**: Brief before query. Query before search. Gate before acquire. Ingest requires explicit confirm. No opinion without reading the paper.
-
-Progressive disclosure: `.claude/skills/literature-review/SKILL.md` is the map; each step's sub-file under `.claude/skills/literature-review/` is the playbook.
+| Step | What happens |
+|------|-------------|
+| 01 Define | Interactive topic scoping + concept taxonomy → `workspace.toml` + `research_brief.toml` |
+| 02 Search & Screen | Agent generates queries → `lit-review search` runs probe→search→dedupe→packet → AI screens all abstracts |
+| 03 Acquire | Agent analyzes auth once → user configures → `lit-review acquire` batch-downloads all PDFs |
+| 04 Ingest | `lit-review ingest --dry-run` checks cache → user picks papers → `lit-review ingest` decomposes |
+| Options | `lit-review read` / `synthesize` / `export` / `stats` — user picks, non-linear |
 
 ## Directory Layout
 
 ```
 .claude/
-  skills/
-    literature-review/       — main pipeline (progressive disclosure SKILL.md + 00–09)
-    literature-review-rerun/ — re-run any single step
-  agents/               — query-reviewer, abstract-screener, paper-reader
-  commands/             — slash-command entry points
-schemas/                — shared JSON Schema contracts (all skills)
-providers/              — literature source adapters (IEEE, arXiv, Semantic Scholar, ...)
-scripts/                — deterministic Python operations (CLI, validation, acquisition)
-templates/              — reference templates & checklists
-lenses/                 — domain-specific appraisal lenses
-workspaces/             — per-topic research contexts
+  skills/literature-review/  — pipeline orchestrator + step playbooks (01-05)
+  agents/                    — query-reviewer, abstract-screener, paper-reader
+  commands/literature-review/ — slash-command entry point
+literature_review/           — Python package
+  cli.py                     — unified CLI (12 commands)
+  models.py                  — all dataclass models
+  providers/                 — literature source adapters (IEEE + abstract base)
+  pipeline/                  — orchestrator + step implementations
+  review/                    — screen, reader, synthesis, extract
+  search/                    — query engine, dedup
+  acquire/                   — PDF download (Playwright)
+  export/                    — render (markdown/csv) + plot (matplotlib)
+  ai/                        — LiteLLM client + model registry
+  utils/                     — state tracking, schema, paths, log
+lenses/                      — domain-specific appraisal lenses (.toml)
+workspaces/                  — per-topic research contexts
   <topic>/
-    workspace.yaml      — topic config (Zotero binding, defaults, active lenses)
-    briefs/             — research briefs (reusable)
-    runs/               — execution runs
-      <run_id>/
-        research_brief.yaml
-        queries.yaml
-        search/         — raw records, normalized candidates
-        screening/      — agent screening output
-        download/       — approved queue, downloaded PDFs
-        handoff/        — download manifest
-        ingest/         — PDF decomposition artifacts
-        reading/        — reading queue, paper cards
-        notes/          — rendered paper cards, synthesis
-        _audit/         — provenance & logs
-    notes/              — cross-run synthesis
+    workspace.toml           — topic config
+    research_brief.toml      — approved scope + concept taxonomy
+    queries.toml             — Boolean search queries
+    run_state.json           — single-file progress tracking
+    search/                  — raw records, candidates, deduped results
+    screening/               — AI screening output
+    download/                — queue, PDFs, match reports
+    handoff/                 — download manifest
+    ingest/                  — per-paper decomposition artifacts (cached)
+    reading/                 — paper cards from deep reading
+    notes/                   — cross-paper synthesis
+    export/                  — rendered exports + plots
 ```
 
 ## Model Routing
@@ -75,13 +83,11 @@ workspaces/             — per-topic research contexts
 | abstract-screener | Screen abstracts against criteria | gpt-5.6-luna | high |
 | paper-reader | Deep reading with domain lens | gpt-5.6-luna | high |
 
-Model routing is configurable per skill via `.claude/agents/*.md` frontmatter. The orchestrator reads agent configs at invocation time.
-
 ## Provider Support
 
 | Provider | Status | Search | PDF Acquire |
 |----------|--------|--------|-------------|
-| IEEE Xplore | Phase 1 | ✅ REST API via `IeeeXploreProvider` | ✅ CLI via `scripts/lit_review.py acquire-pdf` (Playwright; `IeeeXploreProvider.acquire()` stub) |
-| arXiv | Phase 4 | Planned | Planned |
-| Semantic Scholar | Phase 4 | Planned | N/A (metadata only) |
-| CrossRef | Phase 4 | Planned | N/A (metadata only) |
+| IEEE Xplore | Phase 1 | REST API | Playwright (script-first) |
+| arXiv | Planned | Planned | Planned |
+| Semantic Scholar | Planned | N/A (metadata) | N/A |
+| CrossRef | Planned | N/A (metadata) | N/A |

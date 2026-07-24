@@ -102,9 +102,9 @@ def confirm_queries(run_dir: Path, approved_by: str = "user") -> int:
 
     errors = require_keys(data, "queries")
     if errors:
-        raise ValueError(f"invalid queries.yaml — missing: {errors}")
+        raise ValueError(f"invalid queries.toml — missing: {errors}")
     if not isinstance(data.get("queries"), list):
-        raise ValueError("queries.yaml: 'queries' must be a list")
+        raise ValueError("queries.toml: 'queries' must be a list")
 
     brief_ref = data.get("brief_ref")
     if isinstance(brief_ref, dict):

@@ -1,59 +1,48 @@
 ---
 name: literature-review
-description: Conduct a systematic literature review — define brief, plan queries, search across providers, screen abstracts, acquire PDFs, ingest, triage, deep-read, synthesise, and sync to Zotero.
+description: Conduct a systematic literature review — define scope, search across providers, screen abstracts, acquire PDFs, ingest, and choose from deep-read/synthesis/Zotero/bibliography options.
 argument-hint: <topic-name>
-allowed-tools: "Read,Write,Bash,Glob,Grep,Agent,Skill,WebFetch,WebSearch,Workflow"
+allowed-tools: "Read,Write,Bash,Glob,Grep,Agent,Skill,WebFetch,WebSearch"
 ---
 
 # /literature-review — Systematic literature review
 
-You are the orchestrator. Given a topic name, walk the pipeline below in order. The pipeline is gated: briefing before querying, querying before searching, and explicit user approval before acquisition or decomposition.
+You are the orchestrator. Given a topic name, guide the user through a flexible review workflow. The pipeline is suggestive, not rigid — the user can skip, reorder, or branch at any point.
 
 ## Pipeline
 
-| Step | File | What happens |
-|------|------|--------------|
-| 0 | `00-workspace.md` | Create/select workspace → `workspace.yaml` |
-| 1 | `01-brief.md` | Research brief + concept taxonomy → user gate |
-| 2 | `02-queries.md` | Query planning → user gate (SHA-256 binding) |
-| 3 | `03-search-screen.md` | Multi-provider probe → search → dedupe → agent abstract screen |
-| 4 | `04-acquire.md` | Download queue → user gate → browser PDF acquire |
-| 5 | `05-ingest.md` | PDF decomposition via paper_pdf_ingest (explicit user confirm) |
-| 6 | `06-triage.md` | Portfolio triage — rank papers → reading queue  (Phase 2) |
-| 7 | `07-read.md` | Deep reading + domain lens → paper cards  (Phase 2) |
-| 8 | `08-synthesis.md` | Cross-paper comparison → synthesis (optional)  (Phase 2) |
-| 9 | `09-zotero.md` | Zotero bridge bidirectional sync  (Phase 3) |
+| Step | File | CLI | What happens |
+|------|------|-----|--------------|
+| 01 | `01-define.md` | `lit-review init` | Define topic & scope → `workspace.toml` + `research_brief.toml` |
+| 02 | `02-search.md` | `lit-review search` | AI queries → multi-provider search → dedupe → screening packet |
+| 03 | `03-acquire.md` | `lit-review acquire` | Script-first batch PDF acquisition with auth analysis |
+| 04 | `04-ingest.md` | `lit-review ingest` | On-demand decomposition with cache reuse |
+| — | `05-options.md` | `read`/`synthesize`/`export`/`stats` | Post-acquisition capabilities as a menu |
 
 ## How to execute
 
 At the start of each step, Read the corresponding sub-file and follow it. This file is the map — sub-files are the playbook.
 
-## Resume table (which step to enter on re-invocation)
+## Core principles
 
-Re-invoking `/literature-review <topic>` resumes from the latest non-empty artifact:
+- **User in control**: every step is a suggestion. User can skip, branch, or go back.
+- **Script-first**: deterministic operations use CLI scripts. Agent orchestrates, doesn't micro-manage.
+- **No crypto theater**: no SHA-256 locking. User's verbal confirmation is the gate.
+- **Cache everything**: already-searched, downloaded, or decomposed content is never re-processed without asking.
+- **Single state file**: `run_state.json` tracks progress — one file to check for resume.
 
-| Existing artifact | Enter step |
-|-------------------|-----------|
-| `archived/*/<slug>/` (glob) | Confirm rerun — use `/literature-review:rerun` instead |
-| `runs/<id>/ingest/ingest_manifest.json` | 06 |
-| `runs/<id>/handoff/download_manifest.json` | 05 |
-| `runs/<id>/download/download_queue.json` (all approved) | 04 |
-| `runs/<id>/screening/screening_stage1.jsonl` | 04 |
-| `runs/<id>/search/records.jsonl` | 03 (skip to dedupe) |
-| `runs/<id>/queries.yaml` (approved) | 03 |
-| `runs/<id>/research_brief.yaml` (approved) | 02 |
-| `workspaces/<slug>/workspace.yaml` exists | 01 |
-| nothing | 00 |
+## Resume
 
-## Hard rules
+Re-invoking `/literature-review <topic>` checks `workspaces/<slug>/run_state.json`:
 
-- **Brief before query**: step 01 must complete with an approved brief before step 02 begins.
-- **Query before search**: step 02 must complete with approved queries before step 03 begins.
-- **Gate before acquire**: step 04 must have explicit user approval of the download queue before any PDF is acquired.
-- **Ingest requires explicit confirm**: step 05 must explicitly ask the user before decomposition. Never infer decomposition consent from download approval.
-- **Preserve raw responses, provenance, and audit logs**: every step records its inputs, outputs, and decisions so the run is reproducible and auditable.
-- **Respect publisher terms and rate limits**: throttle searches, honour robots.txt, and never bulk-scrape publisher sites.
+| Step status | Action |
+|-------------|--------|
+| `ingest: done` | Show stats → options menu |
+| `acquire: done` | Offer ingest or options menu |
+| `search: done` | Offer acquire |
+| `define: done` | Resume from search (step 02) |
+| No state / fresh | Start from step 01 |
 
 ## Slug
 
-Derive `<slug>` from the topic name (lowercase, non-alphanum → `-`, strip leading/trailing `-`). If the user passes an existing slug, use the resume table above.
+Derive `<slug>` from the topic name (lowercase, non-alphanum → `-`, strip leading/trailing `-`).
