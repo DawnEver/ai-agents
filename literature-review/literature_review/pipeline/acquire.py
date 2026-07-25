@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Any
 
 ARTIFACT_VERSION = 1
-MIN_PDF_BYTES = 1024
 
 INCLUDED_DECISIONS = {"include", "maybe"}
 PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2, "none": 3, "": 3}
@@ -29,30 +28,20 @@ CSV_FIELDS = [
 # ---------------------------------------------------------------------------
 
 
-def safe_filename(value: str, max_length: int = 100) -> str:
-    """Sanitise a string for use as a safe filename component."""
-    cleaned = re.sub(r'[<>:"/\\|?*\x00-\x1f]', "_", value or "paper")
-    cleaned = re.sub(r"\s+", " ", cleaned).strip(" ._") or "paper"
-    return cleaned[:max_length].rstrip(" .")
+# Canonical definitions live in acquire.verify; re-exported here so the many
+# existing `from pipeline.acquire import validate_pdf` callers keep working.
+from literature_review.acquire.verify import (  # noqa: E402
+    MIN_PDF_BYTES,
+    safe_filename,
+    sha256_file,
+    validate_pdf,
+)
 
-
-def sha256_file(path: Path) -> str:
-    """Return the hex-encoded SHA-256 digest of a file."""
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def validate_pdf(path: Path) -> None:
-    """Raise if *path* is not a valid PDF file."""
-    if not path.is_file():
-        raise ValueError(f"not a valid PDF: file does not exist: {path}")
-    with path.open("rb") as handle:
-        signature = handle.read(5)
-    if signature != b"%PDF-" or path.stat().st_size < MIN_PDF_BYTES:
-        raise ValueError(f"not a valid PDF: {path}")
+__all__ = [
+    "safe_filename", "sha256_file", "validate_pdf",
+    "write_download_queue", "approve_download_queue",
+    "match_pdfs", "write_download_manifest",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -372,12 +361,16 @@ def match_pdfs(queue_path: Path, run_dir: Path) -> dict[str, Any]:
             "reading_questions": item.get("reading_questions", []),
         })
 
+    report_path = run_dir / "pdf_match" / "match_report.json"
     result = {
         "matched_count": len(matches), "matches": matches,
         "manual_review": manual_review,
+        # Returned so callers never have to reconstruct this path themselves —
+        # that drift silently disabled manifest generation once already.
+        "report_path": str(report_path),
     }
-    (run_dir / "pdf_match").mkdir(parents=True, exist_ok=True)
-    (run_dir / "pdf_match" / "match_report.json").write_text(
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    report_path.write_text(
         json.dumps(result, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
     )
     return result
@@ -470,4 +463,4 @@ def write_download_manifest(matches_path: Path, out_dir: Path) -> int:
 
     print(f"validated={len(papers)}; handoff gate reached")
     print("Do you want to decompose all validated PDFs with paper_pdf_ingest now?")
-    return 0
+    return len(papers)

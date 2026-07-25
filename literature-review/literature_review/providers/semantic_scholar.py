@@ -26,8 +26,10 @@ from literature_review.providers.base import (
 BASE_URL = "https://api.semanticscholar.org/graph/v1/paper/search"
 USER_AGENT = polite_user_agent()
 
-# Fields to request from the API — keep lean for performance
-SEARCH_FIELDS = "title,abstract,year,authors,venue,citationCount,externalIds,url,publicationTypes,fieldsOfStudy"
+# Fields to request from the API — keep lean for performance.
+# openAccessPdf is worth its weight: without it every S2 hit reaches the
+# downloader with an empty pdf_url and has to be re-resolved by DOI.
+SEARCH_FIELDS = "title,abstract,year,authors,venue,citationCount,externalIds,url,publicationTypes,fieldsOfStudy,openAccessPdf"
 
 FOS_MAP: dict[str, str] = {
     "Journals": "JournalArticle",
@@ -44,6 +46,16 @@ def _optional_int(value: Any) -> int | None:
         return int(value)
     except (ValueError, TypeError):
         return None
+
+
+def _open_access_pdf(record: dict[str, Any]) -> str:
+    """Direct OA PDF link when S2 has one, else an arXiv PDF, else empty."""
+    oa = record.get("openAccessPdf")
+    if isinstance(oa, dict) and oa.get("url"):
+        return _as_text(oa["url"])
+    external = record.get("externalIds")
+    arxiv_id = external.get("ArXiv") if isinstance(external, dict) else None
+    return f"https://arxiv.org/pdf/{arxiv_id}" if arxiv_id else ""
 
 
 def _to_list(value: Any) -> list[dict[str, Any]]:
@@ -354,7 +366,7 @@ class SemanticScholarProvider(BaseProvider):
                 if record.get("publicationTypes") else ""
             ),
             "html_url": _as_text(record.get("url")),
-            "pdf_url": "",  # S2 doesn't provide direct PDF links
+            "pdf_url": _open_access_pdf(record),
             "provider_raw": {
                 "paper_id": paper_id,
                 "arxiv_id": arxiv_id,

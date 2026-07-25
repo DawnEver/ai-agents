@@ -6,7 +6,7 @@ import pytest
 
 from literature_review.acquire import http_fetch
 
-PDF_BYTES = b"%PDF-1.4\ntrailer\n%%EOF\n"
+PDF_BYTES = b"%PDF-1.4\n" + b"%padding\n" * 200 + b"trailer\n%%EOF\n"
 
 
 class FakeResponse:

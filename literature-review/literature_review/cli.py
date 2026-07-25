@@ -96,6 +96,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--candidate-id", action="append", help="Approve specific candidate (repeatable).")
     p.add_argument("--approved-by", default="user")
     p.add_argument("--queue-only", action="store_true", help="Only build the download queue.")
+    p.add_argument("--limit", type=int, default=None, help="Max PDFs to download this run (default: 20).")
+    p.add_argument("--no-resolve-oa", action="store_true", help="Skip DOI->open-access mirror lookup.")
 
     # === Pipeline: ingest ===
     p = sub.add_parser("ingest", help="On-demand PDF decomposition with cache reuse.")
@@ -253,6 +255,8 @@ def _handle_acquire(args: argparse.Namespace) -> int:
             queue_only=args.queue_only,
             candidate_ids=args.candidate_id,
             approved_by=args.approved_by,
+            limit=args.limit,
+            resolve_oa=not args.no_resolve_oa,
         )
         print(f"acquire: downloaded={result.get('downloaded', 0)}, manifest={result.get('manifest_path', 'none')}")
         return 0

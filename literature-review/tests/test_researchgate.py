@@ -6,7 +6,7 @@ import pytest
 
 from literature_review.acquire import researchgate as rg
 
-PDF_BYTES = b"%PDF-1.4\n%%EOF\n"
+PDF_BYTES = b"%PDF-1.4\n" + b"%padding\n" * 200 + b"trailer\n%%EOF\n"
 
 
 @pytest.fixture(autouse=True)

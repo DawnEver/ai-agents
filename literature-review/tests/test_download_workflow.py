@@ -15,7 +15,7 @@ from literature_review.acquire.download import (
     candidate_urls,
 )
 
-PDF_BYTES = b"%PDF-1.4\n%%EOF\n"
+PDF_BYTES = b"%PDF-1.4\n" + b"%padding\n" * 200 + b"trailer\n%%EOF\n"
 
 
 # ---------------------------------------------------------------------------

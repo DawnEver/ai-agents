@@ -226,10 +226,12 @@ def run_acquire(
     topic_dir: Path,
     *,
     profile: str | None = None,
-    browser_channel: str = "chromium",
+    browser_channel: str = "chrome",
     queue_only: bool = False,
     candidate_ids: list[str] | None = None,
     approved_by: str = "user",
+    limit: int | None = None,
+    resolve_oa: bool = True,
 ) -> dict[str, Any]:
     """Run end-to-end acquisition: screening → queue → download → match → manifest.
 
@@ -292,12 +294,13 @@ def run_acquire(
     # --- Download ---
     print("=== Download PDFs ===")
     try:
-        from literature_review.acquire.download import acquire_pdfs
+        from literature_review.acquire.download import HARD_LIMIT, acquire_pdfs
         rows = acquire_pdfs(
             queue_path, topic_dir,
-            limit=20,
+            limit=limit if limit is not None else HARD_LIMIT,
             profile=Path(profile) if profile else None,
             browser_channel=browser_channel,
+            resolve_oa=resolve_oa,
         )
         result["downloaded"] = len(rows)
     except Exception as exc:
@@ -313,7 +316,7 @@ def run_acquire(
 
     # --- Manifest ---
     print("=== Create Manifest ===")
-    match_report = topic_dir / "download" / "pdf_match" / "match_report.json"
+    match_report = Path(match_result["report_path"])
     if match_report.exists():
         write_download_manifest(match_report, handoff_dir)
         result["manifest_path"] = str(handoff_dir / "download_manifest.json")
