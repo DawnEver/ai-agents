@@ -92,6 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("acquire", help="End-to-end: queue -> auth -> download -> match -> manifest.")
     p.add_argument("--topic", required=True, help="Topic slug.")
     p.add_argument("--profile", help="Browser profile path for authenticated download.")
+    p.add_argument("--browser-channel", choices=["chrome", "chromium"], default="chrome", help="Browser to use (default: chrome for real Chrome with cookies).")
     p.add_argument("--candidate-id", action="append", help="Approve specific candidate (repeatable).")
     p.add_argument("--approved-by", default="user")
     p.add_argument("--queue-only", action="store_true", help="Only build the download queue.")
@@ -248,6 +249,7 @@ def _handle_acquire(args: argparse.Namespace) -> int:
         result = do_acquire(
             td,
             profile=args.profile,
+            browser_channel=args.browser_channel,
             queue_only=args.queue_only,
             candidate_ids=args.candidate_id,
             approved_by=args.approved_by,

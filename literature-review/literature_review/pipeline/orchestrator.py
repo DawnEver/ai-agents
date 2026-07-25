@@ -295,7 +295,7 @@ def run_acquire(
         from literature_review.acquire.download import acquire_pdfs
         rows = acquire_pdfs(
             queue_path, topic_dir,
-            limit=100,
+            limit=20,
             profile=Path(profile) if profile else None,
             browser_channel=browser_channel,
         )

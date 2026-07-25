@@ -1,123 +1,59 @@
 # Literature-Review
 
-Claude Code agent for systematic literature reviews. Discover papers from multiple academic sources, screen abstracts with AI, acquire PDFs via script, decompose on demand, and choose from deep-reading, synthesis, Zotero sync, or bibliography export.
+Systematic literature review agent. Define → Search → Acquire → Ingest → user chooses next (read, synthesize, export, Zotero).
 
-## Setup
+## Tool Priority
 
-```bash
-pip install -r requirements.txt
-python -m playwright install chromium
+**Project tools first. Generic tools will hit walls these tools bypass.**
+
+| Task | ✅ Use | ❌ Skip |
+|------|-------|--------|
+| PDF download | `lit-review acquire --topic <slug>` | curl / wget |
+| Paper import + OA PDF | `zotero_add_by_doi` (MCP) | manual HTTP |
+| Batch parallelism | `Workflow` tool | sequential Bash loops |
+| Semantic search | `zotero_semantic_search` | grep on PDFs |
+| Deep-read | `lit-review read --topic <slug> --paper <id>` | ad-hoc Read of text dumps |
+
+## PDF Download Strategy
+
+**Publisher sites (IEEE Xplore, Springer Link) use Cloudflare Turnstile — automated download WILL fail. Always resolve URLs in this order:**
+
+1. **University repository** — `repo.uni-hannover.de`, `acris.aalto.fi`, `nottingham-repository.worktribe.com`, etc. No Cloudflare, use HTTP fast path.
+2. **Preprint servers** — arXiv, techrxiv. Direct PDF download.
+3. **ResearchGate** — `www.researchgate.net`. Blocks HTTP (403) but works in Playwright browser with profile. Search: `https://www.researchgate.net/search/publication?q=<title>`. Author-uploaded PDFs often available even for paywalled papers.
+4. **Publisher OA page** — only as last resort; requires real Chrome + persistent profile + cookie-dismissal + PDF-button auto-click.
+
+**`lit-review acquire` now does this automatically.** For each queue item it:
+
+1. Resolves the DOI against Unpaywall, OpenAlex, and Semantic Scholar to discover repository/preprint mirrors.
+2. Merges those with the queue's `pdf_url`/`html_url` and ranks all of them by the priority above (`literature_review/acquire/oa_resolve.py`).
+3. Tries every source in order — one blocked publisher no longer fails the paper.
+4. Per source: plain HTTP first (landing pages are parsed for `citation_pdf_url` / `/files/` / `/bitstream/` links), falling back to the browser only for Cloudflare-guarded hosts.
+5. On total failure, logs the per-URL reason in `download/download_log.csv` — read that column before retrying by hand.
+
+So a bare DOI in the queue is usually enough; a good `html_url` still helps. Set `LIT_REVIEW_CONTACT` to your email to enter the Unpaywall/OpenAlex polite pool.
+
+## Search Sources
+
+| Source | Access | Notes |
+|--------|--------|-------|
+| Semantic Scholar API | REST (free) | OA URL aggregation, citation graph |
+| IEEE Xplore | REST + Playwright | Primary for EE papers |
+| arXiv | REST + direct PDF | Preprints |
+| DBLP | REST | CS bibliography |
+| **ResearchGate** | Playwright browser | Author uploads, paywalled papers often available; blocks HTTP |
+
+## Key Commands
+
+```
+lit-review init/search/acquire/ingest/read/synthesize/export/stats --topic <slug>
+lit-review login [--profile ...]
 ```
 
-## Architecture
+## Details
 
-`/literature-review:new <topic>` guides a 4-step core pipeline + flexible options menu.
-
-**Core principle**: Define → Search → Acquire → Ingest → user chooses what to do next. Not linear, not forced.
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `lit-review init <topic>` | Create workspace + workspace.toml |
-| `lit-review search --topic <slug>` | End-to-end: queries → probe → search → dedupe → screening packet |
-| `lit-review acquire --topic <slug>` | End-to-end: queue → auth → download → match → manifest |
-| `lit-review ingest --topic <slug>` | On-demand PDF decomposition with cache reuse |
-| `lit-review import-screening --topic <slug> --batch ...` | Import agent-authored screening decisions |
-| `lit-review read --topic <slug> --paper <id> [--lens <name>]` | Deep-read a paper with optional domain lens |
-| `lit-review synthesize --topic <slug>` | Cross-paper synthesis from reading cards |
-| `lit-review export --topic <slug> [--format ...]` | Export paper cards to markdown/csv/bibtex/json |
-| `lit-review stats --topic <slug> [--plots]` | Summary statistics + charts |
-| `lit-review login [--profile ...]` | Browser login for publisher authentication |
-
-## Pipeline
-
-| Step | What happens |
-|------|-------------|
-| 01 Define | Interactive topic scoping + concept taxonomy → `workspace.toml` + `research_brief.toml` |
-| 02 Search & Screen | Agent generates queries → `lit-review search` runs probe→search→dedupe→packet → AI screens all abstracts |
-| 03 Acquire | Agent analyzes auth once → user configures → `lit-review acquire` batch-downloads all PDFs |
-| 04 Ingest | `lit-review ingest --dry-run` checks cache → user picks papers → `lit-review ingest` decomposes |
-| Options | `lit-review read` / `synthesize` / `export` / `stats` — user picks, non-linear |
-
-## Directory Layout
-
-```
-.claude/
-  skills/literature-review/  — pipeline orchestrator + step playbooks (01-05)
-  agents/                    — query-reviewer, abstract-screener, paper-reader
-  commands/literature-review/ — slash-command entry point
-literature_review/           — Python package
-  cli.py                     — unified CLI (12 commands)
-  models.py                  — all dataclass models
-  providers/                 — literature source adapters (IEEE, arXiv, S2, DBLP) + registry
-  pipeline/                  — orchestrator + step implementations
-  review/                    — screen, reader, synthesis, extract
-  search/                    — query engine, dedup
-  acquire/                   — PDF download (Playwright)
-  export/                    — render (markdown/csv) + plot (matplotlib)
-  ai/                        — LiteLLM client + model registry
-  utils/                     — state tracking, schema, paths, log
-lenses/                      — domain-specific appraisal lenses (.toml)
-workspaces/                  — per-topic research contexts
-  <topic>/
-    workspace.toml           — topic config
-    research_brief.toml      — approved scope + concept taxonomy
-    queries.toml             — Boolean search queries
-    run_state.json           — single-file progress tracking
-    search/                  — raw records, candidates, deduped results
-    screening/               — AI screening output
-    download/                — queue, PDFs, match reports
-    handoff/                 — download manifest
-    ingest/                  — per-paper decomposition artifacts (cached)
-    reading/                 — paper cards from deep reading
-    notes/                   — cross-paper synthesis
-    export/                  — rendered exports + plots
-```
-
-## Zotero Integration
-
-Zotero is the human-facing document library for this project. Its role is **reading and PDF storage**, not complex taxonomy. Principles:
-
-### Flat Collections
-- **One workspace → one Zotero collection.** The workspace slug IS the collection name.
-- **No nested subcollections.** Use Zotero tags for cross-cutting labels (e.g. `key-paper`, `to-read`, `baseline`).
-- If a paper belongs to multiple workspaces, it gets filed into each workspace's collection independently.
-
-### Registry (Workspace ↔ Zotero Bridge)
-- Each workspace maintains `zotero_registry.jsonl` — the single source of truth linking `candidate_id` ↔ `zotero_key`.
-- The agent reads this file to know what's already synced; writes to it after each sync.
-- Format: one JSON object per line with fields: `candidate_id`, `zotero_key`, `title`, `doi`, `date_synced`, `pdf_attached`, `notes_synced`, `zotero_collection`.
-
-### Agent Workflow (MCP-First)
-The agent has direct access to all Zotero MCP tools. Preferred workflow:
-
-1. **Check registry** — read `workspaces/<slug>/zotero_registry.jsonl` to see what's already synced.
-2. **Find/create collection** — use `zotero_search_collections` / `zotero_create_collection` with the workspace slug as name.
-3. **Add papers** — use `zotero_add_by_doi` (preferred, gets rich metadata + OA PDF) or `zotero_add_by_url` (arXiv) or `zotero_add_from_file` (local PDF).
-4. **Tag** — apply workspace tag (`zotero_batch_update_tags`) for cross-collection filtering.
-5. **Record** — append each paper's Zotero key to the registry file.
-
-### Batch Sync (CLI)
-```bash
-lit-review zotero-sync --topic <slug>      # Sync include/maybe papers
-lit-review zotero-status --topic <slug>    # Show registry state
-lit-review zotero-sync --topic <slug> --force  # Re-sync all
-```
-
-### Collection Naming Convention
-- Workspace slug becomes the collection name: `constrained-hamiltonian-path-chp-exact-enumeration-and-counting`
-- For readability in Zotero's UI, the agent may use the short workspace name from `workspace.toml`: `"CHP — Exact Enumeration & Counting"`
-- Collection names are idempotent — the same name always maps to the same workspace.
-
-## Provider Support
-
-| Provider | Status | Search | PDF Acquire |
-|----------|--------|--------|-------------|
-| IEEE Xplore | Available | REST API | Playwright (script-first) |
-| arXiv | Available | REST API | Direct PDF |
-| Semantic Scholar | Available | REST API | Open-access PDF when exposed |
-| DBLP | Available | REST API | N/A (metadata) |
-| CrossRef | Planned | N/A (metadata) | N/A |
-
-Multi-provider runs are isolated on disk: probe results under `search/probe/<provider>/`, raw pages under `search/search/raw/<provider>/`, records as `records_<provider>.jsonl`. Aggregated candidates land in `search/all_candidates.jsonl` before dedupe. Set `LIT_REVIEW_ROOT` (or run anywhere inside the project) — the CLI resolves the root holding `workspaces/` automatically.
+Progressive disclosure — load as needed:
+- **Pipeline step details** → `.claude/skills/literature-review/0[1-5]*.md`
+- **Zotero integration + registry format** → `.claude/memory/2026/07/25/zotero-integration-design.md`
+- **Provider matrix + directory layout** → `CLAUDE.md`
+- **CHP workspace context** → `workspaces/<slug>/workspace.toml` + `research_brief.toml`
