@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "zotero": {
+      "command": "uv",
+      "args": ["tool", "run", "--from", "zotero-mcp-server", "pyzotero-mcp", "serve", "--transport", "stdio"]
+    }
+  }
+}

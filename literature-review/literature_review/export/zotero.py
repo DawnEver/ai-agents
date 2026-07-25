@@ -41,7 +41,9 @@ BBT_CAYW_URL = "http://127.0.0.1:23119/better-bibtex/cayw"
 # Default HTTP port for zotero-mcp serve
 MCP_DEFAULT_PORT = 8484
 MCP_HTTP_BASE = f"http://127.0.0.1:{MCP_DEFAULT_PORT}"
-MCP_CMD = str(Path.home() / ".local" / "share" / "lit-review-venv" / "Scripts" / "pyzotero-mcp.exe")
+# Use uv tool run for cross-platform portability — identical to .mcp.json config
+MCP_CMD = "uv"
+MCP_ARGS = ["tool", "run", "--from", "zotero-mcp-server", "pyzotero-mcp"]
 
 
 # ── Per-paper result ─────────────────────────────────────────────────
@@ -165,7 +167,7 @@ class ZoteroMCPClient:
         # 2) Try spawning stdio process
         try:
             self._proc = subprocess.Popen(
-                [MCP_CMD, "serve", "--transport", "stdio"],
+                [MCP_CMD] + MCP_ARGS + ["serve", "--transport", "stdio"],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
