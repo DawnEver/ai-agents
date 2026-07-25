@@ -25,7 +25,16 @@ Systematic literature review agent. Define → Search → Acquire → Ingest →
    **Rate limits are strict and escalate to an IP ban.** The module paces requests (~6 s apart, max 3 publication pages per paper), warms up on the home page to avoid a cold-search challenge, and waits out a bot check so you can solve it in the headed window. If Cloudflare returns **error 1020 ("Access denied", IP-level ban)** there is nothing to solve: a circuit breaker trips and the rest of the run skips ResearchGate. Do not retry — wait for the ban to lapse or use a different network. Never attempt to evade it; that risks the institution's IP reputation.
 4. **Publisher OA page** — only as last resort; requires real Chrome + persistent profile + cookie-dismissal + PDF-button auto-click.
 
-**`lit-review acquire` now does this automatically.** For each queue item it:
+**Architecture** (`literature_review/acquire/`): `oa_resolve` (identity → ranked sources) →
+`transport` (sources → bytes, cheapest-capable first: `http` → `browser` → `researchgate`) →
+`verify` (one definition of a valid PDF) → `ledger` (append-only `download/ledger.jsonl`,
+the source of truth downstream reads). `engine` orchestrates; `net` holds the single HTTP policy.
+`download/download_log.csv` is a derived projection of the ledger — never edit it.
+
+Use `lit-review acquire --topic <slug> --dry-run` to print the per-paper source plan without
+downloading anything; that answers "why didn't this download" before spending a run.
+
+**`lit-review acquire` does this automatically.** For each queue item it:
 
 1. Resolves the DOI against Unpaywall, OpenAlex, and Semantic Scholar to discover repository/preprint mirrors.
 2. Merges those with the queue's `pdf_url`/`html_url` and ranks all of them by the priority above (`literature_review/acquire/oa_resolve.py`).

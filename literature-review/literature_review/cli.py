@@ -98,6 +98,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--queue-only", action="store_true", help="Only build the download queue.")
     p.add_argument("--limit", type=int, default=None, help="Max PDFs to download this run (default: 20).")
     p.add_argument("--no-resolve-oa", action="store_true", help="Skip DOI->open-access mirror lookup.")
+    p.add_argument("--dry-run", action="store_true", help="Print the source plan per paper; download nothing.")
 
     # === Pipeline: ingest ===
     p = sub.add_parser("ingest", help="On-demand PDF decomposition with cache reuse.")
@@ -247,6 +248,23 @@ def _handle_search(args: argparse.Namespace) -> int:
 def _handle_acquire(args: argparse.Namespace) -> int:
     td = _topic_dir(args.topic)
     try:
+        if args.dry_run:
+            from literature_review.acquire.engine import HARD_LIMIT, plan_sources
+            from literature_review.pipeline.acquire import write_download_queue
+
+            write_download_queue(td / "screening" / "screening_stage1.jsonl", td / "download")
+            plans = plan_sources(
+                td / "download" / "download_queue.json", td,
+                limit=args.limit or HARD_LIMIT,
+                resolve_oa=not args.no_resolve_oa,
+            )
+            for plan in plans:
+                print(f"\n{plan['candidate_id']}: {plan['title'][:70]}")
+                for source in plan["sources"] or [{"url": "(no source)", "transport": "-"}]:
+                    print(f"  [{source['transport']:>7}] {source['url'][:110]}")
+            print(f"\n{len(plans)} paper(s) planned; nothing downloaded.")
+            return 0
+
         from literature_review.pipeline.orchestrator import run_acquire as do_acquire
         result = do_acquire(
             td,

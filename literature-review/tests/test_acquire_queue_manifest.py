@@ -7,12 +7,17 @@ sync with the orchestrator and silently disabled manifest generation.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
+from literature_review.acquire import ledger
+from literature_review.acquire.types import DownloadRecord, Outcome
+from literature_review.acquire.verify import sha256_file
 from literature_review.pipeline.acquire import (
     approve_download_queue,
-    match_pdfs,
+    manifest_rows,
+    match_manual_drop,
     validate_pdf,
     write_download_manifest,
     write_download_queue,
@@ -111,41 +116,102 @@ def _approved_queue(workspace, cids):
     return queue_path
 
 
-def test_match_pdfs_reports_its_own_output_path(workspace):
-    """The orchestrator must not have to guess where the report landed."""
+def _record_download(workspace, cid, pdf: Path):
+    """Simulate what the downloader records for a successful fetch."""
+    path = ledger.ledger_path(workspace)
+    ledger.append(path, DownloadRecord(
+        candidate_id=cid, outcome=Outcome.DOWNLOADED,
+        timestamp="2026-07-26T00:00:00+01:00", title=f"Paper {cid}",
+        pdf_path=str(pdf.resolve()), sha256=sha256_file(pdf),
+    ))
+    return path
+
+
+def test_manifest_rows_come_from_the_ledger(workspace):
+    """No text extraction, no assignment problem — just a join on candidate_id."""
     queue_path = _approved_queue(workspace, ["a"])
-    (workspace / "pdfs").mkdir()
-    (workspace / "pdfs" / "a_Paper a.pdf").write_bytes(PDF_BYTES)
+    pdf = workspace / "pdfs" / "a_Paper a.pdf"
+    pdf.parent.mkdir()
+    pdf.write_bytes(PDF_BYTES)
+    _record_download(workspace, "a", pdf)
 
-    result = match_pdfs(queue_path, workspace)
+    rows = manifest_rows(ledger.ledger_path(workspace), queue_path)
 
-    assert "report_path" in result
-    from pathlib import Path
-    assert Path(result["report_path"]).exists()
+    assert len(rows) == 1
+    assert rows[0]["candidate_id"] == "a"
+    assert rows[0]["doi"] == "10.1000/a"       # joined from the queue
+    assert rows[0]["pdf_path"] == str(pdf.resolve())
 
 
-def test_match_pdfs_matches_by_candidate_id_in_filename(workspace):
+def test_manifest_rows_skip_records_whose_pdf_vanished(workspace):
     queue_path = _approved_queue(workspace, ["a"])
-    (workspace / "pdfs").mkdir()
-    (workspace / "pdfs" / "a_Paper a.pdf").write_bytes(PDF_BYTES)
+    pdf = workspace / "pdfs" / "a.pdf"
+    pdf.parent.mkdir()
+    pdf.write_bytes(PDF_BYTES)
+    _record_download(workspace, "a", pdf)
+    pdf.unlink()
 
-    result = match_pdfs(queue_path, workspace)
+    assert manifest_rows(ledger.ledger_path(workspace), queue_path) == []
 
-    assert result["matched_count"] == 1
+
+def test_manual_drop_is_matched_by_candidate_id_in_filename(workspace):
+    queue_path = _approved_queue(workspace, ["a"])
+    drop = workspace / "manual_drop"
+    drop.mkdir()
+    (drop / "a_downloaded_by_hand.pdf").write_bytes(PDF_BYTES)
+
+    rows = match_manual_drop(queue_path, workspace)
+
+    assert [r["candidate_id"] for r in rows] == ["a"]
+
+
+def test_manual_drop_matches_by_doi(workspace):
+    queue_path = _approved_queue(workspace, ["a"])
+    drop = workspace / "manual_drop"
+    drop.mkdir()
+    (drop / "10.1000_a.pdf").write_bytes(PDF_BYTES)
+
+    assert [r["candidate_id"] for r in match_manual_drop(queue_path, workspace)] == ["a"]
+
+
+def test_manual_drop_never_claims_one_paper_twice(workspace):
+    queue_path = _approved_queue(workspace, ["a"])
+    drop = workspace / "manual_drop"
+    drop.mkdir()
+    (drop / "a_one.pdf").write_bytes(PDF_BYTES)
+    (drop / "a_two.pdf").write_bytes(PDF_BYTES)
+
+    assert len(match_manual_drop(queue_path, workspace)) == 1
+
+
+def test_manual_drop_ignores_unmatched_and_invalid_files(workspace):
+    queue_path = _approved_queue(workspace, ["a"])
+    drop = workspace / "manual_drop"
+    drop.mkdir()
+    (drop / "totally_unrelated.pdf").write_bytes(PDF_BYTES)
+    (drop / "a_stub.pdf").write_bytes(b"%PDF-1.4\nshort")
+
+    assert match_manual_drop(queue_path, workspace) == []
+
+
+def test_manual_drop_is_empty_without_the_directory(workspace):
+    queue_path = _approved_queue(workspace, ["a"])
+    assert match_manual_drop(queue_path, workspace) == []
 
 
 # ---------------------------------------------------------------------------
 # Manifest
 # ---------------------------------------------------------------------------
 
-def test_manifest_is_written_from_match_report(workspace):
+def test_manifest_is_written_from_ledger_rows(workspace):
     queue_path = _approved_queue(workspace, ["a"])
-    (workspace / "pdfs").mkdir()
-    (workspace / "pdfs" / "a_Paper a.pdf").write_bytes(PDF_BYTES)
-    result = match_pdfs(queue_path, workspace)
+    pdf = workspace / "pdfs" / "a_Paper a.pdf"
+    pdf.parent.mkdir()
+    pdf.write_bytes(PDF_BYTES)
+    _record_download(workspace, "a", pdf)
 
-    from pathlib import Path
-    count = write_download_manifest(Path(result["report_path"]), workspace / "handoff")
+    rows = manifest_rows(ledger.ledger_path(workspace), queue_path)
+    count = write_download_manifest(rows, workspace / "handoff")
 
     manifest = json.loads((workspace / "handoff" / "download_manifest.json").read_text(encoding="utf-8"))
     assert count == 1
@@ -190,10 +256,14 @@ def test_run_acquire_produces_a_manifest(workspace, monkeypatch):
     _write_screening(workspace, [_screening_row("a")])
 
     def fake_acquire_pdfs(queue_path, run_dir, **kwargs):
+        # A download is only "done" once it is in the ledger — that record is
+        # what every later stage reads.
         pdf_dir = run_dir / "pdfs"
         pdf_dir.mkdir(parents=True, exist_ok=True)
-        (pdf_dir / "a_Paper a.pdf").write_bytes(PDF_BYTES)
-        return [{"candidate_id": "a", "status": "downloaded"}]
+        pdf = pdf_dir / "a_Paper a.pdf"
+        pdf.write_bytes(PDF_BYTES)
+        _record_download(run_dir, "a", pdf)
+        return [{"candidate_id": "a", "outcome": "downloaded"}]
 
     monkeypatch.setattr(
         "literature_review.acquire.download.acquire_pdfs", fake_acquire_pdfs

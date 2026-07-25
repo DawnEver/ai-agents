@@ -17,9 +17,7 @@ import os
 from typing import Any
 from urllib.parse import urlparse
 
-import requests
-
-from literature_review.providers.base import polite_user_agent
+from literature_review.acquire import net
 
 # Lower rank sorts first.
 RANK_REPOSITORY = 0
@@ -100,9 +98,8 @@ def rank_urls(urls: list[str]) -> list[str]:
 # ---------------------------------------------------------------------------
 
 def _get_json(url: str, params: dict[str, str] | None = None) -> Any:
-    response = requests.get(
-        url, params=params, timeout=TIMEOUT,
-        headers={"User-Agent": polite_user_agent(), "Accept": "application/json"},
+    response = net.get(
+        url, params=params, timeout=TIMEOUT, accept="application/json",
     )
     if response.status_code != 200:
         return None

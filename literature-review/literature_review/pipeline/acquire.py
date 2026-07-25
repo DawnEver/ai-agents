@@ -40,7 +40,7 @@ from literature_review.acquire.verify import (  # noqa: E402
 __all__ = [
     "safe_filename", "sha256_file", "validate_pdf",
     "write_download_queue", "approve_download_queue",
-    "match_pdfs", "write_download_manifest",
+    "manifest_rows", "match_manual_drop", "write_download_manifest",
 ]
 
 
@@ -242,143 +242,91 @@ def _norm(value: str) -> str:
     return re.sub(r"[^a-z0-9]", "", (value or "").lower())
 
 
-def _pdf_search_text(path: Path) -> str:
-    raw = path.read_bytes()
-    chunks = [raw[:250_000].decode("latin-1", errors="ignore")]
-    try:
-        import fitz  # pymupdf — provided by paper_pdf_ingest
-        doc = fitz.open(str(path))
-        try:
-            for page in doc[:2]:
-                chunks.append(page.get_text())
-        finally:
-            doc.close()
-    except Exception:
-        pass
-    return "\n".join(chunks).lower()
+def manifest_rows(ledger_path: Path, queue_path: Path) -> list[dict[str, Any]]:
+    """Join successful ledger records with their queue metadata.
 
+    This replaces PDF-text extraction plus maximum-weight assignment. The
+    downloader already recorded which file belongs to which paper; matching
+    only ever existed because that fact was thrown away.
+    """
+    from literature_review.acquire import ledger as ledger_mod
 
-def _match_scores(path: Path, text: str, item: dict[str, Any]) -> int:
-    haystack = _norm(path.stem + " " + text)
-    scores = []
-    doi = _norm(str(item.get("doi", "")))
-    article = _norm(str(item.get("article_number") or item.get("articleNumber") or ""))
-    candidate = _norm(str(item.get("candidate_id", "")))
-    title = _norm(str(item.get("title", "")))
-    if doi and doi in haystack:
-        scores.append(100)
-    if article and article in haystack:
-        scores.append(90)
-    if candidate and candidate in _norm(path.stem):
-        scores.append(80)
-    if len(title) >= 16 and title in haystack:
-        scores.append(70)
-    return max(scores, default=0)
-
-
-def _maximum_weight_matching(
-    scores: list[list[int]], forbidden: tuple[int, int] | None = None
-) -> tuple[int, list[tuple[int, int]]]:
-    """Return a maximum-total-score one-to-one matching, allowing unmatched PDFs."""
-    states: dict[int, tuple[int, list[tuple[int, int]]]] = {0: (0, [])}
-    for source_index, row in enumerate(scores):
-        next_states = dict(states)
-        for mask, (total, pairs) in states.items():
-            for item_index, score in enumerate(row):
-                if forbidden == (source_index, item_index):
-                    continue
-                bit = 1 << item_index
-                if score <= 0 or mask & bit:
-                    continue
-                candidate = (total + score, pairs + [(source_index, item_index)])
-                if candidate[0] > next_states.get(mask | bit, (-1, []))[0]:
-                    next_states[mask | bit] = candidate
-        states = next_states
-    return max(states.values(), key=lambda v: v[0])
-
-
-def match_pdfs(queue_path: Path, run_dir: Path) -> dict[str, Any]:
-    """Match downloaded or manually dropped PDFs to approved queue records."""
-    artifact = json.loads(queue_path.read_text(encoding="utf-8"))
-    items = [item for item in artifact.get("items", []) if item.get("approved") is True]
-
-    sources: list[Path] = []
-    for directory in (run_dir / "pdfs", run_dir / "manual_drop"):
-        if directory.exists():
-            sources.extend(sorted(directory.glob("*.pdf")))
-
-    matches, manual_review = [], []
-    valid_sources: list[tuple[Path, str]] = []
-    for path in sources:
-        try:
-            validate_pdf(path)
-        except (ValueError, OSError) as error:
-            manual_review.append({"pdf_path": str(path.resolve()), "reason": str(error)})
-            continue
-        valid_sources.append((path, _pdf_search_text(path)))
-
-    score_matrix = [
-        [_match_scores(path, text, item) for item in items]
-        for path, text in valid_sources
-    ]
-    total_score, assignments = _maximum_weight_matching(score_matrix)
-
-    # Reject ambiguous matchings
-    if any(
-        _maximum_weight_matching(score_matrix, pair)[0] == total_score
-        for pair in assignments
-    ):
-        assignments = []
-
-    assigned_sources = {si for si, _ in assignments}
-    for si, (path, _) in enumerate(valid_sources):
-        if si not in assigned_sources:
-            manual_review.append({
-                "pdf_path": str(path.resolve()), "reason": "no unique reliable match"
-            })
-
-    for source_index, index in assignments:
-        path = valid_sources[source_index][0]
-        item = items[index]
-        destination = path
-        if path.parent.name == "manual_drop":
-            out = run_dir / "pdfs"
-            out.mkdir(parents=True, exist_ok=True)
-            cid = safe_filename(str(item.get("candidate_id") or "paper"), 40)
-            ttl = safe_filename(str(item.get("title") or "paper"), 80)
-            destination = out / f"{cid}_{ttl}.pdf"
-            if destination.resolve() != path.resolve():
-                shutil.copy2(path, destination)
-
-        matches.append({
-            "candidate_id": item.get("candidate_id", ""),
-            "title": item.get("title", ""),
-            "doi": item.get("doi", ""),
-            "article_number": item.get("article_number") or item.get("articleNumber", ""),
-            "pdf_path": str(destination.resolve()),
-            "sha256": sha256_file(destination),
-            "screening_reason": item.get("screening_reason") or item.get("reason", ""),
-            "reading_questions": item.get("reading_questions", []),
-        })
-
-    report_path = run_dir / "pdf_match" / "match_report.json"
-    result = {
-        "matched_count": len(matches), "matches": matches,
-        "manual_review": manual_review,
-        # Returned so callers never have to reconstruct this path themselves —
-        # that drift silently disabled manifest generation once already.
-        "report_path": str(report_path),
+    queue = json.loads(queue_path.read_text(encoding="utf-8")) if queue_path.exists() else {}
+    by_id = {
+        str(item.get("candidate_id") or ""): item
+        for item in queue.get("items", [])
     }
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(
-        json.dumps(result, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
-    )
-    return result
+
+    rows: list[dict[str, Any]] = []
+    for cid, record in ledger_mod.verified_downloads(ledger_path).items():
+        item = by_id.get(cid, {})
+        rows.append({
+            "candidate_id": cid,
+            "title": record.title or str(item.get("title") or ""),
+            "doi": str(item.get("doi") or ""),
+            "article_number": str(item.get("article_number") or ""),
+            "pdf_path": record.pdf_path,
+            "screening_reason": "; ".join(item.get("inclusion_reasons") or []),
+            "reading_questions": list(item.get("uncertainties") or []),
+        })
+    return sorted(rows, key=lambda r: r["candidate_id"])
 
 
-# ---------------------------------------------------------------------------
-# Download manifest
-# ---------------------------------------------------------------------------
+def match_manual_drop(queue_path: Path, run_dir: Path) -> list[dict[str, Any]]:
+    """Attach user-dropped PDFs to queue items by DOI / id / title in the name.
+
+    Only files a human placed in `manual_drop/` need matching at all, and one
+    file maps to at most one paper, so a per-file best match is sufficient —
+    no assignment problem, no exponential search.
+    """
+    drop_dir = run_dir / "manual_drop"
+    if not drop_dir.exists():
+        return []
+
+    artifact = json.loads(queue_path.read_text(encoding="utf-8"))
+    items = [i for i in artifact.get("items", []) if i.get("approved") is True]
+
+    rows: list[dict[str, Any]] = []
+    claimed: set[str] = set()
+    for pdf in sorted(drop_dir.glob("*.pdf")):
+        try:
+            validate_pdf(pdf)
+        except (OSError, ValueError):
+            continue
+        haystack = pdf.name.lower()
+        best, best_score = None, 0
+        for item in items:
+            cid = str(item.get("candidate_id") or "")
+            if cid in claimed:
+                continue
+            doi = str(item.get("doi") or "").lower()
+            title = str(item.get("title") or "").lower()
+            score = 0
+            if doi and doi.replace("/", "_") in haystack.replace("/", "_"):
+                score = 100
+            elif cid and re.search(rf"(?:^|[^a-z0-9]){re.escape(cid.lower())}(?:[^a-z0-9]|$)",
+                                   haystack):
+                # Token boundaries matter: a short id like "a" would otherwise
+                # match any filename containing that letter.
+                score = 80
+            elif len(title) >= 16 and title[:40] in haystack:
+                score = 70
+            if score > best_score:
+                best, best_score = item, score
+        if best is None:
+            continue
+        cid = str(best.get("candidate_id") or "")
+        claimed.add(cid)
+        rows.append({
+            "candidate_id": cid,
+            "title": str(best.get("title") or ""),
+            "doi": str(best.get("doi") or ""),
+            "article_number": str(best.get("article_number") or ""),
+            "pdf_path": str(pdf.resolve()),
+            "screening_reason": "; ".join(best.get("inclusion_reasons") or []),
+            "reading_questions": list(best.get("uncertainties") or []),
+        })
+    return rows
 
 
 def _load_matches(path: Path) -> list[dict[str, Any]]:
@@ -422,9 +370,14 @@ def _build_papers(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return papers
 
 
-def write_download_manifest(matches_path: Path, out_dir: Path) -> int:
-    """Create a validated pre-ingest PDF download manifest."""
-    papers = _build_papers(_load_matches(matches_path))
+def write_download_manifest(source: Path | list[dict[str, Any]], out_dir: Path) -> int:
+    """Create a validated pre-ingest PDF download manifest.
+
+    Accepts either already-built rows (the ledger path) or a legacy match
+    report on disk.
+    """
+    rows = _load_matches(source) if isinstance(source, Path) else list(source)
+    papers = _build_papers(rows)
     artifact = {
         "artifact_version": ARTIFACT_VERSION,
         "manifest_type": "download_manifest",

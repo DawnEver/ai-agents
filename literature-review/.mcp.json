@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "zotero": {
-      "command": "uv",
-      "args": ["tool", "run", "--from", "zotero-mcp-server", "zotero-mcp", "serve", "--transport", "stdio"]
+      "command": "bash",
+      "args": ["scripts/zotero-mcp.sh"]
     }
   }
 }

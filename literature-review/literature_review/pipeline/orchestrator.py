@@ -247,7 +247,8 @@ def run_acquire(
     """
     from literature_review.pipeline.acquire import (
         approve_download_queue,
-        match_pdfs,
+        manifest_rows,
+        match_manual_drop,
         write_download_manifest,
         write_download_queue,
     )
@@ -309,16 +310,24 @@ def run_acquire(
         mark_step(topic_dir, "acquire", "failed", error=str(exc))
         return result
 
-    # --- Match ---
-    print("=== Match PDFs ===")
-    match_result = match_pdfs(queue_path, topic_dir)
-    result["matched"] = match_result.get("matched_count", 0)
+    # --- Collect ---
+    # The ledger already knows which file belongs to which paper; only PDFs a
+    # human dropped in manual_drop/ have to be matched by name.
+    print("=== Collect PDFs ===")
+    from literature_review.acquire.ledger import ledger_path
+
+    rows = manifest_rows(ledger_path(topic_dir), queue_path)
+    known = {row["candidate_id"] for row in rows}
+    rows.extend(
+        row for row in match_manual_drop(queue_path, topic_dir)
+        if row["candidate_id"] not in known
+    )
+    result["matched"] = len(rows)
 
     # --- Manifest ---
     print("=== Create Manifest ===")
-    match_report = Path(match_result["report_path"])
-    if match_report.exists():
-        write_download_manifest(match_report, handoff_dir)
+    if rows:
+        write_download_manifest(rows, handoff_dir)
         result["manifest_path"] = str(handoff_dir / "download_manifest.json")
 
     mark_step(topic_dir, "acquire", "done",

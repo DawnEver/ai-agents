@@ -110,6 +110,28 @@ Each phase leaves the pipeline runnable.
 - **Phase 5 — observability.** `--dry-run` prints the per-paper Source plan with no
   network, turning "why did this not download" into an up-front question.
 
+## Outcome (all phases executed 2026-07-26)
+
+Delivered as planned. Verified end-to-end on the CHP workspace: `downloaded=1` and — for the
+first time — a real `handoff/download_manifest.json`, so `run_ingest` is reachable.
+
+Two defects the refactor itself surfaced, both fixed:
+
+- `page.on("download", list.append)` raised `'builtin_function_or_method' object has no
+  attribute '_pw_impl_instance_'`. Playwright stores bookkeeping attributes on the handler,
+  and a builtin method has no `__dict__`. Handlers must be real functions.
+- Transports returning `None` recorded no attempt, so the log under-reported and a paper with
+  a valid DOI was described as having "no candidate URL". Every attempt is now recorded.
+
+Live finding: Cloudflare tightened on `research-information.bris.ac.uk`. An out-of-band
+`context.request` to the file endpoint is refused (403) even though navigating the tab to the
+same URL returns 200. The browser transport now intercepts `page.on("response")` and takes
+whatever the tab actually received — the mechanism the deleted `acquire_headed` had used. The
+clearance-cookie retry alone no longer suffices.
+
+Known and deferred by the user: ResearchGate returns Cloudflare error 1020 (IP ban) for this
+network. The circuit breaker handles it correctly; the ban itself is a future fix.
+
 ## Notes
 
 - Phase 0 is independent and net-positive on its own; do it regardless.

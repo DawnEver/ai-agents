@@ -16,18 +16,11 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
-import requests
-
-from literature_review.providers.base import polite_user_agent
+from literature_review.acquire import net
 
 TIMEOUT = 60
 MAX_LINKS_PER_PAGE = 5
 """Cap on landing-page links followed, so a link farm cannot stall the run."""
-
-BROWSER_UA = (
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/120.0 Safari/537.36"
-)
 
 # Path markers that identify a PDF payload even without a .pdf suffix.
 _PDF_PATH_MARKERS = (
@@ -37,19 +30,8 @@ _PDF_PATH_MARKERS = (
 
 
 def _get(url: str, session: Any = None, referer: str = "", **kwargs: Any) -> Any:
-    """Single seam for HTTP GET — tests patch this."""
-    headers = {
-        "User-Agent": BROWSER_UA,
-        "Accept": "application/pdf,text/html;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-GB,en;q=0.9",
-        "X-Contact": polite_user_agent(),
-    }
-    if referer:
-        # Repository file endpoints (Pure, DSpace) reject hotlinked requests;
-        # arriving "from" the landing page is what a real reader looks like.
-        headers["Referer"] = referer
-    getter = session.get if session is not None else requests.get
-    return getter(url, timeout=TIMEOUT, allow_redirects=True, headers=headers, **kwargs)
+    """Single seam for HTTP GET — tests patch this. Policy lives in net.py."""
+    return net.get(url, session=session, referer=referer, timeout=TIMEOUT, **kwargs)
 
 
 def _is_pdf_url(url: str) -> bool:
@@ -118,7 +100,7 @@ def fetch_pdf(
     # One session across landing page and file request, so cookies set by the
     # landing page are presented when the file endpoint checks them.
     if session is None:
-        session = requests.Session()
+        session = net.new_session()
     try:
         response = _get(url, session=session, referer=referer)
     except Exception:  # noqa: BLE001 - network failure just means "try the browser"

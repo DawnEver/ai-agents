@@ -6,14 +6,23 @@ import json
 
 import pytest
 
-from literature_review.acquire import oa_resolve
+from literature_review.acquire import ledger, oa_resolve
 from literature_review.acquire.download import (
     AccessBlockedError,
-    _fetch_linked_pdf,
-    _needs_browser,
     acquire_pdfs,
     candidate_urls,
 )
+from literature_review.acquire.transport import BrowserTransport, needs_browser
+from literature_review.acquire.types import Outcome, Source
+
+
+def _fetch_linked_pdf(page, target, base_url):
+    """Adapter: the linked-PDF strategy now lives on the browser transport."""
+    return BrowserTransport(page)._from_linked_pdf(target, base_url, None, [])
+
+
+def _needs_browser(url):
+    return needs_browser(url)
 
 PDF_BYTES = b"%PDF-1.4\n" + b"%padding\n" * 200 + b"trailer\n%%EOF\n"
 
@@ -146,6 +155,16 @@ def test_candidate_urls_always_appends_researchgate_search_last():
     assert "Hairpin" in urls[-1]
 
 
+def test_candidate_urls_adds_only_one_researchgate_search():
+    """RG rate limits escalate to an IP ban — never spend two hits on one paper."""
+    item = {
+        "title": "Hairpin Winding Design",
+        "html_url": "https://www.researchgate.net/search/publication?q=Hairpin+Winding+Design+2024",
+    }
+    urls = candidate_urls(item, resolve=False)
+    assert sum("researchgate.net" in u for u in urls) == 1
+
+
 def test_candidate_urls_adds_no_researchgate_url_without_identifiers():
     assert not any("researchgate" in u for u in candidate_urls({"pdf_url": "https://x/a.pdf"},
                                                                resolve=False))
@@ -180,7 +199,7 @@ def test_acquire_falls_back_to_next_url_after_block(tmp_path):
     rows = acquire_pdfs(_queue(tmp_path, item), tmp_path, downloader=downloader)
 
     assert len(tried) == 2
-    assert rows[0]["status"] == "downloaded"
+    assert rows[0]["outcome"] == Outcome.DOWNLOADED.value
     assert rows[0]["source_url"] == "https://link.springer.com/article/10.1007/x"
 
 
