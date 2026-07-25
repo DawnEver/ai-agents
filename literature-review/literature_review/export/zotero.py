@@ -41,9 +41,12 @@ BBT_CAYW_URL = "http://127.0.0.1:23119/better-bibtex/cayw"
 # Default HTTP port for zotero-mcp serve
 MCP_DEFAULT_PORT = 8484
 MCP_HTTP_BASE = f"http://127.0.0.1:{MCP_DEFAULT_PORT}"
-# Use uv tool run for cross-platform portability — identical to .mcp.json config
+# Use uv tool run for cross-platform portability — identical to .mcp.json config.
+# NOTE: the CLI entry point is "zotero-mcp", NOT "pyzotero-mcp" (that name
+# belongs to the much smaller read-only `pyzotero` dependency package and
+# silently resolves to the wrong, write-less server).
 MCP_CMD = "uv"
-MCP_ARGS = ["tool", "run", "--from", "zotero-mcp-server", "pyzotero-mcp"]
+MCP_ARGS = ["tool", "run", "--from", "zotero-mcp-server", "zotero-mcp"]
 
 
 # ── Per-paper result ─────────────────────────────────────────────────
