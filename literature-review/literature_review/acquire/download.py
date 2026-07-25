@@ -375,6 +375,41 @@ def acquire_headed(
                     except Exception:
                         continue
 
+                # Dismiss cookie/privacy banners that block clicks (Springer, Elsevier)
+                for banner_sel in [
+                    "button:has-text('Accept')", "button:has-text('Accept all')",
+                    "button:has-text('I accept')", "button:has-text('OK')",
+                    ".cc-banner button:has-text('Accept')",
+                ]:
+                    try:
+                        btn = page.query_selector(banner_sel)
+                        if btn and btn.is_visible():
+                            btn.click()
+                            page.wait_for_timeout(500)
+                            break
+                    except Exception:
+                        continue
+                try:
+                    page.keyboard.press("Escape")
+                    page.wait_for_timeout(300)
+                except Exception:
+                    pass
+
+                # Try clicking PDF link first (some sites trigger download via JS)
+                if pdf_href:
+                    for sel in [
+                        "a:has-text('PDF')", "a:has-text('Download')",
+                        "a[href*='.pdf']", "a:has-text('View PDF')",
+                    ]:
+                        try:
+                            el = page.query_selector(sel)
+                            if el and el.is_visible():
+                                el.click(force=True)  # bypass banner interception
+                                page.wait_for_timeout(3000)
+                                break
+                        except Exception:
+                            continue
+
                 if pdf_href:
                     from urllib.parse import urljoin
                     full_url = urljoin(page.url, pdf_href)
