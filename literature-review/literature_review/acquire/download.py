@@ -336,12 +336,26 @@ def acquire_headed(
 
             page.on("download", on_download)
 
+            # Intercept PDF responses — some publishers (PMC, IEEE) render
+            # PDFs via Chrome extension instead of triggering downloads.
+            pdf_body: list[bytes] = []
+
+            def on_response(resp):
+                ct = (resp.headers.get("content-type", "") or "").lower()
+                if resp.status == 200 and "application/pdf" in ct:
+                    try:
+                        pdf_body.append(resp.body())
+                    except Exception:
+                        pass
+
+            page.on("response", on_response)
+
             try:
                 page.goto(url, wait_until="domcontentloaded", timeout=30000)
                 page.wait_for_timeout(3000)
                 print(f"    Page: {page.title()[:80]}")
 
-                # Find PDF link href on the page
+                # Find PDF link on the page
                 pdf_href = None
                 for sel in [
                     "a:has-text('PDF')",
@@ -361,23 +375,35 @@ def acquire_headed(
                     except Exception:
                         continue
 
-                # Fetch PDF binary via browser's authenticated session
                 if pdf_href:
                     from urllib.parse import urljoin
                     full_url = urljoin(page.url, pdf_href)
-                    print(f"    GET {full_url[:120]}")
-                    api_resp = page.context.request.get(full_url, timeout=60000)
-                    body = api_resp.body()
-                    if api_resp.status == 200 and body[:4] == b'%PDF':
+                    print(f"    Goto: {full_url[:120]}")
+                    # Navigate to PDF — browser JS renders it, we intercept via on_response
+                    page.goto(full_url, wait_until="domcontentloaded", timeout=30000)
+                    page.wait_for_timeout(3000)
+
+                # Check interceptor for valid PDF body
+                for body in pdf_body:
+                    if body[:4] == b'%PDF':
                         path = str(pdf_dir / f"{label}.pdf")
                         with open(path, 'wb') as f:
                             f.write(body)
                         download_occurred.append(path)
-                        print(f"    OK {len(body)/1024:.0f} KB")
-                    else:
-                        print(f"    HTTP {api_resp.status}, PDF={body[:4]==b'%PDF'}")
+                        print(f"    Intercepted {len(body)/1024:.0f} KB")
+                        break
                 else:
-                    print(f"    No PDF link found on page")
+                    # Fallback: direct API request
+                    if pdf_href and not download_occurred:
+                        full_url = urljoin(page.url, pdf_href)
+                        api_resp = page.context.request.get(full_url, timeout=60000)
+                        body = api_resp.body()
+                        if body[:4] == b'%PDF':
+                            path = str(pdf_dir / f"{label}.pdf")
+                            with open(path, 'wb') as f:
+                                f.write(body)
+                            download_occurred.append(path)
+                            print(f"    Direct {len(body)/1024:.0f} KB")
 
             except Exception as e:
                 print(f"    Error: {e}")
@@ -386,8 +412,8 @@ def acquire_headed(
 
             if download_occurred:
                 size_kb = Path(download_occurred[0]).stat().st_size / 1024
-                print(f"    -> {size_kb:.0f} KB")
                 results.append({"label": label, "url": url, "status": "ok", "path": download_occurred[0]})
+                print(f"    -> {size_kb:.0f} KB")
             else:
                 results.append({"label": label, "url": url, "status": "failed", "path": ""})
 
