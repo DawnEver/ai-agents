@@ -19,5 +19,8 @@ ai = ["litellm>=1.77"]
 [project.scripts]
 lit-review = "literature_review.cli:main"
 
+[tool.hatch.metadata]
+allow-direct-references = true
+
 [tool.hatch.build.targets.wheel]
 packages = ["literature_review"]

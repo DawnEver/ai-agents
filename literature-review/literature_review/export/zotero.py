@@ -41,7 +41,7 @@ BBT_CAYW_URL = "http://127.0.0.1:23119/better-bibtex/cayw"
 # Default HTTP port for zotero-mcp serve
 MCP_DEFAULT_PORT = 8484
 MCP_HTTP_BASE = f"http://127.0.0.1:{MCP_DEFAULT_PORT}"
-MCP_CMD = "zotero-mcp"
+MCP_CMD = str(Path.home() / ".local" / "share" / "lit-review-venv" / "Scripts" / "pyzotero-mcp.exe")
 
 
 # ── Per-paper result ─────────────────────────────────────────────────
@@ -142,9 +142,16 @@ class ZoteroMCPClient:
     # ── lifecycle ────────────────────────────────────────────────
 
     def available(self) -> bool:
-        """Check whether zotero-mcp can be reached (HTTP or stdio)."""
-        # 1) Try HTTP endpoint
+        """Check whether zotero-mcp can be reached.
+
+        Tries HTTP first (quick 2s check), then stdio spawn.
+        """
+        # 1) Quick HTTP check
         try:
+            req = urllib.request.Request(f"{self._http_url}/mcp", method="HEAD")
+            with urllib.request.urlopen(req, timeout=2):
+                pass
+            # If reachable, do full initialize
             self._http_rpc("initialize", {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {},
@@ -152,7 +159,7 @@ class ZoteroMCPClient:
             })
             self._initialized = True
             return True
-        except ZoteroMCPError:
+        except Exception:
             pass
 
         # 2) Try spawning stdio process
@@ -161,12 +168,9 @@ class ZoteroMCPClient:
                 [MCP_CMD, "serve", "--transport", "stdio"],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
             )
-            # Give it a moment to start
-            time.sleep(1.0)
+            time.sleep(0.5)
             if self._proc.poll() is not None:
-                stderr = self._proc.stderr.read() if self._proc.stderr else ""
                 self._proc = None
                 return False
             self._stdio_rpc("initialize", {
