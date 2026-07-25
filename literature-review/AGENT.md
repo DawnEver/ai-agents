@@ -75,13 +75,40 @@ workspaces/                  — per-topic research contexts
     export/                  — rendered exports + plots
 ```
 
-## Model Routing
+## Zotero Integration
 
-| Agent | Role | Default Model | Reasoning |
-|-------|------|---------------|-----------|
-| query-reviewer | Review/refine Boolean queries | gpt-5.6-luna | high |
-| abstract-screener | Screen abstracts against criteria | gpt-5.6-luna | high |
-| paper-reader | Deep reading with domain lens | gpt-5.6-luna | high |
+Zotero is the human-facing document library for this project. Its role is **reading and PDF storage**, not complex taxonomy. Principles:
+
+### Flat Collections
+- **One workspace → one Zotero collection.** The workspace slug IS the collection name.
+- **No nested subcollections.** Use Zotero tags for cross-cutting labels (e.g. `key-paper`, `to-read`, `baseline`).
+- If a paper belongs to multiple workspaces, it gets filed into each workspace's collection independently.
+
+### Registry (Workspace ↔ Zotero Bridge)
+- Each workspace maintains `zotero_registry.jsonl` — the single source of truth linking `candidate_id` ↔ `zotero_key`.
+- The agent reads this file to know what's already synced; writes to it after each sync.
+- Format: one JSON object per line with fields: `candidate_id`, `zotero_key`, `title`, `doi`, `date_synced`, `pdf_attached`, `notes_synced`, `zotero_collection`.
+
+### Agent Workflow (MCP-First)
+The agent has direct access to all Zotero MCP tools. Preferred workflow:
+
+1. **Check registry** — read `workspaces/<slug>/zotero_registry.jsonl` to see what's already synced.
+2. **Find/create collection** — use `zotero_search_collections` / `zotero_create_collection` with the workspace slug as name.
+3. **Add papers** — use `zotero_add_by_doi` (preferred, gets rich metadata + OA PDF) or `zotero_add_by_url` (arXiv) or `zotero_add_from_file` (local PDF).
+4. **Tag** — apply workspace tag (`zotero_batch_update_tags`) for cross-collection filtering.
+5. **Record** — append each paper's Zotero key to the registry file.
+
+### Batch Sync (CLI)
+```bash
+lit-review zotero-sync --topic <slug>      # Sync include/maybe papers
+lit-review zotero-status --topic <slug>    # Show registry state
+lit-review zotero-sync --topic <slug> --force  # Re-sync all
+```
+
+### Collection Naming Convention
+- Workspace slug becomes the collection name: `constrained-hamiltonian-path-chp-exact-enumeration-and-counting`
+- For readability in Zotero's UI, the agent may use the short workspace name from `workspace.toml`: `"CHP — Exact Enumeration & Counting"`
+- Collection names are idempotent — the same name always maps to the same workspace.
 
 ## Provider Support
 

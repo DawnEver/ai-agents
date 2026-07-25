@@ -1,8 +1,6 @@
 ---
 name: literature-paper-reader
 description: Deep-read papers with domain lens → produce paper cards (Phase 2)
-model: gpt-5.6-luna
-reasoning: high
 sandbox: read-only
 ---
 

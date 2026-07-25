@@ -1,8 +1,6 @@
 ---
 name: literature-query-reviewer
 description: Review and refine Boolean search queries for literature discovery
-model: gpt-5.6-luna
-reasoning: high
 sandbox: read-only
 ---
 

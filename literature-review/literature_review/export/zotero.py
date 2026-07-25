@@ -1,14 +1,17 @@
 """Zotero sync — priority chain: zotero-mcp → SQLite → Better BibTeX CAYW.
 
-zotero-mcp (https://github.com/54yyyu/zotero-mcp):
-    Standalone MCP server installed via pip. Communicates with Zotero over
-    stdio or streamable-http. Full writes + PDF attachment while Zotero runs.
+Principles:
+  - One workspace → one flat Zotero collection (no nested subcollections).
+  - Zotero is for human reading & PDF storage, not complex taxonomy.
+  - The workspace's zotero_registry.jsonl is the bridge — it tracks every
+    paper's candidate_id ↔ zotero_key mapping.
+  - Agent uses MCP tools directly for interactive operations; this module
+    handles batch sync from the CLI.
 
-SQLite:
-    Direct database writes with PDF attachments. Zotero must be CLOSED.
-
-Better BibTeX CAYW:
-    Citation-only import while Zotero runs. No PDF attachment.
+Backends (priority order):
+  1. zotero-mcp (54yyyu/zotero-mcp) — full read/write while Zotero runs.
+  2. SQLite — direct DB writes with PDF; Zotero must be CLOSED.
+  3. Better BibTeX CAYW — citation-only import; no PDF attachment.
 """
 
 from __future__ import annotations
@@ -213,7 +216,7 @@ class ZoteroMCPClient:
     def _call(self, tool: str, arguments: dict[str, Any]) -> dict[str, Any]:
         return self._rpc("tools/call", {"name": tool, "arguments": arguments})
 
-    def import_pdf(self, pdf_path: Path) -> str | None:
+    def import_pdf(self, pdf_path: Path, collection: str = "Literature Review") -> str | None:
         """Import a PDF file; Zotero extracts metadata automatically.
 
         Uses ``zotero_add_from_file``. Returns the Zotero item key.
@@ -221,13 +224,14 @@ class ZoteroMCPClient:
         abs_path = str(pdf_path.resolve())
         result = self._call("zotero_add_from_file", {
             "path": abs_path,
-            "collections": ["Engineering"],
+            "collections": [collection],
             "create_missing_collections": True,
             "if_exists": "skip",
         })
         return _extract_key(result)
 
-    def add_by_doi(self, doi: str, pdf_path: str | None = None) -> str | None:
+    def add_by_doi(self, doi: str, pdf_path: str | None = None,
+                   collection: str = "Literature Review") -> str | None:
         """Add a paper by DOI; the OA PDF cascade runs automatically.
 
         Uses ``zotero_add_by_doi``. If *pdf_path* is provided and no OA PDF
@@ -235,7 +239,7 @@ class ZoteroMCPClient:
         """
         result = self._call("zotero_add_by_doi", {
             "doi": doi,
-            "collections": ["Engineering"],
+            "collections": [collection],
             "create_missing_collections": True,
             "if_exists": "skip",
         })
@@ -245,17 +249,17 @@ class ZoteroMCPClient:
             try:
                 self._call("zotero_add_from_file", {
                     "path": str(Path(pdf_path).resolve()),
-                    "collections": ["Engineering"],
+                    "collections": [collection],
                 })
             except ZoteroMCPError:
                 pass
         return key
 
-    def add_by_bibtex(self, bibtex: str) -> str | None:
+    def add_by_bibtex(self, bibtex: str, collection: str = "Literature Review") -> str | None:
         """Add a paper via BibTeX."""
         result = self._call("zotero_add_by_bibtex", {
             "bibtex": bibtex,
-            "collections": ["Engineering"],
+            "collections": [collection],
             "create_missing_collections": True,
             "if_exists": "skip",
         })
@@ -470,6 +474,77 @@ def _cayw_available() -> bool:
         return False
 
 
+# ── Registry (workspace ↔ Zotero bridge) ────────────────────────────────
+
+REGISTRY_FILENAME = "zotero_registry.jsonl"
+
+
+def registry_path(workspace_dir: Path) -> Path:
+    """Path to the zotero_registry.jsonl for a workspace."""
+    return workspace_dir / REGISTRY_FILENAME
+
+
+def load_registry(workspace_dir: Path) -> list[dict[str, Any]]:
+    """Load the Zotero registry for a workspace. Returns [] if missing."""
+    rp = registry_path(workspace_dir)
+    if not rp.exists():
+        return []
+    entries: list[dict[str, Any]] = []
+    for line in rp.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line:
+            try:
+                entries.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
+    return entries
+
+
+def save_registry(workspace_dir: Path, entries: list[dict[str, Any]]) -> Path:
+    """Atomically write the registry file."""
+    rp = registry_path(workspace_dir)
+    tmp = rp.with_suffix(".tmp")
+    with tmp.open("w", encoding="utf-8") as f:
+        for entry in entries:
+            f.write(json.dumps(entry, ensure_ascii=True) + "\n")
+    tmp.replace(rp)
+    return rp
+
+
+def find_in_registry(entries: list[dict[str, Any]], candidate_id: str) -> dict[str, Any] | None:
+    """Find a registry entry by candidate_id. Returns None if not found."""
+    for e in entries:
+        if e.get("candidate_id") == candidate_id:
+            return e
+    return None
+
+
+def upsert_registry(entries: list[dict[str, Any]], new_entry: dict[str, Any]) -> list[dict[str, Any]]:
+    """Add or replace a registry entry keyed by candidate_id. Returns mutated list."""
+    cid = new_entry["candidate_id"]
+    for i, e in enumerate(entries):
+        if e.get("candidate_id") == cid:
+            entries[i] = new_entry
+            return entries
+    entries.append(new_entry)
+    return entries
+
+
+def registry_summary(workspace_dir: Path) -> dict[str, Any]:
+    """Quick summary of the registry state."""
+    entries = load_registry(workspace_dir)
+    total = len(entries)
+    with_pdf = sum(1 for e in entries if e.get("pdf_attached"))
+    with_notes = sum(1 for e in entries if e.get("notes_synced"))
+    return {
+        "registry_path": str(registry_path(workspace_dir)),
+        "total_synced": total,
+        "pdf_attached": with_pdf,
+        "notes_synced": with_notes,
+        "entries": entries,
+    }
+
+
 # ── Dedup helpers ─────────────────────────────────────────────────────
 
 def _dedup_key(paper: dict[str, Any]) -> str | None:
@@ -503,33 +578,103 @@ def _validate_pdf(pdf_path: str | None, expected_sha256: str | None = None) -> b
 
 # ── Main sync ─────────────────────────────────────────────────────────
 
+def _derive_collection_name(workspace_dir: Path) -> str:
+    """Derive the Zotero collection name from the workspace directory name.
+
+    The workspace slug IS the collection name — simple, flat, predictable.
+    """
+    return workspace_dir.name
+
+
+def _paper_to_registry_entry(
+    paper: dict[str, Any],
+    zotero_key: str,
+    collection_name: str,
+    has_pdf: bool = False,
+) -> dict[str, Any]:
+    """Build a registry entry from a paper dict + sync result."""
+    from datetime import datetime, timezone
+    return {
+        "candidate_id": str(paper.get("candidate_id", "")),
+        "zotero_key": zotero_key,
+        "title": str(paper.get("title", ""))[:200],
+        "doi": str(paper.get("doi", "")),
+        "date_synced": datetime.now(timezone.utc).isoformat(),
+        "pdf_attached": has_pdf,
+        "notes_synced": False,
+        "zotero_collection": collection_name,
+    }
+
+
 def sync_papers(
     papers: list[dict[str, Any]],
-    collection: str = "Engineering",
+    workspace_dir: Path | None = None,
+    collection: str | None = None,
     db_path: Path | None = None,
+    skip_existing: bool = True,
 ) -> list[SyncResult]:
     """Sync papers into Zotero with the best available backend.
 
     Priority: zotero-mcp → SQLite → CAYW.
 
+    If *workspace_dir* is given, the collection name is derived from the
+    workspace slug and the zotero_registry.jsonl is maintained.
+
     Each paper dict may contain:
-        title, authors, abstract, year, venue, doi, url,
+        candidate_id, title, authors, abstract, year, venue, doi, url,
         pdf_path, pdf_sha256, provider_raw.arxiv_id
     """
     results: list[SyncResult] = []
     seen: set[str] = set()
 
+    # Resolve collection name
+    if collection:
+        coll_name = collection
+    elif workspace_dir:
+        coll_name = _derive_collection_name(workspace_dir)
+    else:
+        coll_name = "Literature Review"
+
+    # Load existing registry for dedup
+    registry: list[dict[str, Any]] = []
+    if workspace_dir:
+        registry = load_registry(workspace_dir)
+        if skip_existing:
+            existing_keys = {e["candidate_id"] for e in registry if e.get("zotero_key")}
+            print(f"Registry: {len(existing_keys)} papers already synced, "
+                  f"will skip duplicates.\n")
+        else:
+            existing_keys: set[str] = set()
+    else:
+        existing_keys = set()
+
     # ── 1. zotero-mcp ──────────────────────────────────────────
     mcp = ZoteroMCPClient()
     if mcp.available():
-        print("Backend: zotero-mcp (Zotero running, full write + PDF)\n")
+        print(f"Backend: zotero-mcp (Zotero running, full write + PDF)\n"
+              f"Collection: {coll_name}\n")
         try:
-            mcp.ensure_collection(collection)
+            mcp.ensure_collection(coll_name)
             for i, p in enumerate(papers):
                 title = str(p.get("title", ""))[:80]
+                cid = str(p.get("candidate_id", ""))
+
+                # Skip if already in registry
+                if cid and cid in existing_keys:
+                    existing = find_in_registry(registry, cid)
+                    zk = (existing or {}).get("zotero_key", "")
+                    results.append(SyncResult(
+                        i, title, "zotero_mcp", item_key=zk,
+                        error="already synced (registry)",
+                    ))
+                    continue
+
+                # Dedup within this batch
                 dk = _dedup_key(p)
                 if dk and dk in seen:
-                    results.append(SyncResult(i, title, "zotero_mcp", error="duplicate (skipped)"))
+                    results.append(SyncResult(
+                        i, title, "zotero_mcp", error="duplicate (skipped)",
+                    ))
                     continue
                 if dk:
                     seen.add(dk)
@@ -544,23 +689,23 @@ def sync_papers(
 
                     # Strategy: prefer DOI-based add (auto metadata + OA PDF cascade)
                     if doi:
-                        key = mcp.add_by_doi(doi, pdf_path if pdf_ok else None)
-                        has_attachment = True  # DOI cascade usually gets PDF
+                        key = mcp.add_by_doi(doi, pdf_path if pdf_ok else None, coll_name)
+                        has_attachment = True
 
                     # Fall back to PDF import if no DOI or DOI failed
                     if not key and pdf_ok:
-                        key = mcp.import_pdf(Path(pdf_path))
+                        key = mcp.import_pdf(Path(pdf_path), coll_name)
                         has_attachment = True
 
                     # Last resort: BibTeX
                     if not key:
-                        bibtex = _paper_to_bibtex(p, f"CHP-{p.get('year', '?')}-{i+1:02d}")
-                        key = mcp.add_by_bibtex(bibtex)
+                        bibtex = _paper_to_bibtex(p, f"LR-{p.get('year', '?')}-{i+1:02d}")
+                        key = mcp.add_by_bibtex(bibtex, coll_name)
                         has_attachment = False
 
                     # Ensure in collection
-                    if key:
-                        mcp.add_to_collection(key, collection)
+                    if key and coll_name:
+                        mcp.add_to_collection(key, coll_name)
 
                     if key:
                         print(f"  ✓ {title}")
@@ -568,6 +713,10 @@ def sync_papers(
                             i, title, "zotero_mcp",
                             item_key=key, attachment=has_attachment,
                         ))
+                        # Update registry
+                        if workspace_dir and cid:
+                            entry = _paper_to_registry_entry(p, key, coll_name, has_attachment)
+                            upsert_registry(registry, entry)
                     else:
                         results.append(SyncResult(
                             i, title, "zotero_mcp",
@@ -578,20 +727,39 @@ def sync_papers(
                     results.append(SyncResult(i, title, "zotero_mcp", error=str(e)))
         finally:
             mcp.close()
+            # Persist registry after sync
+            if workspace_dir:
+                save_registry(workspace_dir, registry)
+                print(f"\nRegistry updated: {registry_path(workspace_dir)} "
+                      f"({len(registry)} entries)")
         return results
 
     # ── 2. SQLite (Zotero closed) ───────────────────────────────
     if _sqlite_available():
-        print("Backend: SQLite (Zotero closed, full write + PDF)\n")
+        print(f"Backend: SQLite (Zotero closed, full write + PDF)\n"
+              f"Collection: {coll_name}\n")
         db = db_path or ZOTERO_DB
         conn = sqlite3.connect(str(db))
         try:
-            coll_id = _sqlite_find_or_create_collection(conn, collection)
+            coll_id = _sqlite_find_or_create_collection(conn, coll_name)
             for i, p in enumerate(papers):
                 title = str(p.get("title", ""))[:80]
+                cid = str(p.get("candidate_id", ""))
+
+                if cid and cid in existing_keys:
+                    existing = find_in_registry(registry, cid)
+                    zk = (existing or {}).get("zotero_key", "")
+                    results.append(SyncResult(
+                        i, title, "sqlite", item_key=zk,
+                        error="already synced (registry)",
+                    ))
+                    continue
+
                 dk = _dedup_key(p)
                 if dk and dk in seen:
-                    results.append(SyncResult(i, title, "sqlite", error="duplicate (skipped)"))
+                    results.append(SyncResult(
+                        i, title, "sqlite", error="duplicate (skipped)",
+                    ))
                     continue
                 if dk:
                     seen.add(dk)
@@ -611,32 +779,54 @@ def sync_papers(
                     results.append(SyncResult(
                         i, title, "sqlite", item_key=zkey, attachment=pdf_ok,
                     ))
+                    if workspace_dir and cid:
+                        entry = _paper_to_registry_entry(p, zkey, coll_name, pdf_ok)
+                        upsert_registry(registry, entry)
                 except Exception as e:
                     print(f"  ✗ {title} — {e}")
                     results.append(SyncResult(i, title, "sqlite", error=str(e)))
         finally:
             conn.commit(); conn.close()
+            if workspace_dir:
+                save_registry(workspace_dir, registry)
+                print(f"\nRegistry updated: {registry_path(workspace_dir)} "
+                      f"({len(registry)} entries)")
         return results
 
     # ── 3. CAYW (citation only) ─────────────────────────────────
     if _cayw_available():
-        print("Backend: CAYW (Zotero running, citation only, no PDF)\n")
+        print(f"Backend: CAYW (Zotero running, citation only, no PDF)\n"
+              f"Collection: {coll_name}\n")
         for i, p in enumerate(papers):
             title = str(p.get("title", ""))[:80]
+            cid = str(p.get("candidate_id", ""))
+
+            if cid and cid in existing_keys:
+                existing = find_in_registry(registry, cid)
+                zk = (existing or {}).get("zotero_key", "")
+                results.append(SyncResult(
+                    i, title, "cayw", item_key=zk,
+                    error="already synced (registry)",
+                ))
+                continue
+
             dk = _dedup_key(p)
             if dk and dk in seen:
-                results.append(SyncResult(i, title, "cayw", error="duplicate (skipped)"))
+                results.append(SyncResult(
+                    i, title, "cayw", error="duplicate (skipped)",
+                ))
                 continue
             if dk:
                 seen.add(dk)
-            cite_key = f"CHP-{p.get('year', '?')}-{i+1:02d}"
+            cite_key = f"LR-{p.get('year', '?')}-{i+1:02d}"
             if _cayw_import(_paper_to_bibtex(p, cite_key)):
                 print(f"  ✓ {title}")
                 results.append(SyncResult(i, title, "cayw"))
             else:
                 print(f"  ✗ {title}")
                 results.append(SyncResult(i, title, "cayw", error="import failed"))
-        print(f"\nItems in Zotero inbox. Drag to '{collection}'.")
+        print(f"\nItems in Zotero inbox. Drag to '{coll_name}' collection.\n"
+              f"Note: CAYW does not support registry tracking (no Zotero key returned).")
         return results
 
     raise RuntimeError(

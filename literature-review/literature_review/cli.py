@@ -131,6 +131,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--topic", required=True, help="Topic slug.")
     p.add_argument("--plots", action="store_true", help="Generate matplotlib plots.")
 
+    # === Zotero: sync ===
+    p = sub.add_parser("zotero-sync", help="Batch sync papers to Zotero with registry maintenance.")
+    p.add_argument("--topic", required=True, help="Topic slug.")
+    p.add_argument("--collection", help="Override Zotero collection name (default: workspace slug).")
+    p.add_argument("--force", action="store_true", help="Re-sync even if already in registry.")
+
+    # === Zotero: status ===
+    p = sub.add_parser("zotero-status", help="Show Zotero registry state for a workspace.")
+    p.add_argument("--topic", required=True, help="Topic slug.")
+
     # === Utility: login ===
     p = sub.add_parser("login", help="Open a publisher site in a browser for authentication.")
     p.add_argument("--profile", default="ieee", help="Browser profile name.")
@@ -184,11 +194,15 @@ def _handle_init(args: argparse.Namespace) -> int:
         f'pdf_store = ""\n'
         f'parent = ""\n'
         f'\n'
+        f'# Zotero: one flat collection per workspace — no nested subcollections.\n'
+        f'# The workspace slug IS the collection name.\n'
+        f'# zotero_registry.jsonl tracks every paper\'s candidate_id ↔ zotero_key.\n'
         f'[zotero]\n'
         f'collection_key = ""\n'
+        f'collection_name = "{slug}"\n'
         f'group_id = ""\n'
         f'sync_notes = true\n'
-        f'sync_attachments = false\n'
+        f'sync_attachments = true\n'
         f'tags = []\n'
         f'\n'
         f'[defaults]\n'
@@ -327,6 +341,82 @@ def _handle_stats(args: argparse.Namespace) -> int:
         return 2
 
 
+def _handle_zotero_sync(args: argparse.Namespace) -> int:
+    td = _topic_dir(args.topic)
+    try:
+        from literature_review.export.zotero import sync_papers
+
+        # Build paper list from screening decisions
+        screening_path = td / "screening" / "screening_stage1.jsonl"
+        if not screening_path.exists():
+            # Try screening_stage2
+            screening_path = td / "screening" / "screening_stage2.jsonl"
+        if not screening_path.exists():
+            print(f"error: no screening file found. Run search + screen first.", file=sys.stderr)
+            return 2
+
+        import json
+        screening = []
+        for line in screening_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                screening.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
+
+        # Only sync included/maybe papers
+        to_sync = [
+            s for s in screening
+            if s.get("decision") in ("include", "maybe")
+        ]
+        if not to_sync:
+            print("No papers with decision 'include' or 'maybe' to sync.")
+            return 0
+
+        print(f"Syncing {len(to_sync)} papers to Zotero...\n")
+        results = sync_papers(
+            to_sync,
+            workspace_dir=td,
+            collection=args.collection,
+            skip_existing=not args.force,
+        )
+
+        ok = sum(1 for r in results if r.item_key and not r.error)
+        skipped = sum(1 for r in results if "already synced" in r.error)
+        errors = sum(1 for r in results if r.error and "already synced" not in r.error)
+        print(f"\nDone: {ok} synced, {skipped} skipped, {errors} errors")
+        return 0 if errors == 0 else 1
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
+def _handle_zotero_status(args: argparse.Namespace) -> int:
+    td = _topic_dir(args.topic)
+    try:
+        from literature_review.export.zotero import registry_summary
+
+        summary = registry_summary(td)
+        print(f"Workspace: {td.name}")
+        print(f"Registry:  {summary['registry_path']}")
+        print(f"Synced:    {summary['total_synced']} papers")
+        print(f"  with PDF:  {summary['pdf_attached']}")
+        print(f"  with notes:{summary['notes_synced']}")
+        if summary["entries"]:
+            print(f"\n{'ID':<24s} {'Zotero Key':<10s} {'Title':<60s} {'PDF':<5s}")
+            print("-" * 103)
+            for e in summary["entries"]:
+                title = (e.get("title", "") or "")[:58]
+                pdf = "✓" if e.get("pdf_attached") else "—"
+                print(f"{e['candidate_id']:<24s} {e.get('zotero_key', ''):<10s} {title:<60s} {pdf:<5s}")
+        return 0
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
 def _handle_login(args: argparse.Namespace) -> int:
     profile = Path(args.profile)
     if not profile.is_absolute():
@@ -373,6 +463,8 @@ _HANDLERS: dict[str, object] = {
     "export": _handle_export,
     "stats": _handle_stats,
     "login": _handle_login,
+    "zotero-sync": _handle_zotero_sync,
+    "zotero-status": _handle_zotero_status,
     "probe": _handle_probe,
     "dedupe-rank": _handle_dedupe_rank,
 }

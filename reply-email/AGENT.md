@@ -25,9 +25,9 @@ this file and must never restate the conventions defined here.
    only when neither exists.
 4. For continuations, load thread history (see **Thread reconstruction**) so the draft is aware
    of everything said before — don't re-ask answered questions.
-5. Create `ongoing/<topic>/` and write `original.txt` + `draft.md` + `final.md`. `final.md`
-   starts identical to `draft.md`. If the directory already exists, resume from the existing
-   files (jump to step 6 — the user is editing).
+5. Create `ongoing/<topic>/` and write `original.txt` + `draft.md`. Then copy `draft.md` to
+   `final.md` with a shell command (`cp`), never by regenerating the content. If the directory
+   already exists, resume from the existing files (jump to step 6 — the user is editing).
 6. Tell the user the draft is ready. The user edits `final.md` directly. Never touch `draft.md`
    after creation. Optional polish: only if the user explicitly asks, edit `final.md`.
 7. After approval, archive the round:

@@ -96,11 +96,34 @@ class Approval(Serde):
 
 @dataclass
 class ZoteroBinding(Serde):
+    """Flat collection per workspace — no nested subcollections in Zotero.
+
+    Principles:
+      - One workspace → one Zotero collection (flat, human-readable).
+      - The workspace slug is the collection name by default.
+      - Tags are used for cross-cutting labels (e.g. "to-read", "key-paper").
+      - The zotero_registry.jsonl file is the single source of truth for
+        workspace↔Zotero linkage.
+    """
     collection_key: str = ""
+    collection_name: str = ""   # derived from workspace slug; populated by init/sync
     group_id: str | None = None
     sync_notes: bool = True
-    sync_attachments: bool = False
+    sync_attachments: bool = True   # PDFs are the primary reason for Zotero
     tags: list[str] = field(default_factory=list)
+
+
+@dataclass
+class ZoteroRegistryEntry(Serde):
+    """One row in a workspace's zotero_registry.jsonl — bridges workspace ↔ Zotero."""
+    candidate_id: str
+    zotero_key: str          # 8-char Zotero item key
+    title: str = ""
+    doi: str = ""
+    date_synced: str = ""    # ISO timestamp
+    pdf_attached: bool = False
+    notes_synced: bool = False
+    zotero_collection: str = ""  # collection name this entry lives in
 
 
 @dataclass

@@ -1,8 +1,6 @@
 ---
 name: literature-abstract-screener
 description: Screen paper abstracts against research brief inclusion/exclusion criteria
-model: gpt-5.6-luna
-reasoning: high
 sandbox: read-only
 ---
 
