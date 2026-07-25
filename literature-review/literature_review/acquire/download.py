@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
-from literature_review.acquire import http_fetch, oa_resolve
+from literature_review.acquire import http_fetch, oa_resolve, researchgate
 
 # ---------------------------------------------------------------------------
 # Playwright setup (inlined from deleted browser/login.py)
@@ -170,6 +170,13 @@ def candidate_urls(item: dict[str, Any], resolve: bool = True) -> list[str]:
             urls.extend(oa_resolve.resolve_oa_urls(doi, title=str(item.get("title") or "") or None))
         normalized = doi.removeprefix("https://doi.org/").removeprefix("doi:")
         urls.append(f"https://doi.org/{normalized}")
+
+    # ResearchGate as a systematic last resort: it carries author-uploaded
+    # copies of papers no repository or aggregator knows about. Ranked last,
+    # so it is only reached once every cheaper source has failed.
+    query = researchgate.query_from_item(item)
+    if query:
+        urls.append(researchgate.search_url(query))
 
     return oa_resolve.rank_urls(urls)
 
@@ -537,6 +544,13 @@ def _playwright_downloader(
     def download(item: dict[str, Any], target: Path, url: str) -> str:
         if not url:
             raise ValueError("queue item has no PDF or HTML URL")
+        # ResearchGate needs search → publication → download, not a URL fetch.
+        if researchgate.is_researchgate_url(url):
+            query = researchgate.query_from_item(item) or researchgate.query_from_item({"html_url": url})
+            source = researchgate.fetch(page, query, target)
+            if source:
+                return source
+            raise ValueError("ResearchGate has no downloadable full text")
         # Repositories and preprint servers need no browser at all; try the
         # cheap, selector-free HTTP path before spending a page navigation.
         if not _needs_browser(url):
@@ -789,6 +803,11 @@ def acquire_pdfs(
                 try:
                     source_url = downloader(item, target, url)
                     validate_pdf(target)
+                except researchgate.AccessDeniedError as error:
+                    # IP-level ban: every remaining ResearchGate URL in this run
+                    # would fail the same way, so record it and move on.
+                    blocked = True
+                    attempts.append(f"{url} -> {error}")
                 except AccessBlockedError as error:
                     blocked = True
                     attempts.append(f"{url} -> blocked: {error}")

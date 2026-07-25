@@ -20,7 +20,9 @@ Systematic literature review agent. Define → Search → Acquire → Ingest →
 
 1. **University repository** — `repo.uni-hannover.de`, `acris.aalto.fi`, `nottingham-repository.worktribe.com`, etc. No Cloudflare, use HTTP fast path.
 2. **Preprint servers** — arXiv, techrxiv. Direct PDF download.
-3. **ResearchGate** — `www.researchgate.net`. Blocks HTTP (403) but works in Playwright browser with profile. Search: `https://www.researchgate.net/search/publication?q=<title>`. Author-uploaded PDFs often available even for paywalled papers.
+3. **ResearchGate** — `www.researchgate.net`. Author-uploaded PDFs, often available for otherwise paywalled papers. Handled by `literature_review/acquire/researchgate.py`, which does the three hops a plain URL fetch cannot: search → publication page → `/download`. An RG search is appended automatically for every paper (ranked last), so no queue changes are needed.
+
+   **Rate limits are strict and escalate to an IP ban.** The module paces requests (~6 s apart, max 3 publication pages per paper), warms up on the home page to avoid a cold-search challenge, and waits out a bot check so you can solve it in the headed window. If Cloudflare returns **error 1020 ("Access denied", IP-level ban)** there is nothing to solve: a circuit breaker trips and the rest of the run skips ResearchGate. Do not retry — wait for the ban to lapse or use a different network. Never attempt to evade it; that risks the institution's IP reputation.
 4. **Publisher OA page** — only as last resort; requires real Chrome + persistent profile + cookie-dismissal + PDF-button auto-click.
 
 **`lit-review acquire` now does this automatically.** For each queue item it:

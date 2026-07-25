@@ -125,16 +125,30 @@ def test_doi_org_redirect_is_tried_after_concrete_urls():
     """doi.org only redirects to the paywall — a real URL is always better."""
     item = {"doi": "10.1/x", "html_url": "https://unknown-host.example/paper/1"}
     urls = candidate_urls(item, resolve=False)
-    assert urls == ["https://unknown-host.example/paper/1", "https://doi.org/10.1/x"]
+    assert urls[:2] == ["https://unknown-host.example/paper/1", "https://doi.org/10.1/x"]
 
 
 def test_candidate_urls_normalizes_prefixed_doi():
     item = {"doi": "https://doi.org/10.1/x"}
-    assert candidate_urls(item, resolve=False) == ["https://doi.org/10.1/x"]
+    assert candidate_urls(item, resolve=False)[0] == "https://doi.org/10.1/x"
 
 
 def test_candidate_urls_empty_item_is_empty():
     assert candidate_urls({}, resolve=False) == []
+
+
+def test_candidate_urls_always_appends_researchgate_search_last():
+    """Every paper gets an RG attempt, but only after cheaper sources."""
+    item = {"title": "Hairpin Winding Design", "pdf_url": "https://repo.example/bitstream/a/content"}
+    urls = candidate_urls(item, resolve=False)
+    assert urls[0] == "https://repo.example/bitstream/a/content"
+    assert "researchgate.net/search/publication" in urls[-1]
+    assert "Hairpin" in urls[-1]
+
+
+def test_candidate_urls_adds_no_researchgate_url_without_identifiers():
+    assert not any("researchgate" in u for u in candidate_urls({"pdf_url": "https://x/a.pdf"},
+                                                               resolve=False))
 
 
 # ---------------------------------------------------------------------------
@@ -187,7 +201,8 @@ def test_acquire_records_real_error_detail_when_all_urls_fail(tmp_path):
 
 
 def test_acquire_reports_no_source_when_item_has_no_urls(tmp_path):
-    item = {"candidate_id": "p1", "title": "P", "approved": True}
+    # No title/DOI/URL at all, so not even a ResearchGate search can be built.
+    item = {"candidate_id": "p1", "approved": True}
 
     def downloader(it, target, url):  # pragma: no cover - must not be called
         raise AssertionError("downloader should not run")
@@ -301,6 +316,25 @@ def test_fetch_linked_pdf_navigates_to_clear_cloudflare_then_retries(tmp_path):
 def test_fetch_linked_pdf_returns_none_when_page_has_no_links(tmp_path):
     page = _FakePage("<html>nothing here</html>", {})
     assert _fetch_linked_pdf(page, tmp_path / "o.pdf", page.url) is None
+
+
+def test_acquire_records_researchgate_ban_without_crashing(tmp_path):
+    """An RG IP ban must be logged like any other dead source, not kill the run."""
+    from literature_review.acquire import researchgate
+
+    item = {
+        "candidate_id": "p1", "title": "P", "approved": True,
+        "pdf_url": "https://www.researchgate.net/search/publication?q=P",
+    }
+
+    def downloader(it, target, url):
+        raise researchgate.AccessDeniedError("Cloudflare error 1020")
+
+    rows = acquire_pdfs(_queue(tmp_path, item), tmp_path, downloader=downloader)
+
+    assert rows == []
+    log = (tmp_path / "download" / "download_log.csv").read_text(encoding="utf-8")
+    assert "1020" in log
 
 
 def test_acquire_rejects_non_pdf_and_tries_next_url(tmp_path):
