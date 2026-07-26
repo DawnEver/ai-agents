@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "zotero": {
-      "command": "bash",
-      "args": ["scripts/zotero-mcp.sh"]
+      "command": "uv",
+      "args": ["run", "--no-project", "--with", "zotero-mcp-server", "python", "scripts/zotero-mcp-launcher.py"]
     }
   }
 }

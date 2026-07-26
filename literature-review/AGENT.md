@@ -2,6 +2,12 @@
 
 Systematic literature review agent. Define → Search → Acquire → Ingest → user chooses next (read, synthesize, export, Zotero).
 
+## Environment
+
+- **One venv only**: `~/.local/share/lit-review-venv`. All Python dependencies (`lit-review` CLI, `zotero-mcp-server`, etc.) live here. Never create ad-hoc venvs or use `uv run` (without `--no-project`) inside the project — it will create `.venv/`.
+- **Secrets in `.env`**: `ZOTERO_API_KEY`, `ZOTERO_LIBRARY_ID`, etc. go in `.env` (gitignored). MCP config (`scripts/zotero-mcp-launcher.py`) loads `.env` via stdlib — no dotenv dependency.
+- **Cross-platform**: `scripts/zotero-mcp-launcher.py` uses Python stdlib only. `.mcp.json` uses `uv run --no-project --with zotero-mcp-server` to avoid touching the project venv.
+
 ## Tool Priority
 
 **Project tools first. Generic tools will hit walls these tools bypass.**
@@ -43,6 +49,21 @@ downloading anything; that answers "why didn't this download" before spending a 
 5. On total failure, logs the per-URL reason in `download/download_log.csv` — read that column before retrying by hand.
 
 So a bare DOI in the queue is usually enough; a good `html_url` still helps. Set `LIT_REVIEW_CONTACT` to your email to enter the Unpaywall/OpenAlex polite pool.
+
+## Zotero
+
+### Adding papers — do this EVERY time
+
+1. **Confirm target FIRST**: ask which Zotero collection/group the papers go into. Never assume "My Library".
+2. **Use `zotero_add_from_file`** when you have the local PDF — it extracts the DOI, fetches rich metadata, AND attaches the PDF in one call. `zotero_add_by_doi` is metadata-only.
+3. **Batch with `--if_exists file`**: idempotent — skips papers already in the library.
+4. **Tag consistently**: always include the workspace slug as a tag.
+
+### Collections
+
+- Use `zotero_search_collections` to find the target before adding.
+- Workspace collection name comes from `workspace.toml` → `[zotero].collection_name`.
+- One flat collection per workspace — no nested subcollections.
 
 ## Search Sources
 
