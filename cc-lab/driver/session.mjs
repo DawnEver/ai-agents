@@ -40,6 +40,36 @@ export function findTranscripts(configDir) {
   return { main: files.filter((f) => !isFork(f)), forks: files.filter(isFork) };
 }
 
+/**
+ * List top-level sessions across a real projects dir (e.g. ~/.claude/projects).
+ * `match` filters project-dir names by substring (case-insensitive). Returns
+ * [{ project, file, sessionId, title, mtime, lines }] sorted by mtime descending.
+ */
+export function findSessions(projectsDir, { match } = {}) {
+  const out = [];
+  if (!existsSync(projectsDir)) return out;
+  for (const proj of readdirSync(projectsDir)) {
+    if (match && !proj.toLowerCase().includes(match.toLowerCase())) continue;
+    const dir = join(projectsDir, proj);
+    if (!statSync(dir).isDirectory()) continue;
+    for (const name of readdirSync(dir)) {
+      if (!name.endsWith('.jsonl')) continue;
+      const file = join(dir, name);
+      const lines = readFileSync(file, 'utf8').split(/\r?\n/).filter(Boolean);
+      let title;
+      for (const ln of lines) {
+        const m = ln.match(/"customTitle"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+        if (m) { try { title = JSON.parse(`"${m[1]}"`); } catch { title = m[1]; } break; }
+      }
+      out.push({
+        project: proj, file, sessionId: name.replace(/\.jsonl$/, ''),
+        title, mtime: statSync(file).mtimeMs, lines: lines.length,
+      });
+    }
+  }
+  return out.sort((a, b) => b.mtime - a.mtime);
+}
+
 /** Flatten one message's content to plain text (thinking/tool blocks tagged, not dropped). */
 export function entryText(entry) {
   const c = entry?.message?.content;
@@ -54,9 +84,46 @@ export function entryText(entry) {
   return '';
 }
 
+/** True when a user entry carries a failed/denied/interrupted tool result. */
+function entryIsError(raw) {
+  const tur = raw.toolUseResult;
+  if (tur && typeof tur === 'object' && (tur.is_error || tur.isError)) return true;
+  if (typeof tur === 'string' && /^(error|Error)[:\s]/.test(tur)) return true;
+  const c = raw.message?.content;
+  if (Array.isArray(c)) {
+    for (const b of c) {
+      if (b.type !== 'tool_result') continue;
+      if (b.is_error) return true;
+      const t = typeof b.content === 'string' ? b.content : JSON.stringify(b.content ?? '');
+      if (/does not exist|command not found|Permission denied|Exit code [1-9]/i.test(t) && /error|failed|denied|not found|Exit code/i.test(t)) return true;
+      if (/user (denied|rejected)|permission|interrupted/i.test(t)) return true;
+    }
+  }
+  return false;
+}
+
+/** tool_use blocks of an assistant entry → [{ name, inputKey, filePath?, command? }]. */
+function entryToolUses(raw) {
+  const c = raw.message?.content;
+  if (!Array.isArray(c)) return [];
+  const out = [];
+  for (const b of c) {
+    if (b.type !== 'tool_use') continue;
+    const inp = b.input ?? {};
+    out.push({
+      name: b.name,
+      inputKey: JSON.stringify(inp),
+      filePath: inp.file_path ?? inp.filePath ?? inp.path,
+      command: inp.command,
+    });
+  }
+  return out;
+}
+
 /**
  * Parse a session jsonl into an array of entries. Each: the raw object plus a normalized
- * `{ i, type, role, text }`. Non-JSON lines are skipped.
+ * `{ i, type, role, text, timestamp, isApiError, isError, toolUses }`. Non-JSON lines
+ * are skipped. isError/toolUses enable post-hoc struggle analysis (scripts/analyze-session.mjs).
  */
 export function loadTranscript(file) {
   const lines = readFileSync(file, 'utf8').split(/\r?\n/).filter(Boolean);
@@ -64,7 +131,13 @@ export function loadTranscript(file) {
   lines.forEach((ln, i) => {
     let raw;
     try { raw = JSON.parse(ln); } catch { return; }
-    entries.push({ i, type: raw.type || raw.role || '?', role: raw.message?.role, text: entryText(raw), raw });
+    entries.push({
+      i, type: raw.type || raw.role || '?', role: raw.message?.role, text: entryText(raw), raw,
+      timestamp: raw.timestamp,
+      isApiError: !!raw.isApiErrorMessage,
+      isError: entryIsError(raw),
+      toolUses: entryToolUses(raw),
+    });
   });
   return entries;
 }

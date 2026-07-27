@@ -65,6 +65,11 @@ parent Claude (designs cases, runs driver, reads traces, writes reports)
   (`ana.mjs`, `peek.mjs`, tty dumps) — those are intermediate files, not experiments:
   write them under `.scratch/` so they stay out of `git status` and never get committed.
   Only a reusable, self-executing experiment earns a `cases/<name>.case.mjs`.
+- **Post-hoc real-session review** — `scripts/analyze-session.mjs` reads real user
+  sessions from `~/.claude/projects` (no PTY, no launch; `driver/struggle.mjs`
+  detectors over `driver/session.mjs`) and prints "where did the agent struggle"
+  episodes (tool-error repeats, edit-thrash, bash-retries, stalls, denials). The
+  parent Claude then deep-reads flagged entries and writes `reports/session-review-<project>.md`.
 - Each run gets a fresh `.lab/<timestamp>-<name>/` with isolated `CLAUDE_CONFIG_DIR`
   (credentials + onboarding state bootstrapped by the driver). `.lab/` is gitignored.
 - **`.lab/` is disposable — clean it after analysis.** Authoritative traces live in the
