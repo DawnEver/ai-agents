@@ -54,16 +54,30 @@ So a bare DOI in the queue is usually enough; a good `html_url` still helps. Set
 
 ### Adding papers — do this EVERY time
 
-1. **Confirm target FIRST**: ask which Zotero collection/group the papers go into. Never assume "My Library".
-2. **Use `zotero_add_from_file`** when you have the local PDF — it extracts the DOI, fetches rich metadata, AND attaches the PDF in one call. `zotero_add_by_doi` is metadata-only.
-3. **Batch with `--if_exists file`**: idempotent — skips papers already in the library.
-4. **Tag consistently**: always include the workspace slug as a tag.
+**Architecture (agreed 2026-07-27)**: ALL papers go into ONE shared Zotero collection
+(`Engineering`, key `HNRLNAP9`). Each workspace maintains its own catalogue in
+`zotero_registry.jsonl` (file ↔ zotero_key) plus a workspace tag from
+`workspace.toml` → `[zotero].tags`. Never create per-topic collections.
+
+1. **Batch import (preferred)**: `lit-review zotero-import --topic <slug>` — scans
+   `download/pdfs` + `papers` + `pdfs`, dedupes by DOI → title-key (three-pass
+   grouping), attaches PDFs, updates the registry. DOI-bearing groups get
+   CrossRef-enriched items at creation; identifier-less PDFs import as bare
+   `document` items that step 3's enrich pass fixes afterwards.
+2. **Interactive single paper**: `zotero_add_from_file` (MCP) with the collection and
+   workspace tag explicitly set — never bare "My Library".
+3. **After any import**: `lit-review zotero-maintain --topic <slug>` (registry-scoped
+   enrich + local file mirroring; `--all` for whole-collection maintenance), then
+   `zotero_update_search_database` (MCP) to re-embed.
 
 ### Collections
 
-- Use `zotero_search_collections` to find the target before adding.
-- Workspace collection name comes from `workspace.toml` → `[zotero].collection_name`.
-- One flat collection per workspace — no nested subcollections.
+- Shared collection lives in `workspace.toml` → `[zotero].collection_name` **and**
+  `collection_key` (names are not unique — there are two "Engineering" collections;
+  the real one is `HNRLNAP9`, `PETTGPID` is an empty stray).
+- All workspaces share the collection; workspace identity = registry + tag.
+- `zotero-maintain` is registry-scoped by default so it never touches other
+  projects' items; `--all` opts into whole-collection maintenance.
 
 ## Search Sources
 
@@ -79,6 +93,7 @@ So a bare DOI in the queue is usually enough; a good `html_url` still helps. Set
 
 ```
 lit-review init/search/acquire/ingest/read/synthesize/export/stats --topic <slug>
+lit-review zotero-import/zotero-maintain/zotero-sync/zotero-status --topic <slug>
 lit-review login [--profile ...]
 ```
 

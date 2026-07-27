@@ -9,6 +9,13 @@ tags: [zotero, architecture, registry, mcp]
 
 ## Zotero Integration Design
 
+> ⚠️ **SUPERSEDED 2026-07-27.** The "one workspace → one collection" and
+> "workspace slug = collection name" principles below are replaced by the
+> shared-collection architecture: ALL papers → `Engineering` (`HNRLNAP9`),
+> workspace identity = `zotero_registry.jsonl` + workspace tag.
+> See `2026/07/26/zotero-maintenance-pipeline.md`. The registry format and
+> registry-CRUD parts below still apply.
+
 ### Principles
 
 1. **Flat collections.** One workspace → one Zotero collection. No nested subcollections.

@@ -29,7 +29,14 @@ lit-review stats --topic <slug> [--plots]
 Summary statistics (candidates, screening breakdown, downloads, decomposed, deep-read). With `--plots`, generates year/venue distribution charts.
 
 ### Zotero Sync
-Push paper metadata, PDFs, and reading notes to a Zotero collection. Requires Zotero binding in `workspace.toml`.
+Push all workspace PDFs into the shared Zotero collection (`workspace.toml` → `[zotero]`), then fix metadata and local files:
+
+```
+lit-review zotero-import --topic <slug>     # DOI-deduped batch import + registry
+lit-review zotero-maintain --topic <slug>   # enrich bare items + mirror PDFs to ~/Zotero/storage
+```
+
+Then re-embed via the `zotero_update_search_database` MCP tool so `zotero_semantic_search` sees the new items. Workspace ↔ Zotero mapping lives in `zotero_registry.jsonl`; every item gets the workspace tag.
 
 ### Custom
 Anything else — re-search with modified queries, add papers manually, compare specific papers, generate a summary report. Just ask.

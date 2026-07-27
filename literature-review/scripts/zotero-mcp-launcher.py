@@ -15,6 +15,12 @@ if env_path.exists():
         key, val = key.strip(), val.strip().strip('"').strip("'")
         os.environ.setdefault(key, val)
 
+# ── apply runtime patches (pyzotero attachment filename bug) ───────
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import zotero_mcp_patch
+
+zotero_mcp_patch.apply()
+
 # ── hand off to the real entry point ────────────────────────────────
 from zotero_mcp.cli import main
 

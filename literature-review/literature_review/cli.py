@@ -145,6 +145,26 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("zotero-status", help="Show Zotero registry state for a workspace.")
     p.add_argument("--topic", required=True, help="Topic slug.")
 
+    # === Zotero: import workspace PDFs ===
+    p = sub.add_parser(
+        "zotero-import",
+        help="Import all workspace PDFs into the configured Zotero collection (DOI-deduped, registry-updated).",
+    )
+    p.add_argument("--topic", required=True, help="Topic slug.")
+    p.add_argument("--dry-run", action="store_true", help="Show the dedupe/import plan only.")
+    p.add_argument("--force", action="store_true", help="Re-import even if in the registry.")
+
+    # === Zotero: maintenance ===
+    p = sub.add_parser(
+        "zotero-maintain",
+        help="Enrich bare items (document/filename titles) and mirror PDFs into local storage.",
+    )
+    p.add_argument("--topic", required=True, help="Topic slug (scopes to the workspace collection).")
+    p.add_argument("--collection", help="Override Zotero collection name (default: workspace.toml).")
+    p.add_argument("--all", dest="whole_library", action="store_true",
+                   help="Widen scope from registry items to the whole configured collection.")
+    p.add_argument("--dry-run", action="store_true", help="Plan only; no writes.")
+
     # === Utility: login ===
     p = sub.add_parser("login", help="Open a publisher site in a browser for authentication.")
     p.add_argument("--profile", default="ieee", help="Browser profile name.")
@@ -441,6 +461,129 @@ def _handle_zotero_status(args: argparse.Namespace) -> int:
         return 2
 
 
+def _handle_zotero_import(args: argparse.Namespace) -> int:
+    import os
+
+    import rtoml
+
+    from literature_review.export import zotero_maintenance as zm
+    from literature_review.export.zotero_import import import_workspace_pdfs
+
+    zm.load_dotenv()
+    api_key = os.environ.get("ZOTERO_API_KEY")
+    library_id = os.environ.get("ZOTERO_LIBRARY_ID")
+    library_type = os.environ.get("ZOTERO_LIBRARY_TYPE", "user")
+    if not args.dry_run and (not api_key or not library_id):
+        print("error: ZOTERO_API_KEY / ZOTERO_LIBRARY_ID not set (check .env)", file=sys.stderr)
+        return 2
+
+    td = _topic_dir(args.topic)
+    ws = rtoml.load(td / "workspace.toml") if (td / "workspace.toml").exists() else {}
+    zconf = ws.get("zotero", {})
+    tags = zconf.get("tags") or [args.topic]
+    collection_key = None
+    if not args.dry_run:
+        collection_key = zconf.get("collection_key") or None
+        if not collection_key and zconf.get("collection_name"):
+            collection_key = zm.find_collection_key(zconf["collection_name"], library_id,
+                                                    api_key, library_type)
+            if not collection_key:
+                print(f"error: Zotero collection not found: {zconf['collection_name']!r}",
+                      file=sys.stderr)
+                return 2
+
+    results = import_workspace_pdfs(
+        td, library_id, api_key, library_type,
+        collection_key=collection_key, tags=tags,
+        dry_run=args.dry_run, force=args.force,
+    )
+    for r in results:
+        line = f"  [{r.action}] {r.canonical}"
+        if r.zotero_key:
+            line += f" -> {r.zotero_key}"
+        if r.duplicates:
+            line += f" (+{r.duplicates} dup)"
+        if r.action == "error":
+            line += f"  ERROR: {r.detail}"
+        print(line)
+    counts: dict[str, int] = {}
+    for r in results:
+        counts[r.action] = counts.get(r.action, 0) + 1
+    print(f"\nImport: {counts}")
+    if not args.dry_run:
+        print("Next: lit-review zotero-maintain --topic <slug>, then zotero_update_search_database (MCP)")
+    return 0 if counts.get("error", 0) == 0 else 1
+
+
+def _handle_zotero_maintain(args: argparse.Namespace) -> int:
+    import os
+
+    import rtoml
+
+    from literature_review.export import zotero_maintenance as zm
+
+    zm.load_dotenv()
+    api_key = os.environ.get("ZOTERO_API_KEY")
+    library_id = os.environ.get("ZOTERO_LIBRARY_ID")
+    library_type = os.environ.get("ZOTERO_LIBRARY_TYPE", "user")
+    if not api_key or not library_id:
+        print("error: ZOTERO_API_KEY / ZOTERO_LIBRARY_ID not set (check .env)", file=sys.stderr)
+        return 2
+
+    collection_key = None
+    collection_name = None
+    td = _topic_dir(args.topic)
+    ws = rtoml.load(td / "workspace.toml") if (td / "workspace.toml").exists() else {}
+    zconf = ws.get("zotero", {})
+    collection_name = args.collection or zconf.get("collection_name") or args.topic
+    # Prefer an explicit key: collection names are not unique in Zotero.
+    collection_key = zconf.get("collection_key") or None
+    if not collection_key:
+        collection_key = zm.find_collection_key(collection_name, library_id,
+                                                api_key, library_type)
+    if not collection_key:
+        print(f"error: Zotero collection not found: {collection_name!r}", file=sys.stderr)
+        return 2
+    print(f"Collection: {collection_name} ({collection_key})")
+
+    # Scope: registry items by default; --all widens to the whole collection.
+    # An empty registry must mean "nothing to maintain" — never fall back to
+    # an unscoped run against the shared collection.
+    only_keys: set[str] | None = None
+    if not args.whole_library:
+        from literature_review.export.zotero import load_registry
+
+        only_keys = {e["zotero_key"] for e in load_registry(td) if e.get("zotero_key")}
+        print(f"Scope: {len(only_keys)} registry items (use --all for the whole collection)")
+        if not only_keys:
+            print("Registry is empty — nothing to maintain. Run zotero-import first, or --all.")
+            return 0
+
+    scope = "whole collection" if args.whole_library else "registry"
+    print(f"Enriching bare items ({scope}){' [dry-run]' if args.dry_run else ''}...")
+    results = zm.enrich_items(library_id, api_key, library_type, collection_key,
+                              dry_run=args.dry_run, only_keys=only_keys)
+    for r in results:
+        mark = "✓" if r.applied else ("·" if r.action == "no-match" else "✗")
+        print(f"  {mark} {r.key} [{r.action}] {r.title_before[:50]}"
+              + (f" -> {r.detail[:60]}" if r.detail and r.applied else ""))
+    applied = sum(1 for r in results if r.applied)
+    print(f"Enrich: {applied} updated, {sum(1 for r in results if r.action == 'no-match')} no-match, "
+          f"{sum(1 for r in results if r.action == 'error')} errors")
+
+    print("Mirroring attachment files to local storage...")
+    mirrors = zm.mirror_attachments(library_id, api_key, library_type, collection_key,
+                                    dry_run=args.dry_run, only_keys=only_keys)
+    for r in mirrors:
+        if r.status in ("downloaded", "error"):
+            print(f"  {r.status}: {r.key}/{r.filename} {r.detail}")
+    counts = {}
+    for r in mirrors:
+        counts[r.status] = counts.get(r.status, 0) + 1
+    print(f"Mirror: {counts}")
+    return 0
+
+
 def _handle_login(args: argparse.Namespace) -> int:
     profile = Path(args.profile)
     if not profile.is_absolute():
@@ -489,6 +632,8 @@ _HANDLERS: dict[str, object] = {
     "login": _handle_login,
     "zotero-sync": _handle_zotero_sync,
     "zotero-status": _handle_zotero_status,
+    "zotero-import": _handle_zotero_import,
+    "zotero-maintain": _handle_zotero_maintain,
     "probe": _handle_probe,
     "dedupe-rank": _handle_dedupe_rank,
 }
