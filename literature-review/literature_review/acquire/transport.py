@@ -59,6 +59,12 @@ CHALLENGE_RETRIES = 3
 CHALLENGE_WAIT_MS = 5_000
 CLEARANCE_WAIT_MS = 6_000
 
+# Cloudflare Turnstile: the checkbox sits in a cross-origin iframe whose DOM
+# is deliberately hostile to selector automation. The reliable equivalent of
+# a human click is a coordinate click on the iframe element's checkbox zone.
+TURNSTILE_IFRAME_SELECTOR = 'iframe[src*="challenges.cloudflare.com"]'
+TURNSTILE_CLICK_OFFSET_X = 30  # checkbox sits ~30px from the iframe left edge
+
 
 def host_of(url: str) -> str:
     return urlparse((url or "").lower()).hostname or ""
@@ -193,7 +199,14 @@ class BrowserTransport:
                 continue
 
     def _await_challenge(self) -> None:
-        """Give a Cloudflare interstitial a chance to resolve itself."""
+        """Give a Cloudflare interstitial a chance to resolve itself.
+
+        Order per round: wait for the passive check to clear on its own; if it
+        does not, click the Turnstile checkbox once (coordinate click — the
+        iframe DOM resists selectors); wait again. Never loops forever: after
+        CHALLENGE_RETRIES rounds the caller classifies the page as Blocked and
+        moves on to the next source, so one stubborn host cannot stall a run.
+        """
         for attempt in range(CHALLENGE_RETRIES):
             html = self._content().lower()
             if not any(marker in html for marker in CHALLENGE_MARKERS):
@@ -201,6 +214,37 @@ class BrowserTransport:
             if attempt == CHALLENGE_RETRIES - 1:
                 return
             self.page.wait_for_timeout(CHALLENGE_WAIT_MS)
+            if not self._still_challenged():
+                continue
+            self._click_turnstile_checkbox()
+
+    def _still_challenged(self) -> bool:
+        html = self._content().lower()
+        return any(marker in html for marker in CHALLENGE_MARKERS)
+
+    def _click_turnstile_checkbox(self) -> bool:
+        """Click the Cloudflare Turnstile checkbox via iframe coordinates.
+
+        Returns True if a clickable iframe was found. Image-puzzle escalations
+        are not attempted; the outer retry simply lets the page settle.
+        """
+        try:
+            frames = self.page.locator(TURNSTILE_IFRAME_SELECTOR)
+            if frames.count() == 0:
+                return False
+            box = frames.first.bounding_box()
+            if not box:
+                return False
+            x = box["x"] + TURNSTILE_CLICK_OFFSET_X
+            y = box["y"] + box["height"] / 2
+            self.page.mouse.move(x - 120, y - 60)
+            self.page.mouse.move(x, y, steps=18)
+            self.page.wait_for_timeout(150)
+            self.page.mouse.click(x, y)
+            print("  clicked Cloudflare Turnstile checkbox", flush=True)
+            return True
+        except Exception:  # noqa: BLE001 - widget gone or not ready
+            return False
 
     # -- strategies -------------------------------------------------------
 

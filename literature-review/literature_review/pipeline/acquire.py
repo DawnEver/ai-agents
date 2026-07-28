@@ -378,10 +378,18 @@ def write_download_manifest(source: Path | list[dict[str, Any]], out_dir: Path) 
     """
     rows = _load_matches(source) if isinstance(source, Path) else list(source)
     papers = _build_papers(rows)
+    generated_at = datetime.now(timezone.utc).isoformat()
+    # Stable, content-derived manifest id: the same set of papers always yields
+    # the same id, which keeps re-acquisition idempotent.
+    manifest_id = hashlib.sha256(
+        json.dumps(papers, sort_keys=True, ensure_ascii=True).encode("utf-8")
+    ).hexdigest()[:16]
     artifact = {
         "artifact_version": ARTIFACT_VERSION,
         "manifest_type": "download_manifest",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "manifest_id": manifest_id,
+        "run_id": manifest_id,
+        "generated_at": generated_at,
         "papers": papers,
     }
 

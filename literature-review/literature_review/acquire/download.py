@@ -195,14 +195,16 @@ def playwright_page(
         )
         context = browser.new_context()
 
-    page = context.pages[0] if context.pages else context.new_page()
-    page.add_init_script(
+    # Hide the automation markers Cloudflare scores on. Context-level so the
+    # patch also reaches cross-origin iframes (Turnstile reads them too).
+    context.add_init_script(
         """
         Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
         Object.defineProperty(navigator, 'plugins', {get: () => [1, 2, 3, 4, 5]});
         Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
         """
     )
+    page = context.pages[0] if context.pages else context.new_page()
 
     def close() -> None:
         try:

@@ -42,9 +42,48 @@ class ModelSpec:
 
 
 # ---------------------------------------------------------------------------
-# Built-in model registry
+# Model resolution
+#
+# Model names age fast; a hard-coded registry is guaranteed to go stale. The
+# design therefore keeps two layers:
+#
+#   PROVIDERS  — stable per-provider facts: the env var holding the API key
+#                and the OpenAI-compatible /models endpoint for discovery.
+#   MODELS     — a small set of *pinned aliases* for models we have actually
+#                validated. Anything else is resolved dynamically against the
+#                provider's live /models list (cached on disk).
+#
+# To use a new model: pass "<provider>/<model-id>" (e.g. "deepseek/deepseek-v4-flash")
+# or a bare model id; get_model() validates it against the live list.
 # ---------------------------------------------------------------------------
 
+import json
+import os
+import time
+from pathlib import Path
+from urllib.request import Request, urlopen
+
+PROVIDERS: dict[str, dict[str, str]] = {
+    "deepseek": {
+        "api_key_env": "DEEPSEEK_API_KEY",
+        "models_url": "https://api.deepseek.com/models",
+    },
+    "moonshot": {
+        "api_key_env": "MOONSHOT_API_KEY",
+        "models_url": "https://api.moonshot.cn/v1/models",
+    },
+    "gemini": {
+        "api_key_env": "GEMINI_API_KEY",
+        "models_url": "",  # discovery not wired; use pinned aliases
+    },
+    "ollama": {
+        "api_key_env": "",
+        "models_url": "http://localhost:11434/api/tags",
+    },
+}
+
+# Pinned aliases for models validated in this codebase. These never go stale
+# in the breaking sense — worst case the alias stops resolving upstream.
 MODELS: dict[str, ModelSpec] = {
     # Ollama (local)
     "gpt-oss:20b": ModelSpec(provider="ollama", model_name="gpt-oss:20b", think="medium"),
@@ -58,27 +97,140 @@ MODELS: dict[str, ModelSpec] = {
                                  context_length=128000, think="medium"),
 }
 
-
-def get_model(key: str) -> ModelSpec:
-    """Look up a model by registry key."""
-    if key in MODELS:
-        return MODELS[key]
-    raise KeyError(f"Unknown model: {key}. Available: {list(MODELS)}")
+_CACHE_PATH = Path.home() / ".cache" / "lit-review" / "models.json"
+_CACHE_TTL_S = 24 * 3600
 
 
-# ---------------------------------------------------------------------------
-# Chat interface (from ReviewAgent ai_chat_response.py)
-# ---------------------------------------------------------------------------
+def _load_env_key(env_var: str) -> str:
+    """Read an API key from the process env, falling back to the project .env."""
+    if not env_var:
+        return ""
+    value = os.environ.get(env_var)
+    if value:
+        return value
+    env_file = Path(__file__).resolve().parents[2] / ".env"
+    if env_file.is_file():
+        for line in env_file.read_text(encoding="utf-8").splitlines():
+            if line.startswith(f"{env_var}="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return ""
 
-def _ensure_litellm():
-    """Lazy-import litellm; raise a helpful error if not installed."""
+
+def _read_cache() -> dict[str, Any]:
     try:
-        from litellm import completion  # noqa: F401
-    except ImportError:
-        raise ImportError(
-            "litellm is required for AI features. Install with: pip install literature-review[ai]"
-        ) from None
+        data = json.loads(_CACHE_PATH.read_text(encoding="utf-8"))
+        if time.time() - data.get("fetched_at", 0) < _CACHE_TTL_S:
+            return data
+    except Exception:  # noqa: BLE001 - no usable cache
+        pass
+    return {}
 
+
+def _write_cache(data: dict[str, Any]) -> None:
+    try:
+        _CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _CACHE_PATH.write_text(json.dumps(data), encoding="utf-8")
+    except Exception:  # noqa: BLE001 - cache is best-effort
+        pass
+
+
+def _ensure_provider_key(provider: str) -> None:
+    """Populate os.environ with the provider's API key from the project .env.
+
+    litellm authenticates from process env vars; the project keeps secrets in
+    .env. Bridge the two, without ever clobbering a var the user set.
+    """
+    spec = PROVIDERS.get(provider)
+    if not spec or not spec["api_key_env"]:
+        return
+    env_var = spec["api_key_env"]
+    if os.environ.get(env_var):
+        return
+    key = _load_env_key(env_var)
+    if key:
+        os.environ[env_var] = key
+
+
+def list_provider_models(provider: str, *, refresh: bool = False) -> list[str]:
+    """Live model ids for a provider, from its /models endpoint (cached 24 h).
+
+    Returns an empty list when discovery is unavailable (no key, no endpoint,
+    or a network failure) — callers fall back to pinned aliases.
+    """
+    spec = PROVIDERS.get(provider)
+    if not spec or not spec["models_url"]:
+        return []
+    if not refresh:
+        cached = _read_cache().get(provider)
+        if cached:
+            return cached
+    ids: list[str] = []
+    try:
+        headers = {}
+        key = _load_env_key(spec["api_key_env"])
+        if key:
+            headers["Authorization"] = f"Bearer {key}"
+        req = Request(spec["models_url"], headers=headers)
+        with urlopen(req, timeout=15) as resp:
+            payload = json.loads(resp.read())
+        if provider == "ollama":
+            ids = [m.get("name", "") for m in payload.get("models", [])]
+        else:
+            ids = [m.get("id", "") for m in payload.get("data", [])]
+        ids = [i for i in ids if i]
+    except Exception:  # noqa: BLE001 - discovery is best-effort
+        return []
+    cache = _read_cache()
+    cache["fetched_at"] = time.time()
+    cache[provider] = ids
+    _write_cache(cache)
+    return ids
+
+
+def resolve_model(name: str) -> ModelSpec:
+    """Resolve any model name to a ModelSpec.
+
+    Accepts a pinned alias ("gemini-2.5-flash"), a provider-qualified id
+    ("deepseek/deepseek-v4-flash"), or a bare id ("kimi-k3") resolved against
+    the provider's live /models list. Raises KeyError when the id cannot be
+    confirmed anywhere.
+    """
+    if name in MODELS:
+        return MODELS[name]
+
+    provider, _, bare = name.partition("/")
+    if bare:  # explicit provider/model-id
+        if provider not in PROVIDERS:
+            raise KeyError(f"Unknown provider: {provider!r}. Known: {list(PROVIDERS)}")
+        live = list_provider_models(provider)
+        if live and bare not in live:
+            raise KeyError(
+                f"{bare!r} not in {provider}'s live model list. Available: {live}"
+            )
+        if not live:
+            import warnings
+            warnings.warn(
+                f"could not verify {bare!r} against {provider}'s /models "
+                f"(no API key or discovery failed); passing through unvalidated",
+                stacklevel=2,
+            )
+        return ModelSpec(provider=provider, model_name=bare)
+
+    # Bare id: find the single provider that serves it.
+    matches = [p for p in PROVIDERS if name in list_provider_models(p)]
+    if len(matches) == 1:
+        return ModelSpec(provider=matches[0], model_name=name)
+    if len(matches) > 1:
+        raise KeyError(f"Ambiguous model id {name!r} served by {matches}; qualify it.")
+    raise KeyError(
+        f"Unknown model: {name!r}. Pinned: {list(MODELS)}; "
+        f"or pass provider/model-id discoverable via /models."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Chat interface
+# ---------------------------------------------------------------------------
 
 def chat(model: ModelSpec | str, messages: list[dict[str, str]]) -> str | None:
     """Send messages to an LLM via litellm and return assistant text.
@@ -93,16 +245,28 @@ def chat(model: ModelSpec | str, messages: list[dict[str, str]]) -> str | None:
     from litellm import completion
 
     if isinstance(model, str):
-        model = get_model(model)
+        model = resolve_model(model)
+
+    # litellm reads provider keys from the process environment only; make sure
+    # the project's .env has been applied before the call (never overrides an
+    # explicitly-set variable).
+    _ensure_provider_key(model.provider)
 
     model_str = model.to_litellm_model()
     options = {"temperature": model.temperature, **model.extra_options}
 
+    import os
+    debug = os.environ.get("LIT_REVIEW_AI_DEBUG", "").lower() in ("1", "true", "yes")
     try:
         response = completion(model=model_str, messages=messages, stream=False, **options)
         content = response["choices"][0]["message"]["content"]
         return str(content).strip() if content else None
-    except Exception:
+    except Exception as error:
+        # Silent None used to swallow the reason entirely; with debug on, say why.
+        if debug:
+            import sys
+            print(f"[ai.client] {model_str} call failed: {type(error).__name__}: {error}",
+                  file=sys.stderr)
         return None
 
 
