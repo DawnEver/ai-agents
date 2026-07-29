@@ -18,7 +18,7 @@ parent Claude (designs cases, runs driver, reads traces, writes reports)
 - `'tap'` (default) — the architecture above: claude-tap MITM into the sqlite trace DB.
   Vanilla Anthropic routing only, so the driver strips Foundry provider env — tap and
   Foundry are mutually exclusive.
-- `'proxy'` — borrow the cc-market fabric engine layer (`Sync/claude/cc-market/shared`,
+- `'proxy'` — borrow the cc-market fabric engine layer (`Sync/claude/cc-market/fabric/engine`,
   override via `CC_MARKET_SHARED`): the child speaks vanilla HTTP at a local
   observe-proxy that owns the real upstream/auth/model-alias for `provider` (e.g.
   `deepseek`); capture lands in `<runDir>/http.jsonl` (`session.jsonlPath`), read via the

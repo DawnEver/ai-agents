@@ -46,14 +46,15 @@ function realConfigDir() {
 }
 
 /**
- * Locate the cc-market shared/ engine layer (observe-proxy, spawn-child) for the
- * observe:'proxy' profile. Default: the sibling Sync/claude checkout; override with
- * CC_MARKET_SHARED for non-standard layouts.
+ * Locate the cc-market fabric engine layer (observe-proxy, spawn-child) for the
+ * observe:'proxy' profile. The engine moved from cc-market/shared/ to
+ * cc-market/fabric/engine/. Default: the sibling Sync/claude checkout;
+ * override with CC_MARKET_SHARED for non-standard layouts.
  */
 function ccMarketSharedDir() {
   if (process.env.CC_MARKET_SHARED) return process.env.CC_MARKET_SHARED;
   return resolve(fileURLToPath(new URL('.', import.meta.url)),
-    '..', '..', '..', 'claude', 'cc-market', 'shared');
+    '..', '..', '..', 'claude', 'cc-market', 'fabric', 'engine');
 }
 
 /**

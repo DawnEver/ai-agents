@@ -13,7 +13,7 @@ import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const shared = process.env.CC_MARKET_SHARED
-  || resolve(import.meta.dirname, '..', '..', '..', 'claude', 'cc-market', 'shared');
+  || resolve(import.meta.dirname, '..', '..', '..', 'claude', 'cc-market', 'fabric', 'engine');
 const { loadRows, mainTurns } = await import(pathToFileURL(join(shared, 'observe-reader.mjs')).href);
 
 const runDir = join('.lab', runDirName('observe-proxy'));
