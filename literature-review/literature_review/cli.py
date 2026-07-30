@@ -98,6 +98,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--queue-only", action="store_true", help="Only build the download queue.")
     p.add_argument("--limit", type=int, default=None, help="Max PDFs to download this run (default: 20).")
     p.add_argument("--no-resolve-oa", action="store_true", help="Skip DOI->open-access mirror lookup.")
+    p.add_argument("--http-only", action="store_true", help="HTTP-only mode: skip browser transports entirely. Publisher URLs will fail but are logged for manual retrieval.")
+    p.add_argument("--rebuild-queue", action="store_true", help="Force rebuild the download queue from screening (even if it already exists).")
     p.add_argument("--dry-run", action="store_true", help="Print the source plan per paper; download nothing.")
 
     # === Pipeline: ingest ===
@@ -172,6 +174,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--browser-channel", choices=sorted(SUPPORTED_BROWSER_CHANNELS), default=DEFAULT_BROWSER_CHANNEL)
     p.add_argument("--completion", choices=sorted(COMPLETION_MODES), default="browser-close")
     p.add_argument("--network-mode", choices=sorted(SUPPORTED_NETWORK_MODES), default=DEFAULT_NETWORK_MODE)
+
+    # === Utility: repair ===
+    p = sub.add_parser("repair", help="Scan files on disk and rebuild pipeline state (ledger, manifest, queue).")
+    p.add_argument("--topic", required=True, help="Topic slug.")
+    p.add_argument("--dry-run", action="store_true", help="Report what would be done without making changes.")
 
     # === Micro-commands (kept for debugging / advanced use) ===
     p = sub.add_parser("probe", help="[Advanced] Probe queries against a provider.")
@@ -272,17 +279,21 @@ def _handle_acquire(args: argparse.Namespace) -> int:
             from literature_review.acquire.engine import HARD_LIMIT, plan_sources
             from literature_review.pipeline.acquire import write_download_queue
 
-            write_download_queue(td / "screening" / "screening_stage1.jsonl", td / "download")
+            if args.rebuild_queue or not (td / "download" / "download_queue.json").exists():
+                write_download_queue(td / "screening" / "screening_stage1.jsonl", td / "download")
             plans = plan_sources(
                 td / "download" / "download_queue.json", td,
                 limit=args.limit or HARD_LIMIT,
                 resolve_oa=not args.no_resolve_oa,
+                http_only=args.http_only,
             )
             for plan in plans:
                 print(f"\n{plan['candidate_id']}: {plan['title'][:70]}")
                 for source in plan["sources"] or [{"url": "(no source)", "transport": "-"}]:
                     print(f"  [{source['transport']:>7}] {source['url'][:110]}")
             print(f"\n{len(plans)} paper(s) planned; nothing downloaded.")
+            if args.http_only:
+                print("(http-only mode: browser transports skipped)")
             return 0
 
         from literature_review.pipeline.orchestrator import run_acquire as do_acquire
@@ -295,6 +306,8 @@ def _handle_acquire(args: argparse.Namespace) -> int:
             approved_by=args.approved_by,
             limit=args.limit,
             resolve_oa=not args.no_resolve_oa,
+            http_only=args.http_only,
+            rebuild_queue=args.rebuild_queue,
         )
         print(f"acquire: downloaded={result.get('downloaded', 0)}, manifest={result.get('manifest_path', 'none')}")
         return 0
@@ -598,6 +611,21 @@ def _handle_login(args: argparse.Namespace) -> int:
     )
 
 
+def _handle_repair(args: argparse.Namespace) -> int:
+    td = _topic_dir(args.topic)
+    try:
+        from literature_review.pipeline.repair import repair_workspace
+
+        result = repair_workspace(td, dry_run=args.dry_run)
+        for action in result.get("actions", []):
+            print(action)
+        print(result.get("status_table", ""))
+        return 0
+    except Exception as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+
 def _handle_probe(args: argparse.Namespace) -> int:
     try:
         provider = get_provider(args.provider)
@@ -634,6 +662,7 @@ _HANDLERS: dict[str, object] = {
     "zotero-status": _handle_zotero_status,
     "zotero-import": _handle_zotero_import,
     "zotero-maintain": _handle_zotero_maintain,
+    "repair": _handle_repair,
     "probe": _handle_probe,
     "dedupe-rank": _handle_dedupe_rank,
 }

@@ -14,6 +14,7 @@ Architecture:
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -232,6 +233,8 @@ def run_acquire(
     approved_by: str = "user",
     limit: int | None = None,
     resolve_oa: bool = True,
+    http_only: bool = False,
+    rebuild_queue: bool = False,
 ) -> dict[str, Any]:
     """Run end-to-end acquisition: screening → queue → download → match → manifest.
 
@@ -270,8 +273,29 @@ def run_acquire(
     }
 
     # --- Build queue ---
-    print("=== Build Download Queue ===")
-    write_download_queue(screening_path, download_dir)
+    queue_path = download_dir / "download_queue.json"
+    should_rebuild = rebuild_queue or not queue_path.exists()
+
+    if not should_rebuild and queue_path.exists():
+        existing = json.loads(queue_path.read_text(encoding="utf-8"))
+        screening_conf = existing.get("screening_confirmation", {})
+        screening_sha = screening_conf.get("screening_sha256")
+        if screening_sha:
+            current_sha = hashlib.sha256(screening_path.read_bytes()).hexdigest()
+            if screening_sha != current_sha:
+                print("Screening changed — rebuilding queue.")
+                should_rebuild = True
+        else:
+            # Queue predates screening_sha — cannot verify consistency
+            print("Queue has no screening checksum — rebuilding to be safe.")
+            should_rebuild = True
+
+    if should_rebuild:
+        print("=== Build Download Queue ===")
+        write_download_queue(screening_path, download_dir)
+    else:
+        existing = json.loads(queue_path.read_text(encoding="utf-8"))
+        print(f"Queue up to date ({len(existing.get('items', []))} items, use --rebuild-queue to force).")
 
     if queue_only:
         mark_step(topic_dir, "acquire", "queued", queue_path=result["queue_path"])
@@ -302,6 +326,7 @@ def run_acquire(
             profile=Path(profile) if profile else None,
             browser_channel=browser_channel,
             resolve_oa=resolve_oa,
+            http_only=http_only,
         )
         result["downloaded"] = len(rows)
     except Exception as exc:
@@ -327,7 +352,7 @@ def run_acquire(
     # --- Manifest ---
     print("=== Create Manifest ===")
     if rows:
-        write_download_manifest(rows, handoff_dir)
+        write_download_manifest(rows, handoff_dir, write_md=True)
         result["manifest_path"] = str(handoff_dir / "download_manifest.json")
 
     mark_step(topic_dir, "acquire", "done",

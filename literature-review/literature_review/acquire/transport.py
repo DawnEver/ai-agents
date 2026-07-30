@@ -90,13 +90,25 @@ class Transport(Protocol):
 # ---------------------------------------------------------------------------
 
 class HttpTransport:
-    """Repositories and preprint servers need nothing more than this."""
+    """Repositories and preprint servers need nothing more than this.
+
+    When *accept_all* is True (--http-only mode), publisher URLs are also
+    attempted — they will likely fail with a challenge page, but the failure
+    is logged with a clear reason so the user knows what to download manually.
+    """
 
     name = "http"
     cost = 10
 
+    def __init__(self, accept_all: bool = False) -> None:
+        self._accept_all = accept_all
+
     def can_handle(self, source: Source) -> bool:
-        return bool(source.url) and not needs_browser(source.url)
+        if not source.url:
+            return False
+        if self._accept_all:
+            return True
+        return not needs_browser(source.url)
 
     def fetch(self, source: Source, target: Path) -> str | None:
         return http_fetch.fetch_pdf(source.url, target)
@@ -420,10 +432,15 @@ class ResearchGateTransport:
         return found
 
 
-def default_transports(page: Any | None, item: dict[str, Any] | None = None) -> list[Transport]:
-    """Transports in cost order. Without a page, only plain HTTP is possible."""
-    transports: list[Transport] = [HttpTransport()]
-    if page is not None:
+def default_transports(page: Any | None, item: dict[str, Any] | None = None,
+                      http_only: bool = False) -> list[Transport]:
+    """Transports in cost order. Without a page, only plain HTTP is possible.
+
+    When *http_only* is True, browser and ResearchGate transports are skipped
+    even if a page is available — every paper is attempted via plain HTTP only.
+    """
+    transports: list[Transport] = [HttpTransport(accept_all=http_only)]
+    if page is not None and not http_only:
         transports.append(BrowserTransport(page))
         transports.append(ResearchGateTransport(page, item))
     return sorted(transports, key=lambda t: t.cost)

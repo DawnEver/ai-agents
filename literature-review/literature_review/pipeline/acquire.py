@@ -370,11 +370,13 @@ def _build_papers(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return papers
 
 
-def write_download_manifest(source: Path | list[dict[str, Any]], out_dir: Path) -> int:
+def write_download_manifest(source: Path | list[dict[str, Any]], out_dir: Path,
+                           write_md: bool = False) -> int:
     """Create a validated pre-ingest PDF download manifest.
 
     Accepts either already-built rows (the ledger path) or a legacy match
-    report on disk.
+    report on disk. By default only writes the JSON manifest; pass
+    *write_md=True* for the human-readable markdown handoff file.
     """
     rows = _load_matches(source) if isinstance(source, Path) else list(source)
     papers = _build_papers(rows)
@@ -399,29 +401,29 @@ def write_download_manifest(source: Path | list[dict[str, Any]], out_dir: Path) 
         json.dumps(artifact, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
     )
 
-    # Write human-readable summary
-    lines = [
-        "# Download Manifest", "",
-        f"Validated PDFs: {len(papers)}",
-        f"Machine-readable manifest: `{manifest_path.resolve()}`", "",
-    ]
-    for paper in papers:
+    if write_md:
+        lines = [
+            "# Download Manifest", "",
+            f"Validated PDFs: {len(papers)}",
+            f"Machine-readable manifest: `{manifest_path.resolve()}`", "",
+        ]
+        for paper in papers:
+            lines.extend([
+                f"## {paper['candidate_id']}: {paper['title']}", "",
+                f"- PDF: `{paper['pdf_path']}`",
+                f"- SHA-256: `{paper['sha256']}`",
+                f"- Screening reason: {paper['screening_reason'] or 'Not recorded'}",
+            ])
+            if paper["reading_questions"]:
+                lines.append("- Reading questions: " + "; ".join(paper["reading_questions"]))
+            lines.append("")
         lines.extend([
-            f"## {paper['candidate_id']}: {paper['title']}", "",
-            f"- PDF: `{paper['pdf_path']}`",
-            f"- SHA-256: `{paper['sha256']}`",
-            f"- Screening reason: {paper['screening_reason'] or 'Not recorded'}",
+            "## Handoff Gate", "",
+            "Do you want to decompose all validated PDFs with `paper_pdf_ingest` now?",
+            "No decomposition or detailed-reading work has been started.", "",
         ])
-        if paper["reading_questions"]:
-            lines.append("- Reading questions: " + "; ".join(paper["reading_questions"]))
-        lines.append("")
-    lines.extend([
-        "## Handoff Gate", "",
-        "Do you want to decompose all validated PDFs with `paper_pdf_ingest` now?",
-        "No decomposition or detailed-reading work has been started.", "",
-    ])
-    (out_dir / "download_manifest.md").write_text("\n".join(lines), encoding="utf-8")
+        (out_dir / "download_manifest.md").write_text("\n".join(lines), encoding="utf-8")
+        print(f"validated={len(papers)}; handoff gate reached")
+        print("Do you want to decompose all validated PDFs with paper_pdf_ingest now?")
 
-    print(f"validated={len(papers)}; handoff gate reached")
-    print("Do you want to decompose all validated PDFs with paper_pdf_ingest now?")
     return len(papers)

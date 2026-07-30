@@ -28,8 +28,52 @@ def ingest_output_dir(topic_dir: Path, candidate_id: str) -> Path:
 
     Single source of truth for the slug so cache checks and readers agree
     with what :func:`decompose_pdfs` actually writes (case-folded slug).
+
+    When the canonical CID-based directory does not exist but an older
+    title-slug directory contains a paper.md, that directory is returned
+    instead — this provides backward compatibility with ingestions from
+    before the CID-based naming convention was standardized.
     """
-    return topic_dir / "ingest" / _safe_component(str(candidate_id), "paper")
+    canonical = topic_dir / "ingest" / _safe_component(str(candidate_id), "paper")
+    if canonical.exists():
+        return canonical
+
+    # Backward-compat: check the repair-built compat_map.json for old-style
+    # title-based directories, then fall back to content scanning.
+    ingest_root = topic_dir / "ingest"
+    if not ingest_root.exists():
+        return canonical
+
+    # 1. Check compat_map.json (written by lit-review repair)
+    mapping_path = ingest_root / "compat_map.json"
+    if mapping_path.exists():
+        try:
+            compat_map = json.loads(mapping_path.read_text(encoding="utf-8"))
+            old_name = compat_map.get(canonical.name)
+            if old_name:
+                compat_dir = ingest_root / old_name
+                if compat_dir.is_dir() and (compat_dir / "1-paper-text" / "paper.md").exists():
+                    return compat_dir
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    # 2. Content-based fallback: word-boundary CID match in paper.md
+    cid_lower = str(candidate_id).lower()
+    cid_pattern = re.compile(rf"(?:^|[^a-z0-9]){re.escape(cid_lower)}(?:[^a-z0-9]|$)")
+    for d in ingest_root.iterdir():
+        if not d.is_dir() or d.name == canonical.name:
+            continue
+        paper_md = d / "1-paper-text" / "paper.md"
+        if not paper_md.exists():
+            continue
+        try:
+            content = paper_md.read_text(encoding="utf-8")[:8192]
+            if cid_pattern.search(content.lower()):
+                return d
+        except (OSError, UnicodeDecodeError):
+            continue
+
+    return canonical
 
 
 def _validate_ingest_output(output_dir: Path) -> None:

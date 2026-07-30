@@ -135,6 +135,7 @@ def plan_sources(
     run_dir: Path,
     limit: int = DEFAULT_LIMIT,
     resolve_oa: bool = True,
+    http_only: bool = False,
 ) -> list[dict[str, Any]]:
     """What *would* be tried, per paper, without downloading anything.
 
@@ -158,13 +159,17 @@ def plan_sources(
     plans: list[dict[str, Any]] = []
     for item in pending:
         urls = candidate_urls(item, resolve=resolve_oa)
+        sources = []
+        for url in urls:
+            entry = {"url": url, "transport": "browser" if needs_browser(url) else "http"}
+            if http_only and entry["transport"] == "browser":
+                entry["degraded"] = True
+                entry["note"] = "no-browser mode — will likely fail with challenge"
+            sources.append(entry)
         plans.append({
             "candidate_id": str(item.get("candidate_id") or ""),
             "title": str(item.get("title") or ""),
-            "sources": [
-                {"url": url, "transport": "browser" if needs_browser(url) else "http"}
-                for url in urls
-            ],
+            "sources": sources,
         })
     return plans
 
@@ -179,11 +184,19 @@ def acquire_pdfs(
     downloader: Callable[[dict[str, Any], Path, str], str] | None = None,
     resolve_oa: bool = True,
     page_factory: Callable[[], tuple[Any, Callable[[], None]]] | None = None,
+    http_only: bool = False,
 ) -> list[dict[str, Any]]:
-    """Download approved PDFs, recording every outcome in the ledger."""
+    """Download approved PDFs, recording every outcome in the ledger.
+
+    When *http_only* is True, browser transports are globally disabled —
+    no Playwright page is launched, no ResearchGate searches are attempted,
+    and every paper is tried via plain HTTP. Publisher URLs will typically
+    fail with a challenge response, but the failure is logged with the
+    URL so the user can retrieve the paper manually.
+    """
     import json
 
-    from literature_review.acquire.download import candidate_urls, playwright_page
+    from literature_review.acquire.download import candidate_urls
 
     artifact = json.loads(queue_path.read_text(encoding="utf-8"))
     pdf_dir = run_dir / "pdfs"
@@ -200,7 +213,8 @@ def acquire_pdfs(
 
     page: Any | None = None
     close: Callable[[], None] = lambda: None  # noqa: E731
-    if downloader is None:
+    if downloader is None and not http_only:
+        from literature_review.acquire.download import playwright_page
         factory = page_factory or (
             lambda: playwright_page(profile, browser_channel, network_mode)
         )
@@ -216,7 +230,7 @@ def acquire_pdfs(
 
             transports = (
                 [_CallableTransport(downloader, item)] if downloader is not None
-                else default_transports(page, item)
+                else default_transports(page, item, http_only=http_only)
             )
             sources = [Source(url) for url in candidate_urls(item, resolve=resolve_oa)]
 
