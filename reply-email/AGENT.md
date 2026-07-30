@@ -28,9 +28,11 @@ this file and must never restate the conventions defined here.
 5. Create `ongoing/<topic>/` and write `original.txt` + `draft.md`. Then copy `draft.md` to
    `final.md` with a shell command (`cp`), never by regenerating the content. If the directory
    already exists, resume from the existing files (jump to step 6 — the user is editing).
+   **Never archive until the user explicitly says "归档" (or "archive").** Creating the ongoing
+   directory and presenting the draft is the end of this step — wait.
 6. Tell the user the draft is ready. The user edits `final.md` directly. Never touch `draft.md`
    after creation. Optional polish: only if the user explicitly asks, edit `final.md`.
-7. After approval, archive the round:
+7. After approval (user says "归档" or "archive"), archive the round:
    - 7a. Move `ongoing/<topic>/` → `archived/<YYYY>/<MM>/<DD>/<topic>/` (apply the `-r<N>`
      suffix rule from **Naming conventions** if the same slug already archived today).
    - 7b. Diff `draft.md` vs `final.md` (before renaming) to identify what the user changed
@@ -38,8 +40,8 @@ this file and must never restate the conventions defined here.
    - 7c. Update style: promote patterns seen in ≥2 archives to `style/profile.md`; record
      per-reply observations in `meta.md` under `## Diff notes`.
    - 7d. Rename `final.md` → `reply.md` and write `meta.md` (see **meta.md schema**).
-   - 7e. For continuations, set `prev:` in `meta.md` to the relative path of the immediately
-     preceding round's folder (cosmetic; slug-based lookup is authoritative).
+   - 7e. For continuations, set `prev:` in `meta.md` to the repo-root-relative path of the
+     immediately preceding round's folder (cosmetic; slug-based lookup is authoritative).
 
 ---
 
@@ -61,6 +63,8 @@ archived/<YYYY>/<MM>/<DD>/<topic>/  — one folder per exchange round (local onl
   draft.md                 — AI's initial draft (preserved for diff learning)
   reply.md                 — sent reply (user's final.md, renamed after diff)
   meta.md                  — metadata + diff observations
+  (attachments)            — any material that came with the email (image/*.png, *.csv, …);
+                             filenames are unconstrained, not part of the spec
 ```
 
 - `draft.md` = AI's raw output, preserved untouched for diff learning. `final.md` = user's version.
@@ -74,6 +78,18 @@ archived/<YYYY>/<MM>/<DD>/<topic>/  — one folder per exchange round (local onl
   (`archived/2026/06/22/<topic>/`, `archived/2026/06/23/<topic>/`).
 - **Same slug, same date (≥2 rounds in one day):** suffix the directory with `-r<N>`, N starting
   at 2 (`<topic>/`, `<topic>-r2/`, `<topic>-r3/` …). The first round of the day has no suffix.
+
+### Legacy archive quirks
+
+Archives from early June 2026 predate the current conventions. Known deviations, kept as-is
+(no backfill):
+
+- `original.md` instead of `original.txt` (all archives before 2026-06-16).
+- No `draft.md` — so no diff notes exist for those rounds.
+- `position: N/M` frontmatter field instead of `round: N` (earliest metas).
+- `archived/2026/06/05/torque-correlation-check-v2/` uses a `-v2` suffix that the canonical
+  thread glob below does **not** match; treat that round as orphaned unless looked up directly.
+- `prev:` paths written in various formats (see schema note below).
 
 ### Thread reconstruction & globs
 
@@ -96,12 +112,12 @@ reply is round N+1.
 ```markdown
 ---
 subject: <email subject>
-sender: <sender name / address>
+sender: <sender name / address>   # for a user follow-up with no new incoming email: "[User follow-up — no new incoming email]"
 recipient: <recipient>      # optional — only for outgoing-initiated mail
 date: <original email date, normalized to YYYY-MM-DD>
 thread: <topic-slug>
 round: <N>                  # 1-indexed position in the thread
-prev: <relative path to preceding round's folder>   # omit for round 1
+prev: <path to preceding round's folder>   # omit for round 1
 ---
 
 <1-2 sentence summary of this message in the thread>
@@ -110,6 +126,10 @@ prev: <relative path to preceding round's folder>   # omit for round 1
 
 <what the user changed from draft.md to final.md: tone, phrasing, structure, additions, removals>
 ```
+
+- `prev:` is always a repo-root-relative path: `archived/YYYY/MM/DD/<topic>` (trailing slash
+  optional). Never `../..`-style relative — older archives mix formats; write the canonical one.
+- The summary may optionally sit under a `## Summary` heading; bare text is the default.
 
 ### Diff learning
 
@@ -148,9 +168,7 @@ They must never contain:
 
 Use generic placeholders: `conference-invitation`, `prof.smith@example.com`, `[Your Name]`,
 `project-proposal`. Real data lives exclusively in gitignored paths — `ongoing/`, `archived/`,
-`style/profile.md`. A pre-commit hook (`.claude/hooks/check-pii.sh`) greps staged tracked files
-for email-address and obvious PII patterns as a backstop; it is a safety net, not a substitute
-for the rules above.
+`style/profile.md`.
 
 ### File conventions
 

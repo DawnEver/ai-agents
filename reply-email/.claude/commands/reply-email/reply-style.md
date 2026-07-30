@@ -6,17 +6,14 @@ disable-model-invocation: true
 
 # Reply Style (Fallback)
 
-Read at step 6 only when neither `style/profile.md` nor archived replies exist.
-
-## Style
-
-- Conversational but professional — real conversation tone, not stiff corporate speak
-- Fluent and natural — no awkward translation feel
-- Concise and clear — no filler phrases ("I hope this email finds you well")
-- Friendly and positive
-- Reply in the same language as the incoming email
+Read at the **Learn style** step only when neither `style/profile.md` nor archived replies
+exist. Style defaults are defined once in `AGENT.md` (Style section) — this file adds only
+the structure template and a worked example.
 
 ## Structure
+
+Every line separated by a blank line — the draft is rendered from markdown and copied into
+an email client; adjacent lines collapse when pasted.
 
 ```
 Subject: Re: [Original subject]
@@ -26,6 +23,7 @@ Hi [Name],
 [Body]
 
 Best,
+
 [Your Name]
 ```
 
@@ -52,10 +50,11 @@ Subject: Re: Meeting about research project
 
 Hi Prof. Smith,
 
-Thanks for reaching out! Friday afternoon at 3pm works perfectly for me. Could you let me know which meeting room we'll be in?
+Thanks for reaching out! Friday afternoon at 3pm works perfectly for me.
 
-Looking forward to our discussion.
+Could you let me know which meeting room we'll be in?
 
 Best,
+
 [Your Name]
 ```

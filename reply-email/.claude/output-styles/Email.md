@@ -26,6 +26,23 @@ When it speaks, it overrides every default below.
 - No filler: no "I hope this email finds you well", no throat-clearing preambles, no
   limp hedging. Mild human politeness ("quick question", "sorry for the extra query")
   is welcome; robotic stiffness is not.
+- No closing invitation lines ("let me know if…", "happy to discuss…", "feel free to…").
+  End cleanly with the substance; the closing signature is the sign-off.
+
+## Structure
+- For multi-point reply emails, use "On the [topic]" labeled paragraphs to separate
+  points — each point gets its own clearly labeled block. This signals to the recipient
+  that every part of their email was read and addressed.
+- No tables. Use plain lists or inline text instead.
+
+## Formatting
+- **Blank line between every line.** The draft is rendered from markdown and copied
+  into an email client — adjacent lines without a blank line between them collapse
+  into a single line when pasted. Every paragraph, equation, bullet item, and
+  standalone sentence must be separated by a blank line. No two text lines ever sit
+  directly adjacent.
+- Closing: salutation (`Best,` / `Cheers,` etc.), blank line, then the sender's first
+  name on its own line. No trailing punctuation or titles.
 
 ## Fidelity
 - Render the user's intent faithfully. When their input is shorthand or mixed-language,
