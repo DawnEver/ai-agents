@@ -56,14 +56,34 @@ Summary statistics (candidates, screening breakdown, downloads, decomposed, deep
 
 ### Zotero Sync
 
-Push all workspace PDFs into the shared Zotero collection (`workspace.toml` → `[zotero]`), then fix metadata and local files:
+All papers → ONE shared Zotero collection (from `workspace.toml` → `[zotero]`, resolved by
+`collection_key`, names are not unique). Workspace identity = `zotero_registry.jsonl` +
+workspace tag. Never create per-topic collections.
+
+**1. 确认范围再导入。** 用户说"导入哪几篇"就导入哪几篇。先 dry-run 展示计划,核对范围后执行:
 
 ```
-lit-review zotero-import --topic <slug>     # DOI-deduped batch import + registry
-lit-review zotero-maintain --topic <slug>   # enrich bare items + mirror PDFs to ~/Zotero/storage
+lit-review zotero-import --topic <slug> --dry-run                                          # show what would import
+lit-review zotero-import --topic <slug> --candidate-id <id1> --candidate-id <id2>          # per-paper (recommended for "just these")
+lit-review zotero-import --topic <slug>                                                    # full workspace, only on explicit request
 ```
 
-Then re-embed via the `zotero_update_search_database` MCP tool so `zotero_semantic_search` sees the new items. Workspace ↔ Zotero mapping lives in `zotero_registry.jsonl`; every item gets the workspace tag.
+去重:DOI → title-key(three-pass);DOI-bearing groups CrossRef-enriched at creation。
+Interactive single paper: `zotero_add_from_file` (MCP), collection + workspace tag explicit.
+
+**2. Import 后**:`zotero-maintain`(registry-scoped enrich + **mirror**)+ re-embed:
+
+```
+lit-review zotero-import --topic <slug> --candidate-id <id1> ...   # (or full)
+lit-review zotero-maintain --topic <slug>                          # enrich + mirror; --all for whole collection
+zotero_update_search_database (MCP)                                # re-embed for zotero_semantic_search
+```
+
+**3. PDF unavailable(桌面 "File Not Found" / 附件打不开)**:
+- 症状:item 有 `imported_file` attachment 记录,但本地 `~/Zotero/storage/<key>/` 缺文件。
+- 根因:批量 import 上传后未拉回本地。
+- 修复:`lit-review zotero-maintain --topic <slug>` 的 **mirror** 下载到 storage(md5 校验)。
+  注意目录 key = attachment 的 key(非父 item key)。**不要手动复制 PDF 到 storage**。
 
 ### Custom
 
