@@ -69,6 +69,21 @@ So a bare DOI in the queue is usually enough; a good `html_url` still helps. Set
    enrich + local file mirroring; `--all` for whole-collection maintenance), then
    `zotero_update_search_database` (MCP) to re-embed.
 
+### PDF unavailable (桌面 "File Not Found" / 附件打不开)
+
+**症状**:Zotero 桌面显示 PDF unavailable,但 item 有 `imported_file` attachment 记录。
+
+**根因**:attachment 是 `linkMode=imported_file`(PDF 存 Zotero storage),但本地
+`~/Zotero/storage/<key>/` 缺文件——服务器有、本地没有。批量 `zotero-import` 上传后
+不一定拉回本地,或本地上传被跳过。
+
+**修复**:跑 `lit-review zotero-maintain --topic <slug>` 的 **mirror** 步骤——它会下载
+已上传但本地缺失的附件到 `~/Zotero/storage/<key>/`(md5 校验)。Registry-scoped,只处理
+本 workspace 的 item。验证:`ls ~/Zotero/storage/<attachment_key>/` 应有 `.pdf`(注意
+目录 key 是 attachment 的 key,不是父 item 的 key)。
+
+**不要手动复制 PDF 到 storage**——路径/命名由 Zotero 管理,mirror 自动处理。
+
 ### Collections
 
 - Shared collection lives in `workspace.toml` → `[zotero].collection_name` **and**
