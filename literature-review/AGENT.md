@@ -122,6 +122,22 @@ error 1020. Check `download/download_log.csv` after the run for per-URL failure
 reasons before any manual retry. `maybe` decisions are never auto-approved — use
 `--candidate-id <id>` to include one explicitly.
 
+## Memory privacy guardrail
+
+**Research-topic content never enters project-level memory.** Workspace and topic
+material — research briefs, concept taxonomies, paper lists/screening outcomes,
+acquisition/analysis results, and any conclusions derived from a topic — is
+confidential research data. It lives only inside the workspace
+(`workspaces/<slug>/`, which is gitignored) and its own scoped
+`.claude/rules/MEMORY.md`.
+
+Project-level `.claude/memory/` and `.claude/rules/MEMORY.md` may contain ONLY
+generic, topic-agnostic engineering knowledge: tooling bugs fixed, CLI contract
+changes, workflow patterns. Never write a topic slug, paper title, or research
+finding there. When REM / sharp-review write session memory, strip topic
+content before committing; if a topic record was written by mistake, delete it
+and amend the commit (do not leave it in git history).
+
 ## Details
 
 Progressive disclosure — load as needed:
