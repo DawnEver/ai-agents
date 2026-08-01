@@ -92,10 +92,17 @@ So a bare DOI in the queue is usually enough; a good `html_url` still helps. Set
 ## Key Commands
 
 ```
-lit-review init/search/acquire/ingest/read/synthesize/export/stats --topic <slug>
+lit-review init/search/acquire/ingest/export/stats --topic <slug>
 lit-review zotero-import/zotero-maintain/zotero-sync/zotero-status --topic <slug>
 lit-review login [--profile ...]
 ```
+
+## AI 推理 — 层解耦,fabric 优先,litellm 回退,每次确认
+
+- **AI 调用层解耦**:fabric(MCP,首选,provider=deepseek,默认 v4-flash)· litellm(`ai/client.py`,`chat()`,回退)· CLI read/synthesize(走 litellm,保留)。各层独立,agent 按需决策。
+- **每次调用前必须询问用户用哪个后端 + 模型**(如 "fabric/deepseek-v4-flash,还是 litellm?"),绝不默默用默认。
+- 报告/卡片引用用 **ShortRef**(作者+年份,见 `reading/papers_registry.md`),禁用 hash;card 文件名 = `<lastname>-<year>_card.md`。
+- 模板库:`templates/`(skill 层)共享,不入 workspace。
 
 ## Acquisition — auto-run the full ladder
 

@@ -17,7 +17,7 @@ You are the orchestrator. Given a topic name, guide the user through a flexible 
 | 02 | `02-search.md` | `lit-review search` | AI queries → multi-provider search → dedupe → screening packet |
 | 03 | `03-acquire.md` | `lit-review acquire` | Script-first batch PDF acquisition — auto walks http→browser→researchgate ladder, run in background |
 | 04 | `04-ingest.md` | `lit-review ingest` | On-demand decomposition with cache reuse |
-| — | `05-options.md` | `read`/`synthesize`/`export`/`stats` | Post-acquisition capabilities as a menu |
+| — | `05-options.md` | AI(deep-read/synthesize via fabric/litellm,每次确认模型)· export · stats | Post-acquisition capabilities as a menu |
 
 ## How to execute
 
