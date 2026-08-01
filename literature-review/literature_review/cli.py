@@ -338,15 +338,38 @@ def _handle_ingest(args: argparse.Namespace) -> int:
 def _handle_import_screening(args: argparse.Namespace) -> int:
     td = _topic_dir(args.topic)
     candidates_path = td / "search" / "candidates_ranked.jsonl"
-    out_path = td / "screening" / "screening_stage1.jsonl"
+    out_dir = td / "screening"
     if not candidates_path.exists():
         print(f"error: {candidates_path} not found. Run search first.", file=sys.stderr)
         return 2
+    # Migrate away a stale directory left by the pre-fix code, which passed the
+    # full file path as `out_dir` and thereby created a DIRECTORY at
+    # screening/screening_stage1.jsonl/ with the real file nested inside.
+    # Downstream readers open that same path as a file, so leaving it behind
+    # turns the next acquire/repair run into an IsADirectoryError.
+    import shutil
+    stale = out_dir / "screening_stage1.jsonl"
+    if stale.is_dir():
+        nested = stale / "screening_stage1.jsonl"
+        if not nested.is_file():
+            raise SystemExit(
+                f"error: {stale} is a directory from the old import-screening bug "
+                "with no nested screening_stage1.jsonl to migrate — remove it manually."
+            )
+        # os.replace cannot move a file onto an existing directory on Windows.
+        # Stage the file in a sibling path, drop the directory, then hoist.
+        staged = out_dir / "screening_stage1.jsonl.migrating"
+        nested.replace(staged)
+        shutil.rmtree(stale)
+        staged.replace(out_dir / "screening_stage1.jsonl")
+        print("migrated stale screening_stage1.jsonl directory from pre-fix state")
     try:
-        return import_agent_screening(candidates_path, [Path(p) for p in args.batch], out_path)
+        n = import_agent_screening(candidates_path, [Path(p) for p in args.batch], out_dir)
     except Exception as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+    print(f"import-screening: merged={n}")
+    return 0
 
 
 def _handle_read(args: argparse.Namespace) -> int:

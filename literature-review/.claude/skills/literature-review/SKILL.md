@@ -15,7 +15,7 @@ You are the orchestrator. Given a topic name, guide the user through a flexible 
 |------|------|-----|--------------|
 | 01 | `01-define.md` | `lit-review init` | Define topic & scope → `workspace.toml` + `research_brief.toml` |
 | 02 | `02-search.md` | `lit-review search` | AI queries → multi-provider search → dedupe → screening packet |
-| 03 | `03-acquire.md` | `lit-review acquire` | Script-first batch PDF acquisition with auth analysis |
+| 03 | `03-acquire.md` | `lit-review acquire` | Script-first batch PDF acquisition — auto walks http→browser→researchgate ladder, run in background |
 | 04 | `04-ingest.md` | `lit-review ingest` | On-demand decomposition with cache reuse |
 | — | `05-options.md` | `read`/`synthesize`/`export`/`stats` | Post-acquisition capabilities as a menu |
 

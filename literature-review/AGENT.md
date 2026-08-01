@@ -97,6 +97,31 @@ lit-review zotero-import/zotero-maintain/zotero-sync/zotero-status --topic <slug
 lit-review login [--profile ...]
 ```
 
+## Acquisition — auto-run the full ladder
+
+The acquire call is a single backgrounded command that auto-approves includes and
+walks `http → browser → researchgate` per source internally. Run it and move on:
+
+```
+lit-review acquire --topic <slug> --approved-by <you> --profile <name> --limit <N>   # run_in_background; N ≤ 20
+```
+
+**Session reuse requires `--profile`.** Without it the browser launches a fresh
+temporary context with zero cookies, so subscribed/off-campus papers fail even on
+a campus IP. Create the profile once, then reuse it:
+
+```
+lit-review login --profile <name> --url <publisher-page> --completion browser-close   # log in in headed Chrome, close window
+lit-review acquire --topic <slug> --profile <name> --limit <N>
+```
+
+`--http-only` is for diagnosis and headless/CI machines with no display only.
+`--browser-channel` defaults to `chrome` (omit it). There is no `--headed` flag —
+the browser transport is always headed. ResearchGate's circuit breaker handles
+error 1020. Check `download/download_log.csv` after the run for per-URL failure
+reasons before any manual retry. `maybe` decisions are never auto-approved — use
+`--candidate-id <id>` to include one explicitly.
+
 ## Details
 
 Progressive disclosure — load as needed:

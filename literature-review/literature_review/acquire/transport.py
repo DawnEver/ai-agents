@@ -50,6 +50,8 @@ COOKIE_ACCEPT_SELECTORS = (
 )
 PDF_BUTTON_SELECTORS = (
     'a[href*="/stampPDF/"]', "xpl-download-pdf a", "a[xpl-download-pdf]",
+    ".xpl-btn-pdf",  # current IEEE Xplore download button (Angular, 2023+)
+    'a[href*="/stamp/stamp.jsp"]',  # IEEE stamp.jsp PDF endpoint (current)
     ".document-pdf-link a", ".c-pdf-download__link", 'a[href*="/content/pdf/"]',
     "a:has-text('Download PDF')", "a:has-text('View PDF')",
     'a[aria-label*="PDF"]', 'a[title*="PDF"]', ".pdf-btn",
