@@ -20,6 +20,7 @@ attachment patch from ``scripts/zotero_mcp_patch.py`` so uploads actually land.
 from __future__ import annotations
 
 import re
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -43,6 +44,17 @@ def normalize_stem(filename: str) -> str:
     """Lowercase alphanumeric-only stem: 'CutCount_FOCS2011_1103.0534.pdf' -> 'cutcountfocs201111030534'."""
     stem = Path(filename).stem.lower()
     return _NON_ALNUM.sub("", stem)
+
+
+def _candidate_matches(stem: str, candidate_ids: set[str]) -> bool:
+    """True when a PDF filename stem belongs to one of the candidate ids.
+
+    PDF filenames are ``<candidate_id-truncated-to-40>_<title>.pdf`` (safe_filename
+    truncates the id part). Match on the id token only, in either direction, so a
+    full candidate id matches its truncated filename and vice versa.
+    """
+    file_id = stem.split("_", 1)[0]
+    return any(w.startswith(file_id) or file_id.startswith(w) for w in candidate_ids)
 
 
 def title_key(filename: str) -> str:
@@ -264,11 +276,24 @@ def import_workspace_pdfs(
     dry_run: bool = False,
     force: bool = False,
     zot: Any = None,
+    candidate_ids: list[str] | None = None,
 ) -> list[ImportResult]:
-    """Import every workspace PDF into Zotero and maintain the registry."""
+    """Import workspace PDFs into Zotero and maintain the registry.
+
+    When *candidate_ids* is given, only PDFs whose canonical stem starts with one
+    of those candidate ids are imported (the stem is the PDF filename, which the
+    acquisition pipeline names `<candidate_id>_<title>.pdf`). Otherwise every
+    workspace PDF is imported.
+    """
     tags = tags or []
     files = iter_workspace_pdfs(workspace_dir)
     groups = group_pdfs(files)
+    if candidate_ids:
+        wanted = {c.strip() for c in candidate_ids if c and c.strip()}
+        groups = [g for g in groups if _candidate_matches(g.canonical.stem, wanted)]
+        if not groups:
+            print(f"warning: no workspace PDF matches candidate_ids={sorted(wanted)}",
+                  file=sys.stderr)
 
     if dry_run:
         return [

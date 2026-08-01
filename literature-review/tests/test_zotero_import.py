@@ -158,3 +158,42 @@ def test_import_skips_registry_entries(tmp_path):
     results = zi.import_workspace_pdfs(tmp_path, "lib", "key", zot=NoCallZot())
     assert results[0].action == "skipped-registry"
     assert results[0].zotero_key == "ZZ"
+
+
+# ── _candidate_matches ──────────────────────────────────────────────
+
+
+def test_candidate_matches_truncated_filename_prefix():
+    # full candidate id matches its 40-char truncated filename prefix
+    stem = "S2-c5f3ab59b6383b4a333431200ce3ff773d964_Quantitative analysis.pdf"
+    assert zi._candidate_matches(stem, {"S2-c5f3ab59b6383b4a333431200ce3ff773d964c4e"})
+    # and the truncated filename token matches the full id
+    assert zi._candidate_matches(
+        "S2-c5f3ab59b6383b4a333431200ce3ff773d964_Quant.pdf",
+        {"S2-c5f3ab59b6383b4a333431200ce3ff773d964c4e"},
+    )
+
+
+def test_candidate_matches_rejects_other_ids():
+    stem = "S2-c5f3ab59b6383b4a333431200ce3ff773d964_Quant.pdf"
+    assert not zi._candidate_matches(stem, {"S2-fd75c6d3637078c5070cb4986a528428e6cee349"})
+    assert not zi._candidate_matches(stem, set())
+
+
+def test_import_filters_by_candidate_ids(tmp_path):
+    for name in (
+        "S2-c5f3ab59b6383b4a333431200ce3ff773d964_Quant.pdf",
+        "S2-fd75c6d3637078c5070cb4986a528428e6cee_Subdomain.pdf",
+        "S2-34de9698ce8d5e8b20d9008d708ba332ee00f_Iter.pdf",
+    ):
+        _mk(tmp_path, f"papers/{name}")
+    results = zi.import_workspace_pdfs(
+        tmp_path, "lib", "key", dry_run=True,
+        candidate_ids=["S2-c5f3ab59b6383b4a333431200ce3ff773d964c4e",
+                       "S2-fd75c6d3637078c5070cb4986a528428e6cee349"],
+    )
+    assert len(results) == 2
+    got = {r.canonical for r in results}
+    assert any("c5f3ab59" in g for g in got)
+    assert any("fd75c6d3" in g for g in got)
+    assert not any("34de9698" in g for g in got)

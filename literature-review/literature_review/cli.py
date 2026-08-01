@@ -150,9 +150,11 @@ def build_parser() -> argparse.ArgumentParser:
     # === Zotero: import workspace PDFs ===
     p = sub.add_parser(
         "zotero-import",
-        help="Import all workspace PDFs into the configured Zotero collection (DOI-deduped, registry-updated).",
+        help="Import workspace PDFs into the configured Zotero collection (DOI-deduped, registry-updated).",
     )
     p.add_argument("--topic", required=True, help="Topic slug.")
+    p.add_argument("--candidate-id", action="append",
+                   help="Import only this candidate's PDF (repeatable). Default: all workspace PDFs.")
     p.add_argument("--dry-run", action="store_true", help="Show the dedupe/import plan only.")
     p.add_argument("--force", action="store_true", help="Re-import even if in the registry.")
 
@@ -532,6 +534,7 @@ def _handle_zotero_import(args: argparse.Namespace) -> int:
         td, library_id, api_key, library_type,
         collection_key=collection_key, tags=tags,
         dry_run=args.dry_run, force=args.force,
+        candidate_ids=args.candidate_id,
     )
     for r in results:
         line = f"  [{r.action}] {r.canonical}"

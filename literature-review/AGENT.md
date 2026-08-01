@@ -59,11 +59,10 @@ So a bare DOI in the queue is usually enough; a good `html_url` still helps. Set
 `zotero_registry.jsonl` (file ↔ zotero_key) plus a workspace tag from
 `workspace.toml` → `[zotero].tags`. Never create per-topic collections.
 
-1. **Batch import (preferred)**: `lit-review zotero-import --topic <slug>` — scans
-   `download/pdfs` + `papers` + `pdfs`, dedupes by DOI → title-key (three-pass
-   grouping), attaches PDFs, updates the registry. DOI-bearing groups get
-   CrossRef-enriched items at creation; identifier-less PDFs import as bare
-   `document` items that step 3's enrich pass fixes afterwards.
+1. **确认范围再导入**。用户说"导入哪几篇"就导入哪几篇。先 `lit-review zotero-import --topic <slug> --dry-run` 展示将导入哪些 PDF,与用户核对范围(全部 or 指定篇目)后再执行。禁止未经确认就全量导入。
+   - **按篇导入**:`lit-review zotero-import --topic <slug> --candidate-id <id1> --candidate-id <id2>` — 只导入指定论文(推荐用于"就这几篇"场景)。
+   - **全量导入**:`lit-review zotero-import --topic <slug>` — 扫描 `download/pdfs` + `papers` + `pdfs` 全部 PDF,仅在用户明确要全部时使用。
+   - 去重:DOI → title-key(three-pass grouping);DOI-bearing groups CrossRef-enriched at creation。
 2. **Interactive single paper**: `zotero_add_from_file` (MCP) with the collection and
    workspace tag explicitly set — never bare "My Library".
 3. **After any import**: `lit-review zotero-maintain --topic <slug>` (registry-scoped
