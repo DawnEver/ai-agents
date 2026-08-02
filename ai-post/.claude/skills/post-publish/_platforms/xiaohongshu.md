@@ -8,6 +8,10 @@ Plain Chinese text with emoji preserved. Hashtags on a separate line at end. Ima
 
 ## Body Images — 分页文字卡轮图（图文分离）
 - **小红书正文不支持内嵌图片。** 正文纯文字；配图单独上传。
+- **双正文机制（可选的「全文进图片卡 + 正文一版」）**：一篇 `xiaohongshu.md` 可含两段文字——
+  - `## 正文（粘贴到平台编辑框，不进图片卡）` — 精简版，贴进 App 正文框（字数上限见 registry）；
+  - `## 分页文字卡正文（全文细节，渲染进图片卡）` — 完整细节，由脚本拆成分页文字卡。
+  - `gen_xhs_pages.py` 识别这两个区段标记：**只把「分页文字卡正文」区段渲染进卡片**，精简正文被排除。旧文件无标记则照旧渲染 H1 之后全部正文（向后兼容）。若只需要精简正文一版，可省略「分页文字卡正文」区段。
 - **主体轮图 = 脚本生成的分页文字卡**（用脚本，不用 AI 生图——文字要清晰、可复现）：
   ```bash
   python scripts/post-publish/gen_xhs_pages.py <slug>

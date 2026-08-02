@@ -138,13 +138,30 @@ def strip_emoji(text):
     return EMOJI_RE.sub("", text)
 
 
+# Region markers. A 小红书 draft may carry TWO text blocks:
+#   ## 正文（粘贴到平台编辑框，不进图片卡）   — condensed copy for the app body box
+#   ## 分页文字卡正文（全文细节，渲染进图片卡） — full detail packed onto the 3:4 cards
+# Content under ## 正文 is excluded from the cards; content under 分页文字卡正文 is
+# rendered onto them. Legacy articles with neither marker render everything after
+# the H1 (backward compatible).
+CARD_REGION_RE = re.compile(r"^#{2,}\s*分页文字卡正文")
+BODY_REGION_RE = re.compile(r"^#{2,}\s*正文")
+
+
 def parse_article(md_path):
-    """Return (title, [body_paragraph, ...]) — excludes the 配图 manifest and the
-    trailing hashtag line (those belong to the caption, not the cards). Emoji are
-    stripped (see strip_emoji) so cards render clean text."""
+    """Return (title, [body_paragraph, ...]).
+
+    Excludes the 配图 manifest and the trailing hashtag line (those belong to the
+    caption, not the cards). If the article carries a ``## 分页文字卡正文`` region,
+    only that region is rendered onto cards — the condensed ``## 正文`` block above
+    it is the copy for the app body box, not the cards. Legacy articles without the
+    markers render everything after the H1. Emoji are stripped (see strip_emoji) so
+    cards render clean text.
+    """
     title = md_path.stem
     paras = []
     buf = []
+    collecting = True  # legacy default: everything after the H1 goes on cards
     for raw in md_path.read_text(encoding="utf-8").splitlines():
         line = raw.rstrip()
         # H1 title
@@ -155,11 +172,21 @@ def parse_article(md_path):
         # Stop at the 配图 manifest (## 配图 ...) — nothing after belongs on a card.
         if re.match(r"^#{2,}\s*配图", line):
             break
+        # Region markers toggle what belongs on the cards. Checked before the
+        # generic heading skip so they take effect instead of being dropped.
+        if CARD_REGION_RE.match(line):
+            collecting = True
+            continue
+        if BODY_REGION_RE.match(line):
+            collecting = False  # condensed 正文 → app body box, not cards
+            continue
         # Skip other headings (小红书 body rarely has them; keep text clean).
         if re.match(r"^#{2,}\s", line):
             continue
         # Skip the hashtag line (starts with '#tag', i.e. # not followed by space).
         if re.match(r"^#\S", line):
+            continue
+        if not collecting:
             continue
         if line.strip() == "":
             if buf:
@@ -197,35 +224,43 @@ def measure(token, is_emoji, size, fonts):
 
 
 def wrap_paragraph(text, size, max_w, fonts):
-    """Return a list of lines; each line is [(token, is_emoji, width), ...]."""
-    units = []
-    for seg, is_emoji in split_runs(text.replace("\n", " ")):
-        if is_emoji:
-            units.append((seg, True))
-        else:
-            for tok in _tokenize(seg):
-                units.append((tok, False))
-    lines, cur, cur_w = [], [], 0.0
-    for tok, is_emoji in units:
-        w = measure(tok, is_emoji, size, fonts)
-        if tok.isspace():
-            if not cur:
+    """Return a list of lines; each line is [(token, is_emoji, width), ...].
+
+    Hard line breaks (``\\n``) are PRESERVED — each becomes a forced line break —
+    so markdown-style bullet lists render each bullet on its own card line instead
+    of being flattened into one wrapped paragraph. A single logical line still wraps
+    internally when it exceeds ``max_w``.
+    """
+    lines = []
+    for para_line in text.split("\n"):
+        units = []
+        for seg, is_emoji in split_runs(para_line):
+            if is_emoji:
+                units.append((seg, True))
+            else:
+                for tok in _tokenize(seg):
+                    units.append((tok, False))
+        cur, cur_w = [], 0.0
+        for tok, is_emoji in units:
+            w = measure(tok, is_emoji, size, fonts)
+            if tok.isspace():
+                if not cur:
+                    continue
+                if cur_w + w > max_w:
+                    lines.append(cur)
+                    cur, cur_w = [], 0.0
+                else:
+                    cur.append((tok, is_emoji, w))
+                    cur_w += w
                 continue
-            if cur_w + w > max_w:
+            if cur and cur_w + w > max_w:
                 lines.append(cur)
-                cur, cur_w = [], 0.0
+                cur, cur_w = [(tok, is_emoji, w)], w
             else:
                 cur.append((tok, is_emoji, w))
                 cur_w += w
-            continue
-        if cur and cur_w + w > max_w:
+        if cur:
             lines.append(cur)
-            cur, cur_w = [(tok, is_emoji, w)], w
-        else:
-            cur.append((tok, is_emoji, w))
-            cur_w += w
-    if cur:
-        lines.append(cur)
     return lines
 
 

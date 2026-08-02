@@ -64,6 +64,10 @@ emoji_density: see `templates/_platform-registry.md` (emoji_density) — high
 - **Length**: ~800-1000 characters total (craft target). 硬上限见 `templates/_platform-registry.md` (char_limit)。
 - **正文纯文本，零 markdown（小红书硬性要求）**: 小红书正文框是纯文本编辑器，markdown 语法会原样显示成乱码。正文里**禁止**任何 markdown：不要 `**加粗**`、不要 `` `行内代码` ``、不要 `## 标题`、不要 `[文字](链接)`、不要 ``` 代码块、不要 `-`/`1.` 列表符号、不要内嵌 `![](...)` 图片。只允许：纯文字、emoji、换行/空行。强调用词语本身或 emoji，不要用加粗。技术名词（DeepSeek、sharp-review、≥2）直接写，不加反引号。
 - **图文分离（写作时就要做到）**: 正文**完全不含图片**。所有配图（含封面）统一放到文末 `## 配图（单独上传，正文不内嵌）` 清单里。写正文时心里就把图和字分开——正文是能一次性复制进小红书的纯文字，图片照清单逐张手动上传。
+- **双正文机制（可选：全文进图片卡 + 正文一版）**: 当精简正文装不下全部细节、想「全文细节放图片卡、正文放一版」时，用两个显式区段标记（`gen_xhs_pages.py` 识别，只把后者渲染进分页文字卡）——
+  - `## 正文（粘贴到平台编辑框，不进图片卡）` — 精简版，贴进 App 正文框，字数上限见 registry char_limit；
+  - `## 分页文字卡正文（全文细节，渲染进图片卡）` — 完整细节，脚本按容量拆成分页 3:4 文字卡。
+  - 只想要精简正文一版时，可省略「分页文字卡正文」区段（脚本向后兼容，无标记则渲染 H1 后全部正文）。
 - **No external links in body** — 小红书 may hide posts with links. Use "评论区/主页自取" pattern.
 - **Hashtags**: Suggest 3-5 relevant hashtags at the end (e.g., #开源工具 #程序员必备 #效率提升). Hashtags 是纯文本 `#词`，不是 markdown 标题。
 
