@@ -23,6 +23,21 @@ export function stripAnsi(s) {
   return s.replace(ANSI_RE, '');
 }
 
+/**
+ * True while a backgrounded MCP/fabric task is still pending: the child printed
+ * "moved to the background as task X" (>120s fabric fan_out / call / session) but the
+ * matching <task-notification> completion has NOT surfaced yet. waitIdle uses this so
+ * it never declares the child idle while it is legitimately waiting on a long fabric
+ * call — the real result arrives asynchronously, not as the synchronous tool_result.
+ */
+export function backgroundTaskPending(text) {
+  const m = String(text).match(/moved to the background as task (\w+)/);
+  if (!m) return false;
+  const completionSurfaced = new RegExp(`<task-id>${m[1]}</task-id>`).test(text)
+    || /<status>(completed|failed|timeout|cancelled|error)<\/status>/.test(text);
+  return !completionSurfaced;
+}
+
 /** Resolve the claude-tap executable (PATH first, then ~/.local/bin). */
 function resolveClaudeTap() {
   const bin = isWin ? 'claude-tap.exe' : 'claude-tap';
@@ -280,7 +295,12 @@ export async function launch(opts = {}) {
     async waitIdle(quietMs = 2500, timeout = 60000) {
       const start = Date.now();
       while (Date.now() - start < timeout) {
-        if (Date.now() - lastOutputAt >= quietMs) return true;
+        const quiet = Date.now() - lastOutputAt >= quietMs;
+        // Don't declare idle while a fabric/MCP tool is backgrounded (>120s) and its
+        // completion hasn't surfaced — the child may be waiting on it, and a send queued
+        // now would land mid-call. Wait for the <task-notification> (or the timeout).
+        const pendingBackground = quiet && backgroundTaskPending(stripAnsi(buffer));
+        if (quiet && !pendingBackground) return true;
         if (exited) return true;
         await sleep(100);
       }

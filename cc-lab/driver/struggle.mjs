@@ -8,6 +8,11 @@
 
 const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 
+/** Fabric/MCP tools that run long work on an external engine (deepseek/codex/…). */
+const FABRIC_TOOL_RE = /^mcp__plugin_fabric_fabric__(fan_out|call|spawn_session|team_spawn|session_send|team_send)$/;
+/** The client's message when an MCP tool exceeds the sync window and is backgrounded. */
+const BG_TASK_RE = /moved to the background as task (\w+)/;
+
 /** Normalize an error string for clustering: strip paths, numbers, volatile bits. */
 function normErr(s) {
   return String(s).slice(0, 300)
@@ -216,6 +221,58 @@ export function longStalls(entries, threshold = 40) {
 }
 
 /**
+ * fabric-wait: a fabric/MCP tool that exceeded the sync window (>120s) and was
+ * backgrounded — "moved to the background as task X" — closed when its
+ * <task-notification> completion lands. These are LEGITIMATE waits on an external
+ * engine (deepseek/codex), NOT struggles. kind 'fabric-wait'; excluded from
+ * detectStruggles() by default (kept with opts.includeWaits), counted as waitsOnFabric
+ * in summarize(). A backgrounded task whose completion never surfaces is emitted as an
+ * open (startI==endI) episode so it stands out instead of silently hanging a sync.
+ */
+export function fabricToolWaits(entries) {
+  const names = toolUseNames(entries);
+  const pending = new Map(); // bgTaskId -> { startI, tool, sample }
+  const out = [];
+  for (const e of entries) {
+    const c = e.raw.message?.content;
+    if (Array.isArray(c)) {
+      for (const b of c) {
+        if (b.type !== 'tool_result') continue;
+        const t = typeof b.content === 'string' ? b.content : JSON.stringify(b.content ?? '');
+        const tool = names.get(b.tool_use_id) ?? '';
+        if (!FABRIC_TOOL_RE.test(tool)) continue;
+        const m = t.match(BG_TASK_RE);
+        if (m) pending.set(m[1], {
+          startI: e.i,
+          tool: tool.replace(/^mcp__plugin_fabric_fabric__/, ''),
+          sample: t.slice(0, 140),
+        });
+      }
+    }
+    if (e.role === 'user' && /[<]task-notification[>]/.test(e.text)) {
+      const m = e.text.match(/<task-id>([\s\S]*?)<\/task-id>/);
+      const p = m && pending.get(m[1]);
+      if (p) {
+        out.push({
+          kind: 'fabric-wait', startI: p.startI, endI: e.i,
+          summary: `fabric ${p.tool} backgrounded >120s (task ${m[1]})`,
+          evidence: p.sample,
+        });
+        pending.delete(m[1]);
+      }
+    }
+  }
+  for (const [id, p] of pending) {
+    out.push({
+      kind: 'fabric-wait', startI: p.startI, endI: p.startI,
+      summary: `fabric ${p.tool} backgrounded >120s (task ${id}) — completion never surfaced`,
+      evidence: p.sample,
+    });
+  }
+  return out;
+}
+
+/**
  * repeated-command: the same NORMALIZED Bash command (paths/numbers/quoted strings
  * stripped) run ≥min times. Catches near-identical loops that identicalLoops misses —
  * e.g. the same pytest target re-run after every edit, same commit retried with a
@@ -252,7 +309,8 @@ export function repeatedCommands(entries, min = 3) {
 /**
  * Run every detector; episodes sorted by span (desc), then startI.
  * 'wait-on-subagents' spans (longStalls episodes closed by a task-notification) are
- * NOT struggles and are excluded here; opts.includeWaits keeps them.
+ * NOT struggles and are excluded here; opts.includeWaits keeps them. 'fabric-wait'
+ * spans (fabricToolWaits) are likewise legit external-engine waits, excluded by default.
  */
 export function detectStruggles(entries, opts = {}) {
   const stalls = longStalls(entries, opts.stallThreshold);
@@ -265,6 +323,7 @@ export function detectStruggles(entries, opts = {}) {
     ...apiRetries(entries),
     ...repeatedCommands(entries, opts.commandMin),
     ...stalls.filter((s) => opts.includeWaits || s.kind !== 'wait-on-subagents'),
+    ...(opts.includeWaits ? fabricToolWaits(entries) : []),
   ];
   return all.sort((a, b) => (b.endI - b.startI) - (a.endI - a.startI) || a.startI - b.startI);
 }
@@ -279,8 +338,9 @@ export function summarize(entries) {
     assistantTurns: entries.filter((e) => e.role === 'assistant').length,
     toolErrors: entries.filter((e) => e.isError).length,
     apiErrors: entries.filter((e) => e.isApiError).length,
-    episodes: eps.filter((e) => e.kind !== 'wait-on-subagents').length,
+    episodes: eps.filter((e) => e.kind !== 'wait-on-subagents' && e.kind !== 'fabric-wait').length,
     waitsOnSubagents: eps.filter((e) => e.kind === 'wait-on-subagents').length,
+    waitsOnFabric: eps.filter((e) => e.kind === 'fabric-wait').length,
     byKind,
   };
 }

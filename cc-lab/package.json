@@ -7,7 +7,8 @@
     "node": ">=22.5"
   },
   "scripts": {
-    "clean": "node scripts/clean-lab.mjs"
+    "clean": "node scripts/clean-lab.mjs",
+    "test": "node --test test/struggle.test.mjs"
   },
   "dependencies": {
     "node-pty": "^1.1.0"

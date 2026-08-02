@@ -65,7 +65,7 @@ for (const r of results) {
   console.log(`\n# ${se.title ?? se.sessionId}`);
   console.log(`project: ${se.project}  file: ${se.file}`);
   console.log(`entries: ${sm.entries}  assistant turns: ${sm.assistantTurns}  tool errors: ${sm.toolErrors}  api errors: ${sm.apiErrors}`);
-  console.log(`episodes: ${sm.episodes}  waits-on-subagents: ${sm.waitsOnSubagents}  ${JSON.stringify(sm.byKind)}`);
+  console.log(`episodes: ${sm.episodes}  waits-on-subagents: ${sm.waitsOnSubagents}  waits-on-fabric: ${sm.waitsOnFabric ?? 0}  ${JSON.stringify(sm.byKind)}`);
   console.log(`\n| kind | span (entries) | time | summary | evidence |`);
   console.log(`|---|---|---|---|---|`);
   for (const ep of r.episodes.slice(0, 50)) {
