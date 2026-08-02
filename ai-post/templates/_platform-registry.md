@@ -22,7 +22,7 @@ Single source of truth for all platform metadata. Reference this file instead of
 
 | key | filename | aspect_ratio | design_notes |
 |-----|----------|-------------|-------------|
-| xiaohongshu | `xhs-cover.png` | 3:4 | Hook text overlaid, dark/saturated bg, 30-50% text area, modern tech aesthetic |
+| xiaohongshu | `xhs-page-01.png`（标题卡，脚本渲染） | 3:4 | 封面由 `gen_xhs_pages.py` 从 H1 标题渲染；无需 AI 封面。可选 AI 补充图为 `xhs-cover-vN.png`（纯视觉，无钩子文字） |
 | wechat | `wechat-cover.png` | 2.35:1 | Title-safe zone in upper portion, project name/logo as focal point |
 | zhihu | `zhihu-cover.png` | 16:9 | Clean academic/professional, project name as focal point, neutral tech aesthetic |
 | twitter | `twitter-cover.png` | 16:9 | Bold hook visual, can reuse product-shot with 16:9 crop |

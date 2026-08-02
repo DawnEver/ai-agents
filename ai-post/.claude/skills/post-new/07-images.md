@@ -48,11 +48,9 @@ _(Add more shared images as needed — one per concept)_
 
 ## Platform-Specific Images
 
-### 小红书 Cover (`xhs-cover`) (v1)
-- **Hook text on image**: "<hook from draft opening>"
-- **AI Prompt**: <prompt>
-- **Aspect ratio**: see `templates/_platform-registry.md` (3:4 for 小红书)
-- **Path**: `../../images/xhs-cover-v1.png`
+### 小红书 Cover — 脚本渲染标题卡（无需 AI 生成）
+- 小红书封面 = `xhs-page-01.png`（标题卡），由 `scripts/post-publish/gen_xhs_pages.py` 从 H1 标题渲染（3:4）。**不需要 AI 生成封面**。
+- 若额外想补一张 AI 封面（纯视觉、不带钩子文字）作轮图补充，可规划为 `../../images/xhs-cover-v1.png`（可选）。
 
 ### 微信公众号 Cover (`wechat-cover`) (v1)
 - **AI Prompt**: <prompt>
@@ -73,7 +71,7 @@ _(Add more shared images as needed — one per concept)_
 
 | Platform | Cover | Content Images |
 |----------|-------|----------------|
-| 小红书 | `xhs-cover-v1.png` (3:4) | ... |
+| 小红书 | `xhs-page-01.png` 标题卡 (3:4, 脚本渲染) | ... |
 | 微信公众号 | `wechat-cover-v1.png` (2.35:1) | ... |
 | 知乎 | `zhihu-cover-v1.png` (16:9) | ... |
 | Twitter/X | `twitter-cover-v1.png` (16:9) | (optional) ... |

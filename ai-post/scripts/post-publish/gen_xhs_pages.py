@@ -123,9 +123,25 @@ def resolve_md(slug):
     sys.exit(f"No xiaohongshu.md in any version of '{slug}'")
 
 
+def strip_emoji(text):
+    """Remove emoji from text before it reaches a card.
+
+    Emoji render larger than CJK at the same point size in the color-emoji font
+    (Apple's bitmap strikes are fixed-size), so they look oversized and misaligned
+    on the 3:4 text cards. Strip them here — at the source — so every page (title
+    and body) is emoji-free regardless of how the article is edited or re-run.
+    Ordinary punctuation (→ — , 。) is untouched; only emoji codepoints and their
+    FE0F/ZWJ/variation joins are dropped.
+    """
+    if not text:
+        return text
+    return EMOJI_RE.sub("", text)
+
+
 def parse_article(md_path):
     """Return (title, [body_paragraph, ...]) — excludes the 配图 manifest and the
-    trailing hashtag line (those belong to the caption, not the cards)."""
+    trailing hashtag line (those belong to the caption, not the cards). Emoji are
+    stripped (see strip_emoji) so cards render clean text."""
     title = md_path.stem
     paras = []
     buf = []
@@ -134,7 +150,7 @@ def parse_article(md_path):
         # H1 title
         m = re.match(r"^#\s+(.*)", line)
         if m and title == md_path.stem:
-            title = m.group(1).strip()
+            title = strip_emoji(m.group(1).strip())
             continue
         # Stop at the 配图 manifest (## 配图 ...) — nothing after belongs on a card.
         if re.match(r"^#{2,}\s*配图", line):
@@ -150,7 +166,7 @@ def parse_article(md_path):
                 paras.append("\n".join(buf).strip())
                 buf = []
             continue
-        buf.append(line)
+        buf.append(strip_emoji(line))
     if buf:
         paras.append("\n".join(buf).strip())
     return title, [p for p in paras if p]

@@ -109,7 +109,7 @@ def add_code_block(doc, code):
 def add_image(doc, img_path):
     if img_path.exists():
         p = doc.add_paragraph()
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
         run = p.add_run()
         run.add_picture(str(img_path), width=Inches(5.5))
     else:

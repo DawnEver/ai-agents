@@ -24,6 +24,13 @@ import re
 import sys
 from pathlib import Path
 
+# LIMITS 的取值来源并不统一，如实说明（改值前先看对应源）：
+# - xiaohongshu title 20 / caption 1000 ← templates/_platform-registry.md（SSOT）
+# - twitter tweet 280                    ← templates/_platform-registry.md（SSOT）
+# - wechat summary 120                   ← .claude/skills/post-publish/_platforms/wechat.md（"摘要 ≤120 字"，registry 无此字段）
+# - zhihu 无硬上限（registry 的 zhihu char_limit 1500-4000 是目标区间，非 BLOCKING 上限）
+# registry 里的 wechat(2000-5000)/zhihu(1500-4000) 是创作目标，不是 char_count 要卡的硬上限，
+# 所以不进 LIMITS。改某个平台的硬上限时，确认它对应上面哪一行源，再同步这里。
 LIMITS = {
     "xiaohongshu": {"title": 20, "caption": 1000},
     "wechat": {"summary": 120},

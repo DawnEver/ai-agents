@@ -18,6 +18,9 @@ Plain Chinese text with emoji preserved. Hashtags on a separate line at end. Ima
   - **调整每页字体 / 格式 / 分页** → 编辑 `xhs-pages.yaml` 后**重跑同一命令**即可重生成（不带 `--reinit` 时读配置；`--reinit` 用文章重新拆页、丢弃编辑）。
   - 字号默认按每页自适应缩放（在 `body.min_size`~`max_size` 内）；在某页写死 `size:` 即固定该页字号。
 - **AI 配图为可选补充**：README 截图、对比图等仍可来自 `images.md`，穿插在文字卡之间；不再需要 AI 封面（标题卡已由脚本渲染）。
+- **文字卡不含 emoji**：`gen_xhs_pages.py` 渲染时会把 emoji 全部剔除（`strip_emoji()`），因为彩色 emoji 字体在卡片上是固定大字号、会撑大错位。标题卡（`xhs-page-01`）上的标题、正文卡都是纯文字，不含 emoji。所以：
+  - 正文里的 emoji 是给平台编辑框看的（粘贴后正常显示），不是给卡片看的。
+  - 别在卡片上期望 emoji 出现；想给卡片做层次，靠空行、短句、句首词变化。
 - 上传顺序：`xhs-page-01`（标题卡）→ 其余文字卡，按需在中间插入 AI 补充配图。
 - 若正文里还残留 `[IMAGE: 描述]` 占位标记 → 视为未完成，先处理再发布。
 

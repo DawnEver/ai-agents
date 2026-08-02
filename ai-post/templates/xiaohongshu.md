@@ -46,6 +46,11 @@ emoji_density: see `templates/_platform-registry.md` (emoji_density) — high
 - **Preferred set**: 🔥 🚀 💡 ✨ 🛠️ 👨‍💻 📌 💻 🎯 ⚡ 🎉 🔗 ⭐ 💬 👇
 - **Pattern**: Use emojis as visual bullet markers and emotional amplifiers
 - **Don't**: Stack multiple emojis in a row. One is enough.
+- **⚠️ emoji 只在正文生效，分页文字卡上会被去掉**：`gen_xhs_pages.py`（`scripts/post-publish/gen_xhs_pages.py`）渲染分页文字卡时会把 emoji 全部剔除（`strip_emoji()`）——因为彩色 emoji 字体在卡片上是固定大字号，渲染出来会比文字大、错位。所以：
+  - 正文里照常写 emoji（粘贴到小红书编辑框能正常显示，是给平台看的）。
+  - 但生成的分页卡（`xhs-page-*.png`）上不会有 emoji——别指望靠 emoji 给卡片当视觉分隔。
+  - 想给卡片做视觉层次，靠空行、短句、句首词换着来，别靠 emoji。
+  - 别把关键信息塞在 emoji 里（比如"🔥 见评论区"），因为卡片上它不会出现。
 
 ## Technical Depth
 
@@ -84,8 +89,8 @@ First line of the file is the H1 title (`# <title>`, pipeline convention — NOT
 #hashtag1 #hashtag2 #hashtag3
 
 ## 配图（单独上传，正文不内嵌）
-1. 封面（3:4）：![钩子文字](../../images/xhs-cover-v1.png)
-2. 配图（3:4）：![说明](../../images/<id>-v1.png)
+1. 标题卡/封面：`xhs-page-01.png`（脚本渲染，非手动上传 AI 图）
+2. 配图（3:4）：![说明](../../images/<id>-v1.png)（可选补充，穿插在文字卡之间）
 ```
 
 Note: the body above is pure text + emoji + line breaks only — no `**`, no `` ` ``, no inline `![]()`. Images live ONLY in the trailing 配图 list.
@@ -130,7 +135,7 @@ This is a product spec sheet, not a 小红书 post. It screams AI. Instead, ment
   - 文字区域占封面 30-50%，不要太小（feed 中是缩略图）
   - 避免白色背景（feed 中不突出），优先深色或高饱和背景
   - 风格：现代科技产品图 / 开发者工具深色主题 / 扁平插画
-- **Output**: 封面图**不放正文顶部**（图文分离）。它作为文末 `## 配图（单独上传，正文不内嵌）` 清单的第 1 条列出：`1. 封面（3:4）：![钩子文字](../../images/xhs-cover-vN.png)`。封面图不计入正文配图数量。
+- **Output**: 小红书封面 = `xhs-page-01.png`（标题卡，脚本渲染，不放正文顶部）。仅当你额外想做一张纯视觉 AI 补充图时才规划 `xhs-cover-vN.png`（可选，穿插在轮图中，无钩子文字）。
 
 ## 正文配图 (Content Images)
 
@@ -148,8 +153,8 @@ This is a product spec sheet, not a 小红书 post. It screams AI. Instead, ment
 终版配图清单示例：
 ```
 ## 配图（单独上传，正文不内嵌）
-1. 封面（3:4）：![办公室改一半，回家接着改](../../images/xhs-cover-v2.png)
-2. 配图（3:4）：![原生记忆锁本地 vs rem 随仓库走](../../images/native-vs-rem-3x4-v1.png)
+1. 标题卡/封面：`xhs-page-01.png`（脚本渲染）
+2. 补充配图（3:4）：![原生记忆锁本地 vs rem 随仓库走](../../images/native-vs-rem-3x4-v1.png)
 ```
 
 ## Writing Quality
@@ -168,10 +173,10 @@ Before finalizing, verify ALL of these:
 - [ ] At least 1 microhumor moment
 - [ ] CTA present (comment/homepage pattern)
 - [ ] 正文零 markdown：无 `**加粗**`、无 `` `行内代码` ``、无 `##` 标题、无 `[](链接)`、无 ``` 代码块、无 `-`/`1.` 列表符、无内嵌 `![]()` 图片（只有纯文字+emoji+换行）
-- [ ] 图文分离：正文不含任何图片；所有配图（含封面）只在文末 `## 配图（单独上传，正文不内嵌）` 清单里
+- [ ] 图文分离：正文不含任何图片；所有配图只在文末 `## 配图（单独上传，正文不内嵌）` 清单里（封面 = 脚本渲染的 `xhs-page-01.png` 标题卡，不在清单里手传 AI 封面）
 - [ ] No external URLs in body
 - [ ] 3-5 hashtags suggested（纯文本 `#词`）
-- [ ] 配图清单 present at end: 封面（3:4）+ 1-2 配图，每条 `![说明](../../images/<id>-vN.png)`，路径来自 images.md
+- [ ] 配图清单 present at end: 1-2 补充配图（可选），每条 `![说明](../../images/<id>-vN.png)`，路径来自 images.md；封面为脚本标题卡 `xhs-page-01.png`
 - [ ] 「我」主语覆盖：每段至少一句以"我"作主语，无整段以"项目/工具/它"为主语的段落
 - [ ] Writing quality check complete (see `_writing-craft.md`) — no 🔴 paragraphs
 - [ ] Sounds like a friend sharing, not a press release
