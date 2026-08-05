@@ -20,12 +20,12 @@ Markdown is the **working format** (iteration, comparison, diffing); `.docx` is 
 |-------|------|---------|--------------|
 | Extract | `01-extract.md` | `python scripts/docx2md.py <in.docx> [out.md]` | Transcribe to markdown; stamps invisible `ccxN` bookmarks into the docx so content can be patched back |
 | Edit | `02-edit.md` | edit the `.md` | The daily loop: AI and human iterate on markdown; anchors (`<!-- ccxN -->`) are the map, don't delete them |
-| Render | `03-render.md` | `python scripts/md2docx.py <in.md> <template.docx> [out.docx]` | Patch the edited markdown back into the original template, styles preserved |
+| Render | `03-render.md` | `python scripts/md2docx.py <in.md> <template.docx> [out.docx] [--track-changes]` | Patch the edited markdown back into the original template, styles preserved. `--track-changes` wraps AI-added content in Word revision marks (accept/reject in Review pane) |
 | PDF | `04-pdf.md` | `python scripts/to_pdf.py <in.docx> [out.pdf]` | Word COM conversion — only when a PDF is actually needed |
 
 ## How to execute
 
-Read the phase file for the step you're at and follow it. This file is the map; phase files are the playbook. Default output is `out/` for rendered docx and `work/<name>/` for transcripts.
+Read the phase file for the step you're at and follow it. This file is the map; phase files are the playbook. Default output is `out/` for rendered docx and `workspace/<yyMMdd>-<project>/` for transcripts. Each project lives in its own dated directory with a `project.toml` recording source template paths, iteration count and delivery outputs — bump `iteration` on every substantive draft revision.
 
 ## Hard rules
 
@@ -34,18 +34,21 @@ Read the phase file for the step you're at and follow it. This file is the map; 
 3. To fill a blank answer slot: write the text on the same line as its anchor (`<!-- ccx7 --> My answer`). An anchor line alone keeps the block empty.
 4. New content (no anchor) is inserted after the previous anchored block at the position where you wrote it.
 5. Verify every render: re-extract the output and diff against the input md.
-6. PDF last, never first. Ask: does the user need a PDF, or a Word file? Default is Word.
+6. **Honesty over padding.** Answer exactly what the question asks. For background/evidence questions, state only facts from the source material (fact-find form, accounts, provided CVs) — never fill gaps with generic project plans ("will work with…", "will ensure…", "in this role he will…"). When information is missing, admit it explicitly, mark the gap with `==(...)==` highlight, and wait for the user's decision — don't invent, don't pad to a word count.
+7. PDF last, never first. Ask: does the user need a PDF, or a Word file? Default is Word.
 
 ## Examples
 
 ```bash
 # transcribe a template
-python scripts/docx2md.py "ref/Workplan.docx" work/ktp-proposal/workplan.md
+python scripts/docx2md.py "ref/Workplan.docx" workspace/260805-ktp_proposal/workplan.md
 
-# ...edit work/ktp-proposal/workplan.md...
+# ...edit workspace/260805-ktp_proposal/workplan.md...
+# ...and bump `iteration` in workspace/260805-ktp_proposal/project.toml
 
-# render the filled Word deliverable (never overwrite the template)
-python scripts/md2docx.py work/ktp-proposal/workplan.md "ref/Workplan.docx" out/Workplan-filled.docx
+# render the filled Word deliverable (never overwrite the template;
+# default output name carries today's date, e.g. out/Workplan-260805.docx)
+python scripts/md2docx.py workspace/260805-ktp_proposal/workplan.md "ref/Workplan.docx" --track-changes --track-changes
 
 # PDF only when needed
 python scripts/to_pdf.py out/Workplan-filled.docx

@@ -15,4 +15,6 @@ Built at user request to support KTP proposal work (Word form filling). Decided 
 4. **Patch-back architecture** (not rebuild): `docx2md.py` anchors every block with invisible `ccxN` bookmarks; `md2docx.py` edits the original template in place of those anchors, preserving layout/styles. Chosen because KTP templates must stay on the official template.
 5. Environment: Python 3.13 + python-docx + pywin32 on Windows; MS Word Office 16 installed; no LibreOffice/pandoc.
 
-Work area: `work/ktp-proposal/` holds the 4 KTP ref docs transcribed (fact find form, application form, workplan, commercial impacts).
+Work area: `workspace/260805-ktp_proposal/` holds the 4 KTP ref docs transcribed (fact find form, application form, workplan, commercial impacts).
+
+Repo reality (learned 2026-08-05): cc-docx has NO nested .git (an earlier `git init` vanished, likely OneDrive sync) — it's tracked in the **root agents repo** (`DawnEver/ai-agents` on GitHub). User's PII policy: `workspace/` transcripts (real contact emails) are **local-only** — enforced via `cc-docx/workspace/` in the root `.gitignore`; never `git add` them. Harness files (scripts, skill, docs) are safe to commit.

@@ -20,7 +20,7 @@ Default output: `out/<template-stem>-filled.docx`. **Never point the output at t
 
 ```bash
 python scripts/docx2md.py out/X-filled.docx /tmp/x-re.md
-diff <(sed '1d; s/ *$//' work/x.md) <(sed '1d; s/ *$//; s/<!-- ccx[0-9]* --> //' /tmp/x-re.md)
+diff <(sed '1d; s/ *$//' workspace/x.md) <(sed '1d; s/ *$//; s/<!-- ccx[0-9]* --> //' /tmp/x-re.md)
 ```
 
 Expected diffs only: the transcript filename line, trailing whitespace, and `ccxN` anchors gained by previously-unanchored content. Anything else = bug, investigate before delivering.

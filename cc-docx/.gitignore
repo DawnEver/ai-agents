@@ -2,6 +2,8 @@
 __pycache__/
 .scratch/
 out/
-# work/ transcripts contain real contact emails — kept local-only by choice
-# (PII hook blocks commits). Compare snapshots with plain `diff` when needed.
-work/
+# workspace/ transcripts contain real contact emails — kept local-only by
+# choice (PII hook blocks commits). Compare snapshots with plain `diff`.
+# Each project lives in workspace/<yyMMdd>-<project>/ with a project.toml
+# recording source template paths, iteration count and delivery outputs.
+workspace/

@@ -7,7 +7,7 @@
       "Bash(git diff:*)",
       "Bash(mkdir:*)",
       "Read(*/cc-docx/**)",
-      "Write(*/cc-docx/work/**)",
+      "Write(*/cc-docx/workspace/**)",
       "Write(*/cc-docx/out/**)",
       "Write(*/cc-docx/scripts/**)",
       "Write(*/cc-docx/.claude/skills/**)",

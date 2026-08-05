@@ -29,10 +29,16 @@ def _ns(tag):
 
 
 def _iter_runs_in_order(p_elm):
-    """Yield w:r runs and w:hyperlink blocks in true document order."""
+    """Yield w:r runs and w:hyperlink blocks in true document order.
+    w:ins (track-changes insertions) are transparent — their runs are
+    yielded in place so revisions read back as plain text."""
     for child in p_elm.iterchildren():
         if child.tag in (_ns("w:r"), _ns("w:hyperlink")):
             yield child
+        elif child.tag == _ns("w:ins"):
+            for r in child.iterchildren():
+                if r.tag in (_ns("w:r"), _ns("w:hyperlink")):
+                    yield r
 
 
 def _run_text(r_elm):
@@ -41,7 +47,7 @@ def _run_text(r_elm):
 
 def _run_attrs(r_elm):
     rpr = r_elm.find(_ns("w:rPr"))
-    attrs = {"b": False, "i": False, "u": False, "mono": False}
+    attrs = {"b": False, "i": False, "u": False, "mono": False, "hl": False}
     if rpr is None:
         return attrs
     if rpr.find(_ns("w:b")) is not None:
@@ -50,6 +56,10 @@ def _run_attrs(r_elm):
         attrs["i"] = True
     if rpr.find(_ns("w:u")) is not None:
         attrs["u"] = True
+    # yellow highlight → `==text==` (round-trip pair for md2docx)
+    hl = rpr.find(_ns("w:highlight"))
+    if hl is not None and (hl.get(_ns("w:val")) or "yellow") == "yellow":
+        attrs["hl"] = True
     # Courier-like / code faces → backticks
     fonts = [f.get(_ns("w:ascii")) or "" for f in rpr.findall(_ns("w:rFonts"))]
     if any("Courier" in f or "Consolas" in f or "Monaco" in f for f in fonts):
@@ -81,7 +91,15 @@ def _inline_md(elm, part):
     if not text:
         return []
     attrs = _run_attrs(elm)
-    if attrs["b"]:
+    if attrs["hl"]:
+        fmt = "hl"
+        if attrs["b"]:
+            fmt = "hl+b"
+        elif attrs["i"]:
+            fmt = "hl+i"
+        elif attrs["mono"]:
+            fmt = "hl+code"
+    elif attrs["b"]:
         fmt = "b"
     elif attrs["i"]:
         fmt = "i"
@@ -115,6 +133,14 @@ def _para_text_md(p):
             t = f"*{t}*"
         elif fmt == "code":
             t = f"`{t}`"
+        elif fmt == "hl":
+            t = f"=={t}=="
+        elif fmt == "hl+b":
+            t = f"==**{t}**=="
+        elif fmt == "hl+i":
+            t = f"==*{t}*=="
+        elif fmt == "hl+code":
+            t = f"==`{t}`=="
         elif isinstance(fmt, tuple) and fmt[0] == "link":
             t = f"[{t}]({fmt[1]})"
         out.append(t)
@@ -172,9 +198,8 @@ def _table_matrix(table):
     for row in table.rows:
         cells = []
         for cell in row.cells:
-            text = " ".join(
-                _para_text_md(p) for p in cell.paragraphs if p.text.strip()
-            ).strip()
+            texts = [_para_text_md(p) for p in cell.paragraphs]
+            text = " ".join(t for t in texts if t.strip()).strip()
             cells.append(text)
         rows.append(cells)
     return rows
@@ -265,7 +290,7 @@ def _header_footer_blocks(doc):
         for label, container in (("HEADER", section.header),
                                  ("FOOTER", section.footer)):
             for p in container.paragraphs:
-                if not p.text.strip():
+                if not _para_text_md(p).strip():
                     continue
                 blocks.append((label, p))
     return blocks
@@ -293,7 +318,9 @@ def docx2md(docx_path):
     for child in body_elm.iterchildren():
         if child.tag == _ns("w:p"):
             p = Paragraph(child, doc)
-            text = p.text.strip()
+            # use the inline-md rendering (ins-aware) for the emptiness test —
+            # p.text misses runs inside w:ins (track-changes) elements
+            text = _para_text_md(p).strip()
             aid = _paragraph_anchor(body_elm, child, used_ids)
             anchors_added = True
             if not text:

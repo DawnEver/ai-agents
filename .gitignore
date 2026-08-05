@@ -26,5 +26,9 @@
 **/.claude/rules/MEMORY.md
 **/_meta.json
 
-# cc-docx transcripts contain real contact emails — local-only
-cc-docx/work/
+# cc-docx workspace transcripts contain real contact emails, project paths
+# and partner/people names — local-only by choice (PII hook blocks commits)
+cc-docx/workspace/
+
+# Sensitive-content patterns for the PII hook — local-only
+**/.claude/hooks/patterns.local

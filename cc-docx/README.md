@@ -11,14 +11,18 @@ Word ↔ Markdown round-trip harness for Claude Code. Markdown is the working fo
 ## Pipeline
 
 ```text
-  template.docx ──docx2md──▶ work/<name>/<name>.md      (transcript, anchored)
-                                  │
-                    edit .md ◀────┤  ← AI/human iterate here (the daily loop)
-                                  │
-  delivery.docx ◀──md2docx────────┘  (patch back into template, styles preserved)
+  template.docx ──docx2md──▶ workspace/<yyMMdd>-<project>/*.md   (transcript, anchored)
+                                     │
+                    edit .md ◀───────┤  ← AI/human iterate here (the daily loop)
+                                     │
+  delivery.docx ◀──md2docx───────────┘  (patch back into template, styles preserved)
        │
        └──to_pdf──▶ delivery.pdf   (on demand: uploads / final review only)
 ```
+
+Each project lives in its own dated directory `workspace/<yyMMdd>-<project>/`
+(`260805-ktp_proposal/` etc.) with a `project.toml` recording the source
+template paths, the iteration count, and the delivery outputs.
 
 Two converters, one contract:
 
@@ -31,13 +35,15 @@ Two converters, one contract:
 ## Usage
 
 ```bash
-# 1. transcribe a Word template into the working copy
-python scripts/docx2md.py ref/Form.docx work/form/form.md
+# 1. transcribe a Word template into the project working copy
+python scripts/docx2md.py ref/Form.docx workspace/260805-myproject/form.md
 
-# 2. ...edit work/form/form.md (that's the iteration surface)...
+# 2. ...edit workspace/260805-myproject/form.md (that's the iteration surface)...
+#    ...and bump `iteration` in workspace/260805-myproject/project.toml
 
-# 3. render the patched Word deliverable
-python scripts/md2docx.py work/form/form.md ref/Form.docx out/Form-filled.docx
+# 3. render the patched Word deliverable (default name gets today's date)
+python scripts/md2docx.py workspace/260805-myproject/form.md ref/Form.docx --track-changes
+#    → out/Form-260805.docx
 
 # 4. PDF only when needed
 python scripts/to_pdf.py out/Form-filled.docx
@@ -52,7 +58,7 @@ python scripts/to_pdf.py out/Form-filled.docx
 
 ## Work areas
 
-- `work/` — per-document working copies (`.md`). One subdir per document: `work/<doc>/<doc>.md`
+- `workspace/<yyMMdd>-<project>/` — per-project working copies (`.md` transcripts + `project.toml` metadata). One dated subdir per project: `workspace/260805-ktp_proposal/`
 - `out/` — rendered deliverables (gitignored)
 - `scripts/` — the converters (see `AGENT.md` for the contract)
 - `.claude/skills/docx/` — the `/docx` skill wrapping this pipeline

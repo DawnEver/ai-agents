@@ -10,11 +10,11 @@ This project is a Word ↔ Markdown round-trip harness. Read this before touchin
 - Writes an invisible bookmark pair (`ccx1`, `ccx2`, …) around **every** body block in the input docx (paragraphs, tables) so the render pass can find them again. Bookmarks are invisible in Word (View ▸ Bookmarks is off by default).
 - Emits `<!-- ccxN -->` on its own line before each block in the md — these are the round-trip map. **Do not delete or reorder them.**
 - Tables: merged cells are expanded into an *effective matrix* (content repeated in spanned positions) so md and docx map 1:1 positionally. Rendered with `||` column separators on the header rule line (see tables below) — actually plain `|` markdown tables.
-- Inline formatting: `**bold**`, `*italic*`, `` `code` ``, `[text](url)`.
+- Inline formatting: `**bold**`, `*italic*`, `` `code` ``, `[text](url)`, `==highlight==` (yellow highlight in Word; `==**text**==` combines highlight + bold). Both directions round-trip. `w:ins` (track-changes) runs are read back as plain text — the revision layer lives only in the docx.
 - **Idempotent**: running twice on the same docx is safe (existing `ccx*` bookmarks are skipped, blocks already anchored keep their ids; new blocks get new ids).
 - Never modifies the input docx except adding bookmarks. If you need a pristine original, keep a copy.
 
-### `md2docx.py <input.md> <template.docx> [output.docx]`
+### `md2docx.py <input.md> <template.docx> [output.docx] [--track-changes]`
 
 - Reads the **original** template (must still contain the `ccx*` bookmarks — use the copy that docx2md anchored, or the workflow breaks).
 - Walks md blocks in order; for each anchored block it replaces the docx block's content:
@@ -22,7 +22,9 @@ This project is a Word ↔ Markdown round-trip harness. Read this before touchin
   - table → row count synced (extra rows appended by deep-copying the last row's XML; excess dropped), then every effective cell filled from the md
   - unanchored block → inserted **after the previous anchored block** (same document position where you wrote it in the md)
 - Headings: anchored headings keep their original Word style; new unanchored headings map md `#`-level → Heading 1–6.
-- Writes a **new** output file. Never writes over the template.
+- Run-boundary spaces are preserved via `xml:space="preserve"` (without it Word silently drops spaces between runs — "adding ==GBP 200,000== by" renders as "addingGBP 200,000by").
+- `--track-changes` (review mode): rewritten blocks are wrapped in `w:ins` revision elements (author "AI Agent") so the user can accept/reject AI-added content in Word's Review pane. Blocks whose md content equals the template's current text are left untouched — no revision, and the template's own formatting (e.g. design highlights) survives. Unchanged detection normalises whitespace (double spaces, NBSP), curly quotes, and compares whole cells (template cells may split one sentence across paragraphs); a block is still treated as changed if the md adds bold (`**`) the template text doesn't carry (e.g. answer marks "Yes / **No**"). Consequence: re-extracting such a doc may surface template-intrinsic formatting (highlight marks, NBSP) that the md doesn't carry — expected, not a bug.
+- Writes a **new** output file. Never writes over the template. Default output name is `out/<stem>-<yyMMdd>.docx` (today's date suffix, so each render is traceable); pass an explicit output path to override.
 
 ### `to_pdf.py <input.docx> [output.pdf]`
 
