@@ -1,0 +1,7 @@
+.DS_Store
+__pycache__/
+.scratch/
+out/
+# work/ transcripts contain real contact emails — kept local-only by choice
+# (PII hook blocks commits). Compare snapshots with plain `diff` when needed.
+work/

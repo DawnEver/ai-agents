@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python scripts/*.py:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(mkdir:*)",
+      "Read(*/cc-docx/**)",
+      "Write(*/cc-docx/work/**)",
+      "Write(*/cc-docx/out/**)",
+      "Write(*/cc-docx/scripts/**)",
+      "Write(*/cc-docx/.claude/skills/**)",
+      "Write(*/cc-docx/.claude/memory/**)",
+      "Glob(*/cc-docx/**)",
+      "Grep(*/cc-docx/**)"
+    ]
+  }
+}
