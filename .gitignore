@@ -25,3 +25,6 @@
 !**/.claude/sharp-review.json
 **/.claude/rules/MEMORY.md
 **/_meta.json
+
+# cc-docx transcripts contain real contact emails — local-only
+cc-docx/work/
