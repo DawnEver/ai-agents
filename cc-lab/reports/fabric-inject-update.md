@@ -89,6 +89,14 @@ N agentic continuation turns if the model calls tools (observed 4 extra for
 are the right main-turn filter (`tools.length > 0`), same rule AGENT.md
 prescribes for tap records.
 
+## Post-fix closure (0.1.18, 2026-08-10)
+
+Full case re-run against the PLUGIN CACHE 0.1.18 (no CC_MARKET_SHARED override)
+— all assertions pass. Live production check: `fabric:call --provider claude
+mode=task` through the reloaded plugin MCP server (handleCall → layering →
+spawnClaudeP → spawnChild) returns normally ("OK"). The stateless claude path
+that exited 1 in 0.1.17 is confirmed working in the installed plugin.
+
 ## Harness notes (for future runs of this case)
 
 - The observe proxy APPENDS to `http.jsonl` and restarts its id sequence per
