@@ -57,6 +57,15 @@ output-styles/, nearest wins, frontmatter name/description) — discover-styles.
 reads in place, existing config untouched; build = base.md + style body. Group E
 (background/subagent/team) explicitly user-reviewing — not touched.
 
+## base.md v1 (2026-08-09, Sync/claude/system-prompt/base.md, committed)
+~1,500 tok, 7 sections modeled on official block2 structure. **Layer
+separation**: base.md = system-level behavior only; user prefs (language/TDD/
+git/rem memory) stay in global+project CLAUDE.md (injected on every path) —
+5 overlaps removed, referenced not restated. Tool presets (exec 6,076 tok /
+coord 7,674 / daily 16,436 / full 33,600). Smoke-tested: --system-prompt-file
+base.md --tools <daily> → system 1,539 tok; run 2 = 50,848 read / 354 create
+(full cross-process hit). Removed tools named as absent in base.md.
+
 ## Open items
 - codex cross-process cache under model_instructions_file (not measured).
 - --system-prompt-file parity with --system-prompt (assumed).
