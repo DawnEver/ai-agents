@@ -101,7 +101,9 @@ export async function launch(opts = {}) {
     // Copy ~/.claude/.credentials.json into the isolated config dir. Default true
     // (OAuth-account auth). Set false when the child must use the inherited env API
     // key instead (x-api-key) — e.g. when the stored OAuth token is stale/expired
-    // and the env key is the valid one for the tap-detected upstream.
+    // and the env key is the valid one for the tap-detected upstream. When false,
+    // the provider-routing env vars (ANTHROPIC_BASE_URL/API_KEY/AUTH_TOKEN) are
+    // left in the child env (see the tap branch strip below).
     copyCredentials = true,
   } = opts;
 
@@ -182,14 +184,20 @@ export async function launch(opts = {}) {
     // (tap-mode-only: the 'proxy' profile is exactly how a Foundry provider stays
     // observable, and 'none' means direct-connect with the env as-is.)
     //
-    // Also strip ANTHROPIC_BASE_URL/ANTHROPIC_API_KEY/AUTH_TOKEN: if the parent
-    // runs behind a provider base URL (e.g. a deepseek-compatible gateway), tap
-    // auto-detects THAT as the upstream and forwards the child's OAuth Bearer
-    // there — deepseek rejects it ("api key is invalid") because it only accepts
-    // its own x-api-key. Vanilla routing means the child must be credential-free
-    // (OAuth in the config dir) and api.anthropic.com-detected.
+    // The provider-routing vars (ANTHROPIC_BASE_URL/ANTHROPIC_API_KEY/AUTH_TOKEN)
+    // are stripped ONLY when copyCredentials is true (OAuth-file path): with the
+    // OAuth copied, the child must be credential-free so tap auto-detects
+    // api.anthropic.com — if the parent runs behind a provider gateway (e.g.
+    // deepseek), tap would otherwise forward the OAuth Bearer there and get
+    // rejected ("api key is invalid"). With copyCredentials:false the child is
+    // expected to authenticate via the inherited env key — stripping it would
+    // leave the child with no credentials at all. Keys the caller explicitly set
+    // in opts.env are never stripped (caller intent wins over inheritance).
     for (const k of Object.keys(childEnv)) {
-      if (/^ANTHROPIC_FOUNDRY_|^CLAUDE_CODE_USE_FOUNDRY$|^ANTHROPIC_DEFAULT_|^ANTHROPIC_BASE_URL$|^ANTHROPIC_API_KEY$|^ANTHROPIC_AUTH_TOKEN$/.test(k)) {
+      const inherited = !(k in env); // caller-supplied via opts.env
+      if (/^ANTHROPIC_FOUNDRY_|^CLAUDE_CODE_USE_FOUNDRY$|^ANTHROPIC_DEFAULT_/.test(k)) {
+        delete childEnv[k]; // Foundry routing always stripped in tap mode
+      } else if (copyCredentials && inherited && /^ANTHROPIC_BASE_URL$|^ANTHROPIC_API_KEY$|^ANTHROPIC_AUTH_TOKEN$/.test(k)) {
         delete childEnv[k];
       }
     }
