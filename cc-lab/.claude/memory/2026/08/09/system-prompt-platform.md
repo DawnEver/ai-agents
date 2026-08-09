@@ -66,6 +66,13 @@ coord 7,674 / daily 16,436 / full 33,600). Smoke-tested: --system-prompt-file
 base.md --tools <daily> → system 1,539 tok; run 2 = 50,848 read / 354 create
 (full cross-process hit). Removed tools named as absent in base.md.
 
+## First-principles rewrite (2026-08-09, committed cdbb061)
+base.md v2 = 516 tok (5 sections: Principles/Tools/Delegation/Communication
+incl. notifications; user prefs referenced not restated). GLOBAL-AGENTS.md v2
+= 218 tok (user prefs only). Total 3,137 → 734 tok (-77%). ~/.claude/CLAUDE.md
+symlinks to GLOBAL-AGENTS.md (edits take effect everywhere). Smoke test v2:
+24,513 total (create 6,190 / read 18,323), next process full hit expected.
+
 ## Open items
 - codex cross-process cache under model_instructions_file (not measured).
 - --system-prompt-file parity with --system-prompt (assumed).
