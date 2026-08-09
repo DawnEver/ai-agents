@@ -47,6 +47,21 @@ with a mechanism to track official Claude Code prompt updates.
 - **Ignored with `--system-prompt`** — our replace approach sidesteps it anyway.
   Useful for the native-claude path (which keeps the official prompt).
 
+## What actually gets injected (~42k) — tap decomposition (cold-B T1)
+
+| part | chars | ≈tokens | share |
+|------|-------|---------|-------|
+| tools schema (31 built-in defs) | 119,562 | ~33,600 | **80%** |
+| system text (3 blocks: billing/base/block2) | 15,381 | ~4,300 | 10% |
+| first user message (CLAUDE.md/rules/memory) | 15,470 | ~4,300 | 10% |
+| **total** | | **~42,300** | (usage-verified) |
+
+Biggest schema: Workflow 21.3k chars, Bash 11.7k, PowerShell 9.2k, DesignSync 8.9k,
+Agent 8.8k, Monitor 7.5k. `--allowedTools` does NOT shrink the schema (permission
+only). **`--tools <subset>` DOES** — verified: `--tools Bash,Read,Write,Edit,Glob,
+Grep` → 21 defs (6 requested + 15 fabric MCP auto-attached) ≈ 7,994 tokens
+(−76%). Third cost lever (after static --system-prompt and stdin history).
+
 ## Design
 
 ```
@@ -73,6 +88,24 @@ Injection points:
 
 Style switching = selecting the file → each style is its own stable cache key
 (cross-process hits within a style; switching costs one cold call for that style).
+
+### Output-style discovery (mirrors the official mechanism; existing config untouched)
+Official lookup order: user `~/.claude/output-styles/` → project `.claude/output-styles/`
+(from cwd up to repo root, nearest wins) → plugin `<plugin>/output-styles/`; styles are
+markdown files with YAML frontmatter `name`/`description`. Our `discover-styles.mjs`
+walks the SAME paths (incl. `Sync/claude/output-styles/` and
+`Sync/agents/ai-post/.claude/output-styles/`), reads frontmatter, and registers every
+style without moving any file. `build.mjs` = `base.md` + chosen style body →
+`dist/<style>.claude.md` / `.codex.md`. Adding a style = dropping a file into any
+discovered output-styles dir. `keep-coding-instructions: false` in the frontmatter
+means the style's body fully replaces our base behavioral section (post/academic
+modes); `true` layers it on top (persona overlays).
+
+### Explicit user scoping (2026-08-09)
+- Background / subagent / team sections (audit group E) are NOT touched — user is
+  reviewing them manually; no clean/keep decision yet.
+- Every non-native path defaults to the custom system prompt (styles incl. academic/
+  post are switchable); native `claude` keeps the official prompt.
 
 Official-update tracking: full replacement makes runtime immune to official prompt
 changes; watch/fork Piebald-AI/claude-code-system-prompts (npm-extracted, changelog

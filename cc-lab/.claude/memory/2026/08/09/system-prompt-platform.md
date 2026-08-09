@@ -47,6 +47,16 @@ system prompt with switchable styles (coding/academic/post + extensible); native
   (claude-code-system-prompts) as change radar; sync-official.mjs diffs → human
   absorption list.
 
+## Injection composition (tap, cold-B T1)
+~42.3k total = tools schema 33.6k (80%, Workflow 21.3k chars / Bash 11.7k / PS 9.2k /
+DesignSync 8.9k / Agent 8.8k) + system text ~4.3k + first-user-message CLAUDE.md
+~4.3k. `--allowedTools` does NOT shrink schema; **`--tools <subset>` DOES** (verified:
+Bash,Read,Write,Edit,Glob,Grep → 21 defs ≈ 8k tok, −76%; fabric MCP auto-attached).
+Third cost lever. Output-style discovery mirrors official paths (user/project/plugin
+output-styles/, nearest wins, frontmatter name/description) — discover-styles.mjs
+reads in place, existing config untouched; build = base.md + style body. Group E
+(background/subagent/team) explicitly user-reviewing — not touched.
+
 ## Open items
 - codex cross-process cache under model_instructions_file (not measured).
 - --system-prompt-file parity with --system-prompt (assumed).
