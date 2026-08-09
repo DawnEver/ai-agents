@@ -98,6 +98,11 @@ export async function launch(opts = {}) {
     observe = 'tap',
     // Provider registry key for observe:'proxy' (claude_env_settings.json).
     provider = 'deepseek',
+    // Copy ~/.claude/.credentials.json into the isolated config dir. Default true
+    // (OAuth-account auth). Set false when the child must use the inherited env API
+    // key instead (x-api-key) — e.g. when the stored OAuth token is stale/expired
+    // and the env key is the valid one for the tap-detected upstream.
+    copyCredentials = true,
   } = opts;
 
   if (!runDir) throw new Error('launch: runDir is required');
@@ -119,9 +124,13 @@ export async function launch(opts = {}) {
   mkdirSync(configDir, { recursive: true });
 
   // 1. Bootstrap the isolated config dir so the child skips onboarding + is authed.
-  const srcCreds = join(realConfigDir(), '.credentials.json');
-  if (existsSync(srcCreds)) {
-    copyFileSync(srcCreds, join(configDir, '.credentials.json'));
+  //    copyCredentials:false leaves the dir credential-free → the child falls back
+  //    to the inherited ANTHROPIC_API_KEY (x-api-key) instead of OAuth file creds.
+  if (copyCredentials) {
+    const srcCreds = join(realConfigDir(), '.credentials.json');
+    if (existsSync(srcCreds)) {
+      copyFileSync(srcCreds, join(configDir, '.credentials.json'));
+    }
   }
   // macOS keychain case: no file creds — claude-tap handles auth detection, so skip.
 
@@ -172,8 +181,15 @@ export async function launch(opts = {}) {
     // The child session needs vanilla Anthropic routing so claude-tap can intercept.
     // (tap-mode-only: the 'proxy' profile is exactly how a Foundry provider stays
     // observable, and 'none' means direct-connect with the env as-is.)
+    //
+    // Also strip ANTHROPIC_BASE_URL/ANTHROPIC_API_KEY/AUTH_TOKEN: if the parent
+    // runs behind a provider base URL (e.g. a deepseek-compatible gateway), tap
+    // auto-detects THAT as the upstream and forwards the child's OAuth Bearer
+    // there — deepseek rejects it ("api key is invalid") because it only accepts
+    // its own x-api-key. Vanilla routing means the child must be credential-free
+    // (OAuth in the config dir) and api.anthropic.com-detected.
     for (const k of Object.keys(childEnv)) {
-      if (/^ANTHROPIC_FOUNDRY_|^CLAUDE_CODE_USE_FOUNDRY$|^ANTHROPIC_DEFAULT_/.test(k)) {
+      if (/^ANTHROPIC_FOUNDRY_|^CLAUDE_CODE_USE_FOUNDRY$|^ANTHROPIC_DEFAULT_|^ANTHROPIC_BASE_URL$|^ANTHROPIC_API_KEY$|^ANTHROPIC_AUTH_TOKEN$/.test(k)) {
         delete childEnv[k];
       }
     }
