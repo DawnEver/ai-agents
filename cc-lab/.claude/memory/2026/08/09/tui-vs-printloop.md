@@ -1,6 +1,6 @@
 ---
 name: tui-vs-printloop
-description: live token measurement TUI vs -p loop (claude + codex); claude -p argv prompt truncation breaks fabric write-session replay; cc 2.1.226 TUI queue/suggestion quirks; driver tap strips provider env for vanilla routing
+description: live token measurement TUI vs -p loop (claude + codex); claude -p argv truncation fixed in fabric 0.1.15 (stdin + persistent child = TUI cost structure); -p per-process 8.6k creation traced to byte-unstable system tail; cc 2.1.226 TUI queue/suggestion quirks
 created: 2026-08-09
 tags: [tokens, cache, TUI, print-loop, fabric, codex, driver, pitfalls]
 ---
@@ -12,26 +12,40 @@ Live comparison of the same 3-turn task: claude interactive TUI vs fabric-style
 codex. Full data: `reports/tui-vs-printloop.md`. Case: `cases/tui-vs-printloop.case.mjs`
 (supports `--phases=AB` for cache-cold runs).
 
-## Findings (measured 2026-08-09, claude 2.1.226 / codex 0.147)
-1. **TUI (3 turns)**: 30 fresh + 9,059 creation + 138,206 read ≈ **$0.030** (haiku 4.5).
-   T1 creates the ~9k session-specific prefix; T2/T3 are ~99.9% cache reads (49k/turn).
-2. **-p loop (3 fresh processes, stdin history)**: 30 fresh + 22,520 creation +
-   104,670 read ≈ **$0.043** (~1.4× TUI). Re-pays the session prefix per process;
-   cross-process cache sharing works (T3 reads T2's cached content). **The "37k
-   cache-miss per fresh -p process" assumption in fabric-vs-fork/long-running-token-cost
-   is wrong — on a warm cache the -p loop measured 0 creation + 42.2k read/turn.**
+## Findings (measured 2026-08-09, claude 2.1.226 / codex 0.147; cold-cache runs)
+1. **TUI (3 turns, cold-A 20-19-14)**: 30 fresh + 9,198 creation + 138,501 read ≈
+   **$0.029** (haiku 4.5; +1 suggestion call → ~$0.035). T1 creates the ~9k
+   session-specific prefix; T2/T3 are ~99.9% cache reads (49k/turn).
+2. **-p loop (3 fresh processes, stdin history, cold-B 20-29-40)**: 30 fresh + 22,697
+   creation + 104,678 read ≈ **$0.043** (~1.5× TUI). Re-pays ~8.6k system-tail per
+   process; cross-process cache sharing works (T3 reads T2's cached content). **The
+   "37k cache-miss per fresh -p process" assumption in
+   fabric-vs-fork/long-running-token-cost is wrong** — on a warm cache the -p loop
+   measured 0 creation + 42.2k read/turn.
 3. **`claude -p` truncates a multi-line argv prompt at the first newline** — only the
-   first line reaches the API. Prompt via **stdin** preserves the full history
-   (verified: T2's request carried T1+T2). Implication: fabric `engine/session.mjs`
-   `openWriteSession` passes the joined history as one argv arg → **its replay is lost
-   on this build** (every session_send re-asks only the first line).
+   first line reaches the API. Prompt via **stdin** preserves the full history.
+   **FIXED in fabric 0.1.15** (verified 2026-08-09): `spawn-child.mjs` forces
+   stream-json stdin on any newline in the prompt (comment cites our 2.1.226
+   measurement); the stateless argv-replay `openWriteSession` is retired — write
+   sessions are now the same long-lived stream-json child as read sessions → **cost
+   structure identical to the TUI** (one process, prefix created once). Live 2-turn
+   test passed.
 4. **The 1-hour ephemeral cache tier** (`ephemeral_1h_input_tokens`) keeps the shared
-   prefix warm across runs; "cold" runs (15-min gaps) still read ~33.7k. Fully-cold
-   structure is visible in the creation column.
+   prefix warm across runs; "cold" runs (10-min gaps) still read ~33.7k.
 5. **codex TUI ~15.6k input/turn vs codex exec ~9.3k/turn** (TUI ships extra system
    context). codex TUI caches in-session (15.1k/turn after T1, ~0.6k fresh); codex exec
    has no cross-process cache (~9.3k fresh/turn; 28.1k total vs TUI 46.9k). claude
    harness ~42–49k vs codex ~9–16k (3–5×).
+6. **Why -p re-pays ~8.6k/process (mechanism)**: system prompt = (a) ~33.7k
+   byte-stable shared prefix (CLAUDE.md/rules/template head — cached across ALL claude
+   sessions on the machine, read 33,696 on every -p process) + (b) a per-process tail
+   that is NOT byte-stable between cold runs (cold-B T1 vs T2 diverge at char 14,598 —
+   a `gitStatus` block shifts vs a template paragraph; every byte after the first
+   divergence misses) + (c) growing history. Within one run the tail IS stable (T2 vs
+   T3: 0 diffs) and cross-process cache hits immediately (T3: +3,590 read / −3,493
+   create). **A -p loop reaches TUI cost exactly when its system tail is byte-identical
+   to the previous process's — remaining divergence is claude CLI-side dynamic
+   injection, not fabric-side.**
 
 ## Harness fixes (all driver/case changes)
 - **driver.mjs tap mode now also strips `ANTHROPIC_BASE_URL`/`ANTHROPIC_API_KEY`/
