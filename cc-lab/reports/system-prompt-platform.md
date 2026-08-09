@@ -116,17 +116,21 @@ RemoteTrigger, ReportFindings, Cron*, PowerShell, Workflow, SendUserMessage etc.
 (our own prompt text will not reference removed tools). fabric maps a profile
 `toolsPreset` field to the `--tools` list at spawn.
 
-### base.md v1 (draft) — Sync/claude/system-prompt/base.md
-~1,500 tok static system prompt. Written against the official 9-section block2
-structure, reduced to 7 sections: Working principles, Using your tools,
-Delegation, Communication, Notifications, Context management + layer-separation
-declaration. **Layer separation (vs GLOBAL-AGENTS.md):** base.md = system-level
-behavior only; user preferences (language, code style, TDD, git conventions,
-rem memory, todos) live in the global/project CLAUDE.md which is already injected
-on every path — base.md references it instead of restating (5 overlaps removed).
-Tool references: only preset tools; explicitly names removed tools as absent.
-Smoke-tested: `--system-prompt-file base.md --tools <daily>` → system 1,539 tok;
-run 2 = 50,848 cache_read / 354 create (full cross-process hit).
+### Final split (2026-08-09, committed) — Sync/claude/
+- `GLOBAL-AGENTS.md` (~500 tok, symlinked from `~/.claude/CLAUDE.md`): ALL
+  universal principles + preferences — first principles, delivery scope,
+  analysis-first, safety, correction restraint, language, code style, LSP,
+  TDD, communication (concise, no emojis, file:line), git (heredoc/
+  force-with-lease/tests/retry 3×), rem memory + todos.
+- `system-prompt/claude-base.md` (~330 tok): claude-platform specifics only —
+  tool-preset discipline (removed tools named absent), delegation
+  (subagents/fork/SendMessage), notifications (PushNotification discipline).
+  `codex-base.md` will hold codex-platform specifics (future).
+- Universal principles live in GLOBAL-AGENTS.md (all paths inject it via
+  CLAUDE.md); platform files replace the stock system prompt on non-native
+  paths via `--system-prompt-file`.
+Smoke-tested (earlier base.md): `--system-prompt-file` + `--tools <daily>` →
+system 1,539 tok; run 2 = 50,848 cache_read / 354 create (full cross-process hit).
 
 ### Explicit user scoping (2026-08-09)
 - Background / subagent / team sections (audit group E) are NOT touched — user is

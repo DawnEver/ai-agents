@@ -57,21 +57,16 @@ output-styles/, nearest wins, frontmatter name/description) — discover-styles.
 reads in place, existing config untouched; build = base.md + style body. Group E
 (background/subagent/team) explicitly user-reviewing — not touched.
 
-## base.md v1 (2026-08-09, Sync/claude/system-prompt/base.md, committed)
-~1,500 tok, 7 sections modeled on official block2 structure. **Layer
-separation**: base.md = system-level behavior only; user prefs (language/TDD/
-git/rem memory) stay in global+project CLAUDE.md (injected on every path) —
-5 overlaps removed, referenced not restated. Tool presets (exec 6,076 tok /
-coord 7,674 / daily 16,436 / full 33,600). Smoke-tested: --system-prompt-file
-base.md --tools <daily> → system 1,539 tok; run 2 = 50,848 read / 354 create
-(full cross-process hit). Removed tools named as absent in base.md.
-
-## First-principles rewrite (2026-08-09, committed cdbb061)
-base.md v2 = 516 tok (5 sections: Principles/Tools/Delegation/Communication
-incl. notifications; user prefs referenced not restated). GLOBAL-AGENTS.md v2
-= 218 tok (user prefs only). Total 3,137 → 734 tok (-77%). ~/.claude/CLAUDE.md
-symlinks to GLOBAL-AGENTS.md (edits take effect everywhere). Smoke test v2:
-24,513 total (create 6,190 / read 18,323), next process full hit expected.
+## Final split (2026-08-09, committed in Sync/claude)
+- GLOBAL-AGENTS.md (~500 tok, symlinked from ~/.claude/CLAUDE.md): ALL
+  universal principles + prefs (first principles, delivery scope, analysis,
+  safety, correction, language, code style, LSP, TDD, communication, git
+  heredoc/force-with-lease/tests/retry, rem memory + todos).
+- system-prompt/claude-base.md (~330 tok, flat one-line bullets): claude
+  platform specifics — tool-preset discipline (removed tools named absent),
+  delegation (subagents/fork/SendMessage), PushNotification. codex-base.md
+  future. Smoke-tested earlier: --system-prompt-file + --tools daily → run 2
+  = 50,848 read / 354 create (full cross-process hit).
 
 ## Open items
 - codex cross-process cache under model_instructions_file (not measured).
