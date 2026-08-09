@@ -167,6 +167,26 @@ are token-only (pricing not public); fresh-token totals: TUI ~10.8k vs exec loop
    (`ephemeral_1h_input_tokens`, confirmed in raw usage) is what keeps part (a) warm
    across the ≥10-min gaps here.
 
+9. **Static `--system-prompt` injection closes the gap for stateless `-p` — verified.**
+   `claude -p --system-prompt "<fixed text>"` (REPLACE, not append — appended text
+   sits past the byte-unstable tail and never hits) puts a byte-stable block inside the
+   system header, which the request structure (confirmed by tap capture) keys cache
+   hits on: request = `system[billing][base][your static text]` +
+   `user[CLAUDE.md/rules/memory ~6k][prompt with cache_control]` + `tools ~36k`. The
+   static block + CLAUDE.md/rules + tools are byte-identical across processes → full
+   cross-process cache hits. Measured on vanilla api.anthropic.com (haiku 4.5, tap
+   capture): first process create 6,379, second process with the same static prompt
+   reads 25,752 / creates 0; a different static prompt drops back to 19,373+6,379.
+   History grows in the prompt (stdin), so each turn after a warm first call pays only
+   the appended history (+139/+254 tokens on the 3-turn loop) — 3-turn static -p ≈
+   $0.005 vs TUI $0.029 / default -p $0.043 (no suggestion calls, shorter system).
+   Trade-offs: `--system-prompt` replaces the default base template (behavioral
+   instructions must be authored; tool schemas in `body.tools` are unaffected;
+   CLAUDE.md/rules/memory still auto-inject). Fabric note: `spawn-child.mjs` currently
+   concatenates `systemPrompt` into the prompt string (`${systemPrompt}\n\n---\n\n${prompt}`)
+   — that gets NO cache benefit; it must pass systemPrompt via the `--system-prompt`
+   flag (constant across turns) and keep history on stdin.
+
 ## Measurement setup & pitfalls (for reuse)
 
 - **Auth/routing:** the parent env carries a provider base URL + API key (deepseek gateway).

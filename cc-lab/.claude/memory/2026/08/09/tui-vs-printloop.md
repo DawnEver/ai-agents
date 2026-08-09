@@ -46,6 +46,19 @@ codex. Full data: `reports/tui-vs-printloop.md`. Case: `cases/tui-vs-printloop.c
    create). **A -p loop reaches TUI cost exactly when its system tail is byte-identical
    to the previous process's — remaining divergence is claude CLI-side dynamic
    injection, not fabric-side.**
+7. **Static `--system-prompt` injection closes the stateless gap — VERIFIED (tap
+   capture, vanilla api.anthropic.com, haiku 4.5)**: request structure =
+   `system[billing][base][--system-prompt text]` + `user[CLAUDE.md/rules ~6k][prompt
+   w/ cache_control]` + `tools ~36k`. First process create 6,379; same static prompt
+   next process reads 25,752 / creates 0 (full cross-process hit); different prompt
+   → 19,373+6,379. History grows in prompt (stdin) → after a warm first call each turn
+   pays only appended history (+139/+254 on 3-turn loop). **3-turn static -p ≈ $0.005
+   vs TUI $0.029 / default -p $0.043.** Must use `--system-prompt` (REPLACE), not
+   `--append-system-prompt` (sits past the unstable tail). `--system-prompt` replaces
+   the base template (behavioral text must be authored; tools in body.tools unaffected;
+   CLAUDE.md/rules still inject). **Fabric: spawn-child.mjs concatenates systemPrompt
+   into the prompt string — no cache benefit; must pass it via --system-prompt flag
+   and keep history on stdin.**
 
 ## Harness fixes (all driver/case changes)
 - **driver.mjs tap mode now also strips `ANTHROPIC_BASE_URL`/`ANTHROPIC_API_KEY`/
