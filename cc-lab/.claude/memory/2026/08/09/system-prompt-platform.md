@@ -72,3 +72,18 @@ reads in place, existing config untouched; build = base.md + style body. Group E
 - codex cross-process cache under model_instructions_file (not measured).
 - --system-prompt-file parity with --system-prompt (assumed).
 - native TUI cache: consider exclude-dynamic flag in settings.
+
+## codex injection (2026-08-09, committed 02d69e6)
+- codex-base.md (~300 tok): shell/apply_patch discipline, single-execution,
+  approval waits. codex_config.toml (gitignored) model_instructions_file →
+  this file; ~/.codex/AGENTS.md symlink → GLOBAL-AGENTS.md co-injects.
+  Verified: both present ("(1) Yes. (2) Yes."). fabric codex path (app-server)
+  reads global config → no task.mjs change needed; fabric's per-call
+  systemPrompt still lands in the user message (no overlap with codex-base).
+- **codex has NO cross-process prompt cache** (tokens used constant ~5,885
+  across identical runs) — claude's ephemeral-1h cross-process reuse does not
+  apply on the codex/OpenAI side.
+- Tool presets (exec/coord/daily/full --tools tiers) are claude-only: codex
+  has no --tools/schema trimming — tool set fixed (shell/apply_patch/
+  web_search). codex "tiers" would be behavior-level (instructions file
+  variants); single codex-base.md suffices today.
