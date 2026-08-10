@@ -1,11 +1,11 @@
 # cc-docx
 
-Word ↔ Markdown round-trip harness for Claude Code. Markdown is the working format (AI/human iteration, git diff); `.docx` is the delivery format; PDF is generated **on demand only**.
+Word ↔ Markdown round-trip harness for Codex and Claude Code. Markdown is the working format (AI/human iteration, git diff); `.docx` is the delivery format; PDF is generated **on demand only**.
 
 ## Why markdown-first
 
 - **AI/human comparison**: both read the same `.md` working copy; git diff shows exactly what changed between iterations
-- **Format safety**: no accidental Word corruption on every edit — the template `.docx` is only touched at render time
+- **Format safety**: rendering never overwrites the template; extraction only adds invisible round-trip bookmarks
 - **Deterministic**: extraction and rendering are scripted, not hand-edited
 
 ## Pipeline
@@ -34,6 +34,14 @@ Two converters, one contract:
 
 ## Usage
 
+Install Python dependencies first:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+PDF conversion additionally requires Microsoft Word on Windows. DOCX extraction and rendering do not require Word.
+
 ```bash
 # 1. transcribe a Word template into the project working copy
 python scripts/docx2md.py ref/Form.docx workspace/260805-myproject/form.md
@@ -60,9 +68,9 @@ python scripts/to_pdf.py out/Form-filled.docx
 
 - `workspace/<yyMMdd>-<project>/` — per-project working copies (`.md` transcripts + `project.toml` metadata). One dated subdir per project: `workspace/260805-ktp_proposal/`
 - `out/` — rendered deliverables (gitignored)
-- `scripts/` — the converters (see `AGENT.md` for the contract)
-- `.claude/skills/docx/` — the `/docx` skill wrapping this pipeline
+- `scripts/` — the converters (see `AGENTS.md` for the contract)
+- `.agents/skills/docx/` — the Codex `$docx` skill; `.claude/skills/docx/` is the Claude Code wrapper
 
 ## Conventions
 
-Mirrors the other projects in `Sync/agents` (see root `README.md`): `.claude/skills/` for skills, `.claude/memory/` for session memory (per `/rem` conventions), `AGENT.md` for agent operating notes.
+Mirrors the other projects in `Sync/agents` (see root `README.md`): agent-specific skill folders, `.claude/memory/` for session memory (per `/rem` conventions), and `AGENTS.md` for shared operating notes.

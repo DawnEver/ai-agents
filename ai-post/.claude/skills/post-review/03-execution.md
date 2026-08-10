@@ -4,7 +4,11 @@
 
 对每个目标平台，对**两个身份各跑一组 reviewers**。每个身份默认跑 **3 个 reviewer**（Opus + DeepSeek + Codex，见 `02-reviewers.md`），这样 Phase 3 的 `confidence (≥2 reviewers)` 合议才有数据。
 
-Fan out 用 fabric MCP 工具 `mcp__plugin_fabric_fabric__call`（takeover 已并入 fabric —— 旧的 `mcp__plugin_takeover_takeover__call_model` 已废弃；参数一一对应，只是 `userPrompt` → `prompt`）。直接调各 provider API，跑身份的每个 active reviewer（默认全 3 个；`--fast` → 前 2 个）。
+Fan out 使用当前 host 暴露的 fabric `call` 工具：Codex 通常为 `mcp__fabric__call`，Claude Code/plugin host 通常为 `mcp__plugin_fabric_fabric__call`。按能力而不是硬编码名称选择；两者参数契约相同。旧的 takeover `call_model` 已废弃。直接调各 provider API，跑身份的每个 active reviewer（默认全 3 个；`--fast` → 前 2 个）。
+
+### External/paid-call confirmation gate
+
+Fabric reviewers invoke external model providers and may incur cost. Immediately before the first fan-out call, show the user a compact execution plan containing every `provider`/`model`, the number of calls per identity and platform, and the total call count. Obtain explicit confirmation for that exact plan. This gate applies to both the default reviewer set and `--fast`; an earlier request to review is not spending approval. If the plan changes after confirmation, show the revised plan and confirm again. Without confirmation, make no Fabric/model calls, preserve the prepared inputs, and report the review as pending approval.
 
 > ⚡ **必须并行,否则会审会拖到一小时。** 这是本流程最大的性能坑：`fabric call` 每次都要冷启动一个 provider 子进程（codex 尤其慢），**串行**跑 = 平台数 × 身份数 × 模型数 次冷启动叠加。正确做法：
 > - **同一条消息里发出该平台该身份的全部 reviewer `call`**（多个 tool_use 并发），平台之间也并行(每平台一个 sub-agent 或同批发出)。
@@ -18,7 +22,7 @@ Fan out 用 fabric MCP 工具 `mcp__plugin_fabric_fabric__call`（takeover 已�
 **每个 reviewer 调用**（`provider`/`model` 取自该身份 reviewers 数组的对应项）：
 
 ```
-mcp__plugin_fabric_fabric__call({
+<host fabric call tool>({
   provider: "<reviewer.provider>",     // claude | deepseek | codex
   model: "<reviewer.model 或省略>",     // 仅 Opus 传 model="opus"
   mode: "task",                         // 内容审查，非 code-review endpoint

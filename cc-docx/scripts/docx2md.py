@@ -213,7 +213,7 @@ def _table_md(table):
     rows = [r + [""] * (width - len(r)) for r in rows]
     out = []
     out.append("| " + " | ".join(rows[0]) + " |")
-    out.append("|" + "---|" * (width + 1))
+    out.append("|" + "---|" * width)
     for r in rows[1:]:
         out.append("| " + " | ".join(r) + " |")
     return out

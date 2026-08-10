@@ -1,6 +1,6 @@
 # Manuscript-Review
 
-Claude Code agent for reviewing academic papers. Ingest a PDF, profile the literature, build a shared summary (folding in that landscape and the venue type), fan out 4-angle 锐评 across Sonnet subagents and Codex/DeepSeek takeover, then polish an orchestrator-generated draft (user-edited) into publishable **plain-text** reviewer comments.
+Host-adaptive agent workflow for reviewing academic papers. It ingests a PDF, profiles the literature, builds a shared summary, fans out multi-angle reviews through local agents or confirmed external Fabric providers, and polishes a user-edited draft into publishable **plain-text** reviewer comments.
 
 ## Setup
 
@@ -69,8 +69,7 @@ templates/              — default-angles, polish-checklist, summary-template
 
 | Agent | Default router |
 |-------|---------------|
-| novelty, experiments, freestyle | `sonnet-vision` |
-| methodology | `takeover-codex` (deep reasoning; DeepSeek as alternative) |
+| novelty, experiments, freestyle | `sonnet-vision` (local host agent) |
+| methodology | `takeover-codex` (Fabric Codex route; DeepSeek alternative) |
 
-Per-paper overrides in `angles.md`; step 04 invokes the `manuscript-review-fanout` workflow which resolves routing: `angles.md` override > agent frontmatter default.
-Sonnet reviewers run directly; Codex/DeepSeek reviewers use MCP-takeover relay (inlines summary + literature + sections via `call_model`).
+Per-paper overrides live in `angles.md`; step 04 resolves routing as `angles.md` override > agent frontmatter default. Claude can execute the native workflow, while Codex follows the same canonical specification with collaboration subagents and deterministic artifact validation. Local reviewers run on the active host; confirmed Codex/DeepSeek external routes use Fabric with paper context inlined through its `prompt` contract.

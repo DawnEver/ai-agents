@@ -35,3 +35,8 @@ Spawn `polisher-english` to refine the user's edited draft into publishable revi
      - Strip any markdown syntax that slipped in from the draft.
 2. Show `final.md` to the user. Iterate on tone/length if requested.
 3. When the user approves, proceed to step 08.
+
+## Host adaptation
+
+- **Claude Code:** use `Agent(subagent_type: polisher-english)` as above.
+- **Codex:** read `.claude/agents/polisher-english.md` in full, then spawn one bounded collaboration subagent with that canonical prompt plus the paths and constraints above. If collaboration agents are unavailable, the current model may execute the same prompt locally as an explicit same-model fallback. Enforce traceability/no-invention and verify `final.md` exists and is non-empty.

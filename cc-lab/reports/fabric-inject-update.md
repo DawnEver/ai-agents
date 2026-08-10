@@ -86,7 +86,7 @@ A stateless spawn fires, in order: hello probe (404 on deepseek — harmless) �
 title instruction, user = `<session>` wrapper) → the real tool-bearing turn →
 N agentic continuation turns if the model calls tools (observed 4 extra for
 'Say OK.' — the model's own behavior, not an engine cost). Tool-bearing turns
-are the right main-turn filter (`tools.length > 0`), same rule AGENT.md
+are the right main-turn filter (`tools.length > 0`), same rule AGENTS.md
 prescribes for tap records.
 
 ## Post-fix closure (0.1.18, 2026-08-10)
@@ -101,7 +101,7 @@ that exited 1 in 0.1.17 is confirmed working in the installed plugin.
 
 - The observe proxy APPENDS to `http.jsonl` and restarts its id sequence per
   proxy start — a re-run against the same dir mispairs request/response rows.
-  The case wipes its run dir at start (run dirs are disposable per AGENT.md).
+  The case wipes its run dir at start (run dirs are disposable per AGENTS.md).
 - The child's spawn cwd must exist (spawn ENOENTs otherwise).
 - Responses are captured as raw SSE text; usage lives in `data:` frames.
 

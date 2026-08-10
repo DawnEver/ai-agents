@@ -6,7 +6,7 @@
 
 **AI 调用层解耦，fabric 优先，litellm 回退，agent 按需决策。** 各层互相独立：
 
-- **fabric**（MCP `fabric__call` / `fabric__fan_out`）—— 首选。provider = **deepseek**，默认模型 **deepseek-v4-flash**。
+- **fabric**——首选。Claude Code 的工具名是 `fabric__call` / `fabric__fan_out`；Codex 的等价工具名是 `mcp__fabric__call` / `mcp__fabric__fan_out`。使用当前 host 实际暴露的名称，不把某一 host 的前缀视为协议的一部分。provider = **deepseek**，默认模型 **deepseek-v4-flash**。
 - **litellm**（`ai/client.py` 的 `chat()`）—— 作为 fabric 的回退，保留不删。
 - **CLI read/synthesize** —— 走 litellm，保留，可用作回退。
 
@@ -55,6 +55,8 @@ lit-review stats --topic <slug> [--plots]
 Summary statistics (candidates, screening breakdown, downloads, decomposed, deep-read). With `--plots`, generates year/venue distribution charts.
 
 ### Zotero Sync
+
+**Capability gate:** Zotero is optional. Before offering or executing an MCP-only Zotero action, check whether the current host exposes the required Zotero tools. A project `.mcp.json` being present does not prove that Codex loaded it. If unavailable (commonly in Codex), say clearly that Zotero sync is disabled in this session, keep the local registry/export workflow usable, and offer `lit-review export --format bibtex|json` as the non-destructive fallback. Never fabricate a successful sync. CLI `zotero-import`/`zotero-maintain` may still be used only when their configured backend is independently available.
 
 All papers → ONE shared Zotero collection (from `workspace.toml` → `[zotero]`, resolved by
 `collection_key`, names are not unique). Workspace identity = `zotero_registry.jsonl` +

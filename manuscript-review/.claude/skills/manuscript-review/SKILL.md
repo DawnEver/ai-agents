@@ -7,7 +7,15 @@ allowed-tools: "Read,Write,Bash,Glob,Grep,Agent,Skill,WebFetch,WebSearch,Workflo
 
 # /manuscript-review:new — Review a paper
 
+## Host execution rule
+
+This directory and linked `.claude/workflows/` and `.claude/agents/` files are the single source of truth. Claude Code may invoke native `Workflow` and `Agent` runtimes. Codex reads those same specifications and uses the host-adaptive paths in steps 02, 04 and 07 (collaboration subagents, web search, and `mcp__fabric__call` / `mcp__fabric__fan_out` when available). Never duplicate their prompts in `.agents/skills`.
+
 You are the orchestrator. Given a PDF path (or a slug already in `ongoing/`), walk the pipeline below in order.
+
+## Review voice
+
+If the `Review` output style has not already been injected by the host (Claude settings or a Codex custom system prompt), read `.claude/output-styles/Review.md` before producing reviewer-facing prose. Do not re-read or duplicate it when it is already active. `style/profile.md` remains the authoritative learned voice as specified there.
 
 ## Pipeline
 
@@ -51,13 +59,13 @@ Re-invoking `/manuscript-review:new <slug>` resumes from the latest non-empty ar
 
 ## Hard rules
 
-- **Core** (see AGENT.md): no opinion without reading `summary.md`; polisher never invents.
+- **Core** (see AGENTS.md): no opinion without reading `summary.md`; polisher never invents.
 - **Literature before consensus**: step 02 → 02b; summary folds in landscape + venue type.
 - **Venue type gates `Obvious gaps`**: EE conference → no hardware/code/data gaps; journal → fair game.
 - **Intermediate-file language**: steps writing prose read `lang:` from `review-config.md` (default `en`). `final.md` is always plain-text English.
 - **User gates**: steps 03 (angles) and 06 (draft) — iterate until approved; never skip.
 - **Session boundary at 06**: pipeline yields control; resume by re-invoking with the slug.
-- **Fanout is parallel via workflow**: `manuscript-review-fanout` handles `parallel()` + schema validation; routing: `angles.md` override > agent frontmatter default. Sonnet reviewers run as direct agents, Codex/DeepSeek via MCP-takeover relay.
+- **Fanout is host-adaptive**: Claude's `manuscript-review-fanout` runtime handles `parallel()` and schemas; Codex uses collaboration/Fabric and then the same deterministic artifact validator. Routing remains `angles.md` override > agent frontmatter default.
 - **Archive always updates** `style/profile.md` and `critiques-library/angles.md`, with dedup + rolling caps.
 
 ## Slug

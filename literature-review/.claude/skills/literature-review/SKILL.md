@@ -23,6 +23,11 @@ You are the orchestrator. Given a topic name, guide the user through a flexible 
 
 At the start of each step, Read the corresponding sub-file and follow it. This file is the map — sub-files are the playbook.
 
+Host-specific tool names are adapters, not separate workflows. Follow the
+Claude/Codex Fabric mapping and optional-capability gates in `05-options.md`, and
+the host-adaptive asynchronous execution rule in `03-acquire.md`. These canonical
+files remain the single source of truth for both hosts.
+
 ## Core principles
 
 - **User in control**: every step is a suggestion. User can skip, branch, or go back.

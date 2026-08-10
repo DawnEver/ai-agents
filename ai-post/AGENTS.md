@@ -5,8 +5,11 @@ Generate platform-adapted social media content from a **source** — a GitHub re
 ## Architecture
 
 ```
-/post-new (pipeline entry) → /post-review (三方会审) → /post-publish → /post-archive
+post-new (pipeline entry) → post-review (三方会审) → post-publish → post-archive
 ```
+
+Invoke skills as `/post-*` in Claude Code or `$post-*` in Codex; natural-language invocation is
+also valid. The canonical workflows remain under `.claude/skills/<name>/` for both hosts.
 
 All commands are skills under `.claude/skills/<name>/` and use progressive disclosure: `SKILL.md` is the map, `0X-*.md` sub-files are the playbook.
 

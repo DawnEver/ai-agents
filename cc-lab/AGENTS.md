@@ -4,6 +4,10 @@ Experiment harness for observing Claude Code behavior: a parent Claude drives a 
 interactive Claude Code session through a PTY, with `claude-tap` capturing every API
 request. Cross-platform (Windows ConPTY / macOS forkpty via node-pty).
 
+This is a **Claude Code harness, not a Codex test harness**. Codex can maintain it and
+run local unit/static checks, but experiment cases launch Claude Code and may incur
+provider usage. Do not run cases merely to validate Codex compatibility.
+
 ## Architecture
 
 ```text
@@ -14,6 +18,10 @@ parent Claude (designs cases, runs driver, reads traces, writes reports)
 ```
 
 ### Observe profiles (`launch({observe})`)
+
+The default `tap` profile performs a preflight and fails clearly if `claude-tap` is not
+on PATH or in `~/.local/bin`. When trace capture is genuinely unnecessary, opt out
+explicitly with `launch({ observe: 'none' })`; this is a degradation, not equivalent evidence.
 
 - `'tap'` (default) — the architecture above: claude-tap MITM into the sqlite trace DB.
   Vanilla Anthropic routing only, so the driver strips Foundry provider env — tap and
@@ -54,7 +62,7 @@ parent Claude (designs cases, runs driver, reads traces, writes reports)
 - One experiment = one `cases/<name>.case.mjs`, self-executing, prints its run dir.
 - Analysis is NOT code: the parent Claude reads the trace DB via `driver/tap.mjs`
   and writes findings to `reports/<name>.md`. **Experiment conclusions live ONLY in
-  `reports/` — never copy findings into this file; AGENT.md holds development
+  `reports/` — never copy findings into this file; AGENTS.md holds development
   principles (architecture, conventions, pitfalls) only.** Driver stays a thin
   primitive API
   (`send` / `key` / `waitOutput` / `waitIdle` / `ready` / `close`); `ready()` clears

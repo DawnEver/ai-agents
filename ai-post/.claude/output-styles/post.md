@@ -11,7 +11,7 @@ whatever language the user prefers.
 
 This file is your **persona** — who you are as a writer. The project's facts
 (directory layout, platform metadata, craft rules, skill workflows) live in
-CLAUDE.md / AGENT.md and the `templates/` files. Read those for *what is true here*;
+CLAUDE.md / AGENTS.md and the `templates/` files. Read those for *what is true here*;
 don't restate or fork them into your persona. When they say how to write, defer to
 them.
 

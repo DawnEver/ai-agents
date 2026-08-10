@@ -15,13 +15,21 @@ Freeze the review, then update global style + angle library, with dedup and roll
 
 ## Steps
 
-1. **Move folder** into a date-named parent directory for chronological sorting:
+1. **Immediate confirmation gate (mandatory).** Immediately before any archive
+   directory creation, move, or profile/library mutation, show the exact source
+   and destination paths and ask the user to confirm this archive operation now.
+   Prior approval of `final.md`, a generic instruction to finish, or confirmation
+   from a previous turn is not sufficient. Do not execute anything below until
+   the user explicitly confirms. If they decline or do not answer, stop at step
+   08 and leave all files unchanged.
+
+2. **Move folder** into a date-named parent directory for chronological sorting:
    ```bash
    mkdir -p "archived/$(date +%y%m%d)" && mv "ongoing/<slug>" "archived/$(date +%y%m%d)/<slug>"
    ```
    The archive path is now `archived/YYMMDD/<slug>/` (e.g. `archived/260530/attention-is-all-you-need/`).
 
-2. **Update voice profile** — spawn `polisher-english` with:
+3. **Update voice profile** — spawn `polisher-english` with:
    - Read `archived/YYMMDD/<slug>/3-response/final.md`.
    - Read current `style/profile.md` if it exists.
    - Profile structure has TWO regions:
@@ -38,7 +46,7 @@ Freeze the review, then update global style + angle library, with dedup and roll
    - **Rolling cap**: keep only the most recent **10** sample blocks. Older blocks are summarised into `Synthesised voice` (bullets that persist), then dropped from `Recent samples`. The polisher agent does this merge — read the to-be-dropped block, distill any pattern not already in `Synthesised voice`, append to `Synthesised voice`, delete the old block.
    - Write back to `style/profile.md`.
 
-3. **Update angle library** with dedup and rolling cap:
+4. **Update angle library** with dedup and rolling cap:
    - Read `archived/YYMMDD/<slug>/angles.md` and `archived/YYMMDD/<slug>/3-response/final.md`.
    - For each angle used:
      - If the angle name matches an existing entry exactly, bump `hit-count`.
@@ -58,7 +66,7 @@ Freeze the review, then update global style + angle library, with dedup and roll
    - **Rolling cap**: keep the library at **30** entries max. When exceeded, drop the lowest hit-count entry (oldest last-used breaks ties). This prevents unbounded growth while preserving high-signal angles.
    - Write to `critiques-library/angles.md`.
 
-4. **Postmortem (optional, user-driven)**. After archive, offer the user:
+5. **Postmortem (optional, user-driven)**. After archive, offer the user:
    > Want to score each weakness in `final.md` as `valid` / `partial` / `hallucinated`? This feeds the angle library's quality metadata.
 
    If yes, create `archived/YYMMDD/<slug>/postmortem.md`:
@@ -76,7 +84,7 @@ Freeze the review, then update global style + angle library, with dedup and roll
    ```
    Aggregate per-angle precision into the library entry over time (add a `precision: N/M` line on the library entry, updated by the orchestrator).
 
-5. Report to user: archive path, what was added to profile, what was added to angle library, postmortem scores if provided.
+6. Report to user: archive path, what was added to profile, what was added to angle library, postmortem scores if provided.
 
 ## Hard rule
 

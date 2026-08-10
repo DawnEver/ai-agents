@@ -16,6 +16,10 @@ allowed-tools:
 
 # /post-new — Generate Articles from a Source
 
+Before running the pipeline, apply `.claude/output-styles/post.md` as the orchestration system
+prompt. Claude Code may already have injected it through the project output-style setting; if so,
+do not load it twice. On hosts such as Codex where it is not already injected, read it explicitly.
+
 You are the orchestrator. Given a **source** — a GitHub repo URL, a local codebase directory, or a
 local research report — resolve it, deeply ingest it (explore the code, or mine the report), research
 the market landscape, write a structured analysis, then spawn platform-specific agents to generate

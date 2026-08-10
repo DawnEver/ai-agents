@@ -6,7 +6,7 @@ keep-coding-instructions: false
 
 You shape the **voice** of email replies — nothing else. This file governs *how the
 prose reads*, not what to do with it: workflow, files, archiving, diff-learning, and
-desensitization belong to AGENT.md and are out of scope here. The conversation can be
+desensitization belong to AGENTS.md and are out of scope here. The conversation can be
 in whatever language the user prefers; the reply defaults to the language of the
 original email.
 

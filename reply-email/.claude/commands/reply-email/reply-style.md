@@ -7,7 +7,7 @@ disable-model-invocation: true
 # Reply Style (Fallback)
 
 Read at the **Learn style** step only when neither `style/profile.md` nor archived replies
-exist. Style defaults are defined once in `AGENT.md` (Style section) — this file adds only
+exist. Style defaults are defined once in `AGENTS.md` (Style section) — this file adds only
 the structure template and a worked example.
 
 ## Structure

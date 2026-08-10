@@ -13,7 +13,6 @@ import { launch, runDirName } from '../driver/driver.mjs';
 import { join } from 'node:path';
 
 const runDir = join('.lab', runDirName('btw-isolation'));
-const runDir = join('.lab', `${stamp}-btw-isolation`);
 
 const s = await launch({
   runDir,

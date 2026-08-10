@@ -4,6 +4,7 @@ Merge `critiques/*.md` into a single ranked `critiques.md`, then present a numbe
 
 ## Inputs
 - `ongoing/<slug>/2-review/critiques/*.md`
+- `ongoing/<slug>/2-review/fanout-approved.json` — optional explicit user approval for a reduced angle set
 - `ongoing/<slug>/review-config.md` — `lang:` (default `en`); write `critiques.md` prose in this language
 
 ## Output
@@ -11,7 +12,12 @@ Merge `critiques/*.md` into a single ranked `critiques.md`, then present a numbe
 
 ## Steps
 
-1. Read every `critiques/<angle>.md`.
+0. Determine and validate the input set before reading critique prose:
+   - Normally, use every selected angle in `angles.md` and require the critique directory to match exactly.
+   - If `fanout-approved.json` exists, use only its ordered `approved_angles`, require `user_approved: true`, and retain `skipped_angles` for the aggregate note.
+   - Run `python scripts/validate_workflow_output.py fanout "ongoing/<slug>/2-review/critiques" [--approval "ongoing/<slug>/2-review/fanout-approved.json"] <approved-angle> ...`.
+   - Stop on any error. Never read unexpected/stale `*.md`, aggregate a placeholder/PENDING file, or infer approval from file presence.
+1. Read exactly the validated `critiques/<approved-angle>.md` files. For a reduced set, add a prominent `Skipped angles (user approved): ...` note to `critiques.md`.
 2. Assign each **angle** a descriptive prefix based on its name from `angles.md`:
    - `N` for **novelty**
    - `M` for **methodology**

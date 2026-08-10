@@ -10,7 +10,7 @@ This is where AI and human both work. The md is a normal text file: edit it, rev
 3. **Empty md cell/paragraph → cleared in the render.** To keep original content, don't touch that block.
 4. **Add new content**: just write it without an anchor comment, after the block where it belongs. On render it's inserted after the previous anchored block. (After the first render/re-extract it gains its own `ccxN` anchor — that's normal, keep it.)
 5. **Don't hand-write tables with a different column count** than the grid, unless you intend the row to be truncated/padded. For workplan-style step expansion, adding/removing **rows** is supported — the render resizes the table.
-6. Inline formatting supported: `**bold**`, `*italic*`, `` `code` ``, `[text](url)`. Line-initial `#` in plain text will be parsed as a heading on render — escape or avoid.
+6. Inline formatting supported: `**bold**`, `*italic*`, `` `code` ``, `[text](url)`, and `==highlight==`. Line-initial `#` in plain text will be parsed as a heading on render — escape or avoid.
 
 ## Comparison workflow (AI/human)
 

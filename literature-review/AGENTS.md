@@ -20,7 +20,7 @@ Systematic literature review agent. Define → Search → Acquire → Ingest →
 |------|-------|--------|
 | PDF download | `lit-review acquire` | curl / wget |
 | Paper import + OA PDF | `zotero_add_by_doi` (MCP) | manual HTTP |
-| Batch parallelism | `Workflow` tool | sequential Bash loops |
+| Batch parallelism | Claude named agents or Codex collaboration agents, using the canonical prompts in `.claude/agents/` | unvalidated sequential Bash loops |
 | Semantic search | `zotero_semantic_search` | grep on PDFs |
 | Deep-read | skill 工作流(05-options: fabric/litellm,每次确认) | ad-hoc Read of text dumps |
 

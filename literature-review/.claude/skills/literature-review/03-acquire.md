@@ -62,8 +62,11 @@ paywalls will silently fail (the browser has no auth cookies).
    - HTTP wins where an OA mirror exists; browser transport takes over for
      Cloudflare-guarded / subscribed hosts; ResearchGate is tried last with its
      built-in circuit breaker (error 1020 → skip, never retry).
-   - Run in the background (`run_in_background`) and continue other work; you are
-     notified when it finishes. Check `download/download_log.csv` afterwards for
+   - Run asynchronously using the current host's mechanism: Claude Code may use
+     Bash `run_in_background`; Codex starts the shell command, retains its cell id,
+     and waits/polls that cell. If neither mechanism is available, run in the
+     foreground. Continue other work only while the process is genuinely retained;
+     never start an untracked detached process. Check `download/download_log.csv` afterwards for
      per-URL failure reasons — read that column before any manual retry.
    - ⚠️ A headed browser needs the display; on a headless/CI box without one,
      use `--http-only` (publisher URLs will be logged as failed for manual

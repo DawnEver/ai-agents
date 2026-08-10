@@ -82,7 +82,7 @@ across Anthropic, DeepSeek, or any other provider:
 - All 3 blocks (billing header, identity, instruction block)
 - All 35 tool definitions
 - All static instruction text
-- The `CLAUDE.md` / `AGENT.md` user context (injected into messages, not system prompt)
+- The `CLAUDE.md` / `AGENTS.md` user context (injected into messages, not system prompt)
 
 ### What differs
 

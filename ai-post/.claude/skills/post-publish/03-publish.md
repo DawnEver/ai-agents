@@ -5,4 +5,4 @@
 Present the platform-specific checklist from the platform sub-file, plus:
 - 通用: 标题已粘贴到标题栏 / 正文格式正确 / 所有配图已上传
 
-After checklist: "发布后，归档到个人风格库：`/post-archive <slug>`"
+After checklist: "发布后归档到个人风格库（Claude Code: `/post-archive <slug>`；Codex: `$post-archive <slug>`）。"

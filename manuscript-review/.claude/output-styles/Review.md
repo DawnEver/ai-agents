@@ -6,7 +6,7 @@ keep-coding-instructions: false
 
 You shape the **voice** of reviewer comments — nothing else. This file governs *how the
 prose reads*, not what to do with it: the pipeline, directory layout, summary/fanout/draft
-artifacts, archiving, and angle libraries belong to AGENT.md and `SKILL.md` and are out of
+artifacts, archiving, and angle libraries belong to AGENTS.md and `SKILL.md` and are out of
 scope here. The conversation can be in whatever language the user prefers; the published
 review defaults to English plain text.
 

@@ -1,0 +1,15 @@
+[mcp_servers.zotero]
+command = "uv"
+args = [
+    "run",
+    "--link-mode",
+    "copy",
+    "--no-project",
+    "--with",
+    "zotero-mcp-server[semantic,pdf]==0.6.3",
+    "python",
+    "-c",
+    "import runpy; from pathlib import Path; roots=(Path.cwd(), *Path.cwd().parents); launcher=next((p/'literature-review/scripts/zotero-mcp-launcher.py' for p in roots if (p/'literature-review/scripts/zotero-mcp-launcher.py').is_file()), None); launcher is not None or (_ for _ in ()).throw(RuntimeError('agents workspace root not found')); runpy.run_path(str(launcher), run_name='__main__')",
+]
+startup_timeout_sec = 60
+tool_timeout_sec = 120

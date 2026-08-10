@@ -49,7 +49,7 @@ MCP_HTTP_BASE = f"http://127.0.0.1:{MCP_DEFAULT_PORT}"
 # belongs to the much smaller read-only `pyzotero` dependency package and
 # silently resolves to the wrong, write-less server).
 MCP_CMD = "uv"
-MCP_ARGS = ["tool", "run", "--from", "zotero-mcp-server", "zotero-mcp"]
+MCP_ARGS = ["tool", "run", "--from", "zotero-mcp-server==0.6.3", "zotero-mcp"]
 
 
 # ── Per-paper result ─────────────────────────────────────────────────

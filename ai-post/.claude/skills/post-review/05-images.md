@@ -29,9 +29,9 @@ Verify aspect ratios match platform requirements per `templates/_platform-regist
 
 ## Image Editing
 
-If an existing image needs content fixes (not just prompt text updates), spawn a takeover-image agent with an edit prompt to create a new version:
+If an existing image needs content fixes (not just prompt text updates), use the host-specific image backend to create a new version: Claude Code spawns the `takeover-image` named agent; Codex directly calls its built-in `imagegen` edit flow with the current image as reference and must not launch nested `codex exec`.
 
-1. Spawn a takeover-image agent with the edit prompt and current image path
+1. Invoke the host-specific backend above with the edit prompt and current image path
 2. Save output as `<image-id>-v<N+1>.png` — do NOT overwrite the old version
 3. Update `images.md`: bump version in the entry header, update **Path**
 4. Update all article files (walk the version chain) that reference the old version: replace `-v<N>.png` → `-v<N+1>.png`

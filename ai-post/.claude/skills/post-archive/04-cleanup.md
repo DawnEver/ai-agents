@@ -2,6 +2,8 @@
 
 ## Step 7: Clean Up Cached Source & Drop `ongoing/<slug>`
 
+This step is destructive and hard to reverse. **Show the exact resolved paths that would be removed and obtain explicit user confirmation immediately before executing any delete command.** Approval to archive or earlier workflow approval is not deletion approval. If confirmation is absent, keep the paths and report cleanup as pending.
+
 The source cache is keyed on `<repo-slug>` (= `<slug>` with any `__<topic>` suffix stripped) and is
 **shared across every article from that source**. It holds either a **clone** (`repos/<repo-slug>/`,
 a github source) or a **one-line pointer** (`repos/<repo-slug>.src`, a local-dir source). A

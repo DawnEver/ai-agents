@@ -5,7 +5,7 @@
 If `slug` is provided:
 1. Verify `ongoing/<slug>/` exists.
 2. Verify `2-draft/` exists and `brief.md` has `finalized: true` — if not, abort: "No finalized articles found. Complete review and step 10 final confirmation first."
-3. **Review-verdict gate (BLOCKING):** Locate the latest `2-draft/v<N>/review-verdict.md` by walking the version chain down from the highest `v<N>` (if the highest N lacks one, fall back to the next lower N). If no verdict artifact exists at all, abort: "未找到 review-verdict.md — 请先完成 /post-review (三方会审)，不能归档未经会审的草稿。" Parse it: read the ACTIVE platform list from `brief.md` (`platforms:` line, comma-separated; default to all registry platforms if absent). If ANY active platform's verdict is failing/❌/rejected (i.e. not passing/✅), abort: "<platform> 在最近一次会审中未通过，不能归档被驳回的草稿。" Only proceed when the actual review artifact shows every active platform passing.
+3. **Review-verdict gate (BLOCKING):** Locate the latest `2-draft/v<N>/review-verdict.md` by walking the version chain down from the highest `v<N>` (if the highest N lacks one, fall back to the next lower N). If no verdict artifact exists at all, abort: "未找到 review-verdict.md — 请先完成三方会审（Claude Code: `/post-review`; Codex: `$post-review`），不能归档未经会审的草稿。" Parse it: read the ACTIVE platform list from `brief.md` (`platforms:` line, comma-separated; default to all registry platforms if absent). If ANY active platform's verdict is failing/❌/rejected (i.e. not passing/✅), abort: "<platform> 在最近一次会审中未通过，不能归档被驳回的草稿。" Only proceed when the actual review artifact shows every active platform passing.
 4. Assemble the full version set by walking back through versions for each active platform. Verify at least one platform file exists.
 
 Never archive incomplete, unreviewed, or rejected work — only passing drafts may be frozen.
@@ -15,7 +15,7 @@ If not provided:
 2. Present a numbered list: "Ready to archive — which one?"
 3. Read the user's choice
 
-If no slugs found: "No articles ready for archive. Run `/post-new <url>` first."
+If no slugs found: "No articles ready for archive. Run Claude Code `/post-new <url>` or Codex `$post-new <url>` first."
 
 ## Step 2: Verify Articles are Final
 

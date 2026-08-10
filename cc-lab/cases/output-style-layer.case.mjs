@@ -15,7 +15,6 @@ import { launch, runDirName } from '../driver/driver.mjs';
 import { join } from 'node:path';
 
 const runDir = join('.lab', runDirName('output-style-layer'));
-const runDir = join('.lab', `${stamp}-output-style-layer`);
 
 const s = await launch({
   runDir,

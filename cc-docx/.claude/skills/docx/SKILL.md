@@ -12,7 +12,7 @@ allowed-tools:
 
 # /docx — Word ↔ Markdown round-trip
 
-Markdown is the **working format** (iteration, comparison, diffing); `.docx` is the **delivery format**; PDF is **on demand only**. The pipeline lives in `scripts/` — see `AGENT.md` for the engineering contract.
+Markdown is the **working format** (iteration, comparison, diffing); `.docx` is the **delivery format**; PDF is **on demand only**. The pipeline lives in `scripts/` — see `AGENTS.md` for the engineering contract.
 
 ## Workflow map
 
@@ -48,7 +48,7 @@ python scripts/docx2md.py "ref/Workplan.docx" workspace/260805-ktp_proposal/work
 
 # render the filled Word deliverable (never overwrite the template;
 # default output name carries today's date, e.g. out/Workplan-260805.docx)
-python scripts/md2docx.py workspace/260805-ktp_proposal/workplan.md "ref/Workplan.docx" --track-changes --track-changes
+python scripts/md2docx.py workspace/260805-ktp_proposal/workplan.md "ref/Workplan.docx" --track-changes
 
 # PDF only when needed
 python scripts/to_pdf.py out/Workplan-filled.docx

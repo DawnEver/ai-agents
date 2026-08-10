@@ -6,9 +6,12 @@ Now spawn sub-agents to generate the articles. Each agent reads the analysis, ma
 
 **Agent mapping**: consult `templates/_platform-registry.md` (the `agent` column) for the authoritative platform→agent mapping. Do not hardcode it here.
 
-Spawn the active platform agents in PARALLEL (single message, multiple Agent tool calls). Pass the slug to each agent.
+Spawn the active platform agents in parallel, using the host's native sub-agent mechanism:
 
-Pass the slug to each agent. Each agent must:
+- **Claude Code:** invoke the named agent from `.claude/agents/<agent>.md` with the Agent tool.
+- **Codex:** read `.claude/agents/<agent>.md` (and `_writer-base.md` when referenced), then spawn a collaboration sub-agent with that prompt. Do not expect Claude named agents to be registered in Codex.
+
+Use one parallel batch where the host supports it. Pass the slug to each agent. Each agent must:
 1. Read `ongoing/<slug>/1-research/source-analysis.md`
 2. Read `ongoing/<slug>/1-research/market-research.md` — use market context to inform angle selection
 3. Read `ongoing/<slug>/1-research/brief.md` — use the selected title from `## Selected Titles`; do NOT invent a new title

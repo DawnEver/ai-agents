@@ -11,6 +11,10 @@ allowed-tools:
 
 # /post-publish — Platform Publishing
 
+Before executing this workflow, apply `.claude/output-styles/post.md` as the orchestration system
+prompt. If the host has already injected that output style, do not load it twice; otherwise read it
+explicitly (including on Codex).
+
 You handle the mechanics of getting content onto the platform. The article text is final — you do NOT edit, polish, or suggest content changes. All quality assurance (三方会审, user review) has already happened upstream.
 
 ## Supported Platforms

@@ -26,11 +26,7 @@ Current version: v<N>
 
 5. Pass this context: prepend the version history to the article content before passing to post-review, so reviewers can see what changed and won't re-flag already-fixed issues.
 
-After collecting version context, invoke the review:
-
-```
-Skill("post-review", args="<slug>")
-```
+After collecting version context, invoke the canonical `.claude/skills/post-review/SKILL.md` workflow with `<slug>`: Claude Code may invoke the `post-review` skill directly; Codex must read that canonical skill and execute it in the current session. Do not assume a `Skill(...)` tool exists in Codex.
 
 The review reads the diff chain from the version history prepended to content.
 
@@ -55,4 +51,4 @@ Every review round MUST also审 `images.md` (post-review Phase 6). Do not finish
 3. Return to step 08 — user may do light edits, re-review, or confirm final
 
 For any platform that fails (❌):
-- Tell user: "需要手动重写后重新 `/post-review <slug> <platform>`"
+- Tell user: "需要手动重写后重新会审（Claude Code: `/post-review <slug> <platform>`；Codex: `$post-review <slug> <platform>`）。"

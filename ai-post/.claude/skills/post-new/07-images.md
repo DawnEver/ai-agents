@@ -100,24 +100,20 @@ Then proceed to User Review (08-user-review).
 
 This phase is NOT run during step 07. It is invoked from step 10 after review passes and user confirms final.
 
-### Pre-Check: Codex CLI
+### Host-specific image backend
 
-```bash
-codex --version
-```
-If `codex` is not found, report: "Codex CLI 未安装。请先 `npm install -g @openai/codex && codex login`。"
+- **Claude Code:** pre-check `codex --version`, then spawn the `takeover-image` named agent defined by `.claude/agents/takeover-image.md`. If Codex CLI is missing, report the install/login requirement.
+- **Codex:** call the built-in `imagegen` skill/tool directly. Never spawn `codex exec` from inside Codex (no Codex-in-Codex). Preserve the same prompt, dimensions, and output-path contract.
+- **Codex result handling:** inspect the image tool result and its `output_hint`. Materialize the
+  returned image at the manifest's exact versioned path (copy/move the hinted local artifact when
+  necessary), then verify that the target is a non-empty image file before marking the entry
+  complete. A UI-only/generated-image response is not proof that the repository asset exists.
+  If no local artifact can be materialized, report that entry as failed and follow the retry rule;
+  never invent a path or update article references to a missing file.
 
 ### Batch 1: Cover Images
 
-Generate covers for all target platforms in parallel. For EACH cover entry in the manifest, spawn a takeover-image agent:
-
-```
-Agent({
-  subagent_type: "takeover-image",
-  description: "Generate <cover-id>",
-  prompt: "Generate: <AI Prompt from manifest>, save to ongoing/<slug>/images/<cover-id>-v1.png"
-})
-```
+Generate covers for all target platforms in parallel. For each cover entry, use the host-specific image backend above with: `Generate: <AI Prompt from manifest>, save to ongoing/<slug>/images/<cover-id>-v1.png`.
 
 Spawn ALL cover agents in ONE message for parallel execution.
 
@@ -133,3 +129,6 @@ If an agent fails:
 1. Retry once with the same prompt.
 2. If retry also fails, note: `⚠️ <image-id> generation failed — needs manual creation`.
 3. Do NOT block the pipeline.
+
+For both hosts, success means the exact manifest path exists and is non-empty. Validate every
+generated file after each batch; treat a missing/empty target as a generation failure.

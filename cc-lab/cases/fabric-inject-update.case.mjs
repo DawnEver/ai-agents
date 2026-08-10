@@ -66,7 +66,7 @@ function assert(cond, msg) {
 
 // The real main turn is the tool-bearing request. stdin-mode spawns fire an extra
 // lightweight title-gen /v1/messages call first (tools: 0, system = title instruction);
-// the same filter AGENT.md prescribes for tap records (tools.length > 0).
+// the same filter AGENTS.md prescribes for tap records (tools.length > 0).
 function mainTurn(jsonlPath) {
   const turns = mainTurns(loadRows(jsonlPath));
   const real = turns.find((t) => Array.isArray(t.request.body.tools) && t.request.body.tools.length > 0);

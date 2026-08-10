@@ -2,13 +2,13 @@
 // session under claude-tap and exposes five primitives for cases to drive it.
 //
 // Design: the TUI is only an input channel. Assertions live in the tap trace and
-// session files — never in screen-scraping. See AGENT.md.
+// session files — never in screen-scraping. See AGENTS.md.
 
 import { spawn } from 'node-pty';
 import { mkdirSync, copyFileSync, existsSync, writeFileSync, createWriteStream, rmSync } from 'node:fs';
 
 import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { delimiter, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const isWin = process.platform === 'win32';
@@ -38,12 +38,26 @@ export function backgroundTaskPending(text) {
   return !completionSurfaced;
 }
 
-/** Resolve the claude-tap executable (PATH first, then ~/.local/bin). */
+function executableOnPath(bin) {
+  const extensions = isWin
+    ? (process.env.PATHEXT || '.EXE;.CMD;.BAT;.COM').split(';')
+    : [''];
+  return (process.env.PATH || '').split(delimiter).some((dir) =>
+    extensions.some((ext) => existsSync(join(dir, isWin ? `${bin.replace(/\.exe$/i, '')}${ext}` : bin))),
+  );
+}
+
+/** Resolve claude-tap and fail before creating a paid child session. */
 function resolveClaudeTap() {
   const bin = isWin ? 'claude-tap.exe' : 'claude-tap';
   const local = join(homedir(), '.local', 'bin', bin);
   if (existsSync(local)) return local;
-  return bin; // fall back to PATH
+  if (executableOnPath(bin)) return bin;
+  throw new Error(
+    'claude-tap is required for observe:"tap" but was not found on PATH or in ~/.local/bin. '
+      + 'Install/configure claude-tap, or explicitly use launch({ observe: "none" }) '
+      + 'when trace capture is not required.',
+  );
 }
 
 /**

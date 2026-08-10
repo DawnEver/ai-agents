@@ -15,7 +15,11 @@ allowed-tools:
 
 # /post-review — 三方会审
 
-Two reviewer identities, each independently run by 3 heterogeneous models by default (Opus + DeepSeek + Codex; `--fast` drops to the first 2). Reviewers are fanned out directly via the fabric MCP tool (`mcp__plugin_fabric_fabric__call`); their findings are merged (dedup + confidence tagging) by sharp-review's `merge-findings.js` engine. post-review handles identity-specific configuration and pipeline integration.
+Before executing this workflow, apply `.claude/output-styles/post.md` as the orchestration system
+prompt. If the host has already injected that output style, do not load it twice; otherwise read it
+explicitly (including on Codex).
+
+Two reviewer identities, each independently run by 3 heterogeneous models by default (Opus + DeepSeek + Codex; `--fast` drops to the first 2). Reviewers are fanned out through the fabric MCP `call` exposed by the current host (`mcp__fabric__call` in Codex, normally `mcp__plugin_fabric_fabric__call` in Claude's plugin host); their findings are merged (dedup + confidence tagging) by sharp-review's `merge-findings.js` engine. post-review handles identity-specific configuration and pipeline integration.
 
 ```
 身份A 读者代理人:  [Opus] [DeepSeek V4 Pro] [Codex]  → fabric MCP fan-out → merge-findings → merged findings
@@ -63,4 +67,5 @@ Phase 1-2 run per platform. Phase 3-4 synthesize per-platform (per-identity 合�
 
 ## Invocation
 
-Called from `post-new/09-review.md` after version diff chain is collected. Also callable standalone via `/post-review <slug> [platform]`.
+Called from `post-new/09-review.md` after version diff chain is collected. Also callable standalone
+via Claude Code `/post-review <slug> [platform]` or Codex `$post-review <slug> [platform]`.

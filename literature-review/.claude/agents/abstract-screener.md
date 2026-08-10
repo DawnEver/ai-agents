@@ -10,7 +10,8 @@ Screen a batch of paper candidates against the research brief's inclusion and ex
 
 ## Output Format (JSONL)
 
-One JSON object per line, matching `schemas/screening.schema.json`:
+One JSON object per line, matching the canonical `lit-review import-screening`
+contract implemented in `literature_review/review/screen.py`:
 
 ```json
 {

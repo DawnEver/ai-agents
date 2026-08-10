@@ -31,9 +31,12 @@ Wait for user to confirm. User may:
 
 After user confirms, generate all planned images. Walk back versions to find the latest `images.md`, then run Phase 2 from `07-images.md`:
 
-- Pre-check: `codex --version`
+- Host pre-check: on Claude Code only, run `codex --version` before using the `takeover-image`
+  agent. On Codex, do not check or spawn the Codex CLI; call the built-in imagegen tool directly.
 - Batch 1: All cover images in parallel
 - Batch 2: All content images in parallel
+- For every Codex image result, follow `07-images.md`'s `output_hint` materialization contract and
+  verify the exact versioned target file exists and is non-empty.
 - On failure: retry once, then note `⚠️ <image-id> generation failed`
 
 ## 3. Update Image References
@@ -53,8 +56,11 @@ The latest version in `2-draft/v<N>/` IS the published version. No separate `3-f
 
 ## 5. Next Steps
 
-- **Publish**: `/post-publish <platform> <slug>`
-- **After publishing all platforms**: archive with `/post-archive <slug>`
+- **Publish**: Claude Code `/post-publish <platform> <slug>`; Codex
+  `$post-publish <platform> <slug>` (natural-language invocation is also valid).
+- **After publishing all platforms**: Claude Code `/post-archive <slug>`; Codex
+  `$post-archive <slug>` (natural-language invocation is also valid).
 
 For platforms that failed review (❌):
-- Manual rewrite, then re-run `/post-review <slug> <platform>`
+- Manual rewrite, then re-run Claude Code `/post-review <slug> <platform>` or Codex
+  `$post-review <slug> <platform>`.

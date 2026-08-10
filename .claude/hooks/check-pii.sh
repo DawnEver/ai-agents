@@ -2,7 +2,7 @@
 # Desensitization backstop: scan staged tracked files for PII AND sensitive
 # project content before commit. Covers ALL repos under this agents root
 # (installed as .git/hooks/pre-commit of the root repo).
-# A safety net, not a substitute for the rules in each project's AGENT.md.
+# A safety net, not a substitute for the rules in each project's AGENTS.md.
 #
 # Install (after editing this file):
 #   cp .claude/hooks/check-pii.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit

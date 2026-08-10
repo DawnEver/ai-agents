@@ -71,8 +71,8 @@ Single-reviewer findings:
 | Twitter |  ✅   |  —    |  ✅   |   0    |
 
 建议操作：
-- 小红书：手动重写后重新 `/post-review <slug> xiaohongshu`
-- 微信：手动处理分歧后 `/post-publish wechat <slug>`
-- 知乎：确认技术问题后 `/post-publish zhihu <slug>`
-- Twitter：`/post-publish twitter <slug>`
+- 小红书：手动重写后重新会审（Claude Code `/post-review <slug> xiaohongshu`；Codex `$post-review <slug> xiaohongshu`）
+- 微信：手动处理分歧后发布（Claude Code `/post-publish wechat <slug>`；Codex `$post-publish wechat <slug>`）
+- 知乎：确认技术问题后发布（Claude Code `/post-publish zhihu <slug>`；Codex `$post-publish zhihu <slug>`）
+- Twitter：Claude Code `/post-publish twitter <slug>`；Codex `$post-publish twitter <slug>`
 ```

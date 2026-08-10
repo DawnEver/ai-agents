@@ -28,7 +28,7 @@ PDF_BYTES = b"%PDF-1.4\n" + b"%padding\n" * 200 + b"trailer\n%%EOF\n"
 
 
 # ---------------------------------------------------------------------------
-# Source ranking — AGENT.md priority: repo > preprint > aggregator > publisher
+# Source ranking — AGENTS.md priority: repo > preprint > aggregator > publisher
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("url,expected", [

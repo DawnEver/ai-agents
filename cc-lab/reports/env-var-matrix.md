@@ -30,7 +30,7 @@ All configs emitted the same 27 records incl. the same auxiliary calls (1 title-
   appear in any API request. Its only effect is on disk: with it set, the run writes a
   session `.jsonl` transcript under `config/projects/…`; without it, a session launched
   from a parent Claude Code (`CLAUDE_CODE_CHILD_SESSION=1`) writes **zero** transcripts
-  and is excluded from resume/history. Confirms the AGENT.md pitfall empirically.
+  and is excluded from resume/history. Confirms the AGENTS.md pitfall empirically.
 
 ## No-ops (this build, cc 2.1.199, under the PTY harness)
 
@@ -41,7 +41,7 @@ All configs emitted the same 27 records incl. the same auxiliary calls (1 title-
   Code does not use the classic `ESC[?1049h` alternate-screen buffer in this build — it
   renders full-screen via clear (`ESC[2J`) + cursor positioning — and the private-mode
   escape sequences (`?9001h ?1004h ?2026 …`) are byte-identical with and without the var.
-  So the "changes rendering" caveat in AGENT.md does not manifest as an alt-screen toggle
+  So the "changes rendering" caveat in AGENTS.md does not manifest as an alt-screen toggle
   here; if it matters, detect it by a different signal than `?1049`.
 
 ## Layer taxonomy (populated by what was verified)

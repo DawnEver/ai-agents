@@ -375,6 +375,14 @@ def insert_block(doc, body_elm, cursor, block, link_part, track=False):
 # ----------------------------------------------------------------- main
 
 def md2docx(md_path, docx_path, out_path, track_changes=False):
+    template_path = os.path.normcase(os.path.abspath(docx_path))
+    output_path = os.path.normcase(os.path.abspath(out_path))
+    same_file = template_path == output_path
+    if not same_file and os.path.exists(out_path):
+        same_file = os.path.samefile(docx_path, out_path)
+    if same_file:
+        raise ValueError("output path must not overwrite the template docx")
+
     with io.open(md_path, encoding="utf-8") as f:
         md_text = f.read()
     doc = Document(docx_path)
@@ -382,12 +390,29 @@ def md2docx(md_path, docx_path, out_path, track_changes=False):
     anchors = build_anchor_map(doc)
     link_part = doc.part
 
+    blocks = _parse_md_full(md_text)
+    anchor_errors = []
+    for block in blocks:
+        anchor = block["anchor"]
+        if not anchor:
+            continue
+        entry = anchors.get(anchor)
+        if entry is None:
+            anchor_errors.append(f"{anchor}: not found in template")
+            continue
+        actual_kind = entry[0]
+        expected_kind = "tbl" if block["kind"] == "table" else "p"
+        if actual_kind != expected_kind:
+            anchor_errors.append(
+                f"{anchor}: markdown expects {expected_kind}, template contains {actual_kind}"
+            )
+    if anchor_errors:
+        raise ValueError("invalid markdown anchors: " + "; ".join(anchor_errors))
+
     cursor = None
-    for block in _parse_md_full(md_text):
+    for block in blocks:
         if block["anchor"]:
             entry = anchors.get(block["anchor"])
-            if entry is None:  # unmatched anchor → leave original untouched
-                continue
             kind, elm = entry
             if kind == "p" and block["kind"] != "table":
                 p = Paragraph(elm, doc)
@@ -396,8 +421,6 @@ def md2docx(md_path, docx_path, out_path, track_changes=False):
             elif kind == "tbl" and block["kind"] == "table":
                 sync_table(Table(elm, doc), block["rows"], link_part,
                            track=track_changes)
-            else:
-                continue  # kind mismatch → skip silently
             if elm.getparent() is body_elm:  # only body blocks position inserts
                 cursor = elm
         else:

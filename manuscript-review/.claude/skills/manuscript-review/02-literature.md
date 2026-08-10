@@ -20,7 +20,20 @@ Invoke the workflow:
 Workflow({ name: "manuscript-review-literature", args: { slug, lang, n } })
 ```
 
+### Host adaptation
+
+- **Claude Code with `Workflow` available:** invoke the workflow above unchanged.
+- **Codex (no `Workflow` runtime):** treat `.claude/workflows/manuscript-review-literature.js` as the canonical executable specification. Read its prompts, schemas, ordering, sanitization and output contract. Reproduce Extract → Search → Merge with Codex tools: use collaboration subagents for independent bounded phases/searches and the web search tool for its `WebSearch` calls. Run independent searches concurrently where possible, then merge after all results return. Write the same `literature.md`; do not fork the workflow merely to translate syntax. If web access is unavailable, state the gap and either skip this optional step with user approval or produce clearly labelled paper-internal context only—never invent results.
+
 The workflow runs three phases:
+
+For the Codex path, enforce the on-disk schema after writing (not merely existence or prompt compliance):
+
+```bash
+python scripts/validate_workflow_output.py literature "ongoing/<slug>/2-review/literature.md"
+```
+
+A non-zero exit blocks step 02b; repair or rerun the merge until validation passes.
 
 | Phase | What | How |
 |-------|------|-----|

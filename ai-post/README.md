@@ -4,14 +4,16 @@ Generate platform-adapted social media content from a **source** — a GitHub re
 
 ## Pipeline
 
+Claude Code uses `/skill`; Codex uses `$skill` (natural-language invocation is also supported):
+
 ```
-/post-new <github-url|local-path> [platform]
+/post-new | $post-new <github-url|local-path> [platform]
   → resolve source → ingest (explore code / mine report) + market research
   → analysis → brief gate (angles + titles, user confirms)
   → parallel writer agents → image manifest
   → user review → 三方会审 (fabric MCP fan-out + sharp-review merge engine) → final confirm → generate images
-/post-publish <platform> → clipboard + browser (separate cmd)
-/post-archive <slug> → archive + style update (separate cmd)
+/post-publish | $post-publish <platform> → clipboard + browser (separate cmd)
+/post-archive | $post-archive <slug> → archive + style update (separate cmd)
 ```
 
 ## Dependencies
@@ -25,19 +27,23 @@ Platform rules are centralized in `templates/_platform-registry.md` (metadata: a
 
 ## Prerequisites
 
-- [Codex CLI](https://github.com/openai/codex) v0.124.0+ with `codex login` (for image generation). The `takeover-image` agent spawns `codex exec --full-auto` directly to trigger Codex's built-in `imagegen` skill — no third-party plugin required.
+- **When hosted by Claude Code:** [Codex CLI](https://github.com/openai/codex) v0.124.0+
+  with `codex login`; the `takeover-image` agent uses it for image generation.
+- **When hosted by Codex:** no nested Codex CLI is required; the workflow calls Codex's built-in
+  `imagegen` tool directly.
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `/post-new <github-url\|local-path\|slug> [platform]` | Full pipeline from a source (GitHub repo, local codebase, or research-report file), or resume by `<slug>` — through final confirmation + image generation |
-| `/post-publish <platform>` | Export for publishing (clipboard + guidance) |
-| `/post-archive <slug>` | Archive completed article, update style profile |
-| `/post-review <slug>` | 三方会审 quality review |
+| Claude Code | Codex | Description |
+|---|---|---|
+| `/post-new <source\|slug> [platform]` | `$post-new <source\|slug> [platform]` | Full pipeline or resume |
+| `/post-publish <platform>` | `$post-publish <platform>` | Export for publishing |
+| `/post-archive <slug>` | `$post-archive <slug>` | Archive and update style profile |
+| `/post-review <slug>` | `$post-review <slug>` | 三方会审 quality review |
 
 ## Acknowledgments
 
 - [auto-claude-writing-agent-pub](https://github.com/MapleShaw/auto-claude-writing-agent-pub) by MapleShaw — original project architecture and inspiration.
-- [Codex CLI](https://github.com/openai/codex) — its built-in `imagegen` skill (gpt-image-2) powers the `takeover-image` agent, which spawns `codex exec` directly with no third-party plugin.
+- [Codex](https://github.com/openai/codex) — its built-in `imagegen` capability is used directly
+  on Codex, and through the `takeover-image` bridge when Claude Code is the host.
 - [codex-image-in-cc](https://github.com/KingGyuSuh/codex-image-in-cc) by KingGyuSuh — historical inspiration for bridging Codex's `imagegen` into Claude Code (no longer a dependency).

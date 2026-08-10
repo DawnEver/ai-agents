@@ -6,7 +6,7 @@ the same PDF over plain HTTP. This module answers, for a given DOI, "where else
 can I get this?" and orders the answers so the cheapest, most reliable source is
 tried first.
 
-Priority (mirrors AGENT.md § PDF Download Strategy):
+Priority (mirrors AGENTS.md § PDF Download Strategy):
     repository > preprint > aggregator (ResearchGate) > publisher > unknown
 """
 

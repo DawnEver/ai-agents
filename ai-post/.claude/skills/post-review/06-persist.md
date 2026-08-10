@@ -59,10 +59,10 @@ If Phase 6 was skipped, return to `05-images.md` now. Do NOT write v<N+1> files 
 ### 微信公众号 — ...
 
 ## 建议操作
-- 知乎：确认技术问题后 `/post-publish zhihu <slug>`
-- 微信：手动处理分歧后 `/post-publish wechat <slug>`
-- 小红书：手动重写后重新 `/post-review <slug> xiaohongshu`
-- Twitter：`/post-publish twitter <slug>`
+- 知乎：确认技术问题后发布（Claude Code `/post-publish zhihu <slug>`；Codex `$post-publish zhihu <slug>`）
+- 微信：手动处理分歧后发布（Claude Code `/post-publish wechat <slug>`；Codex `$post-publish wechat <slug>`）
+- 小红书：手动重写后重新会审（Claude Code `/post-review <slug> xiaohongshu`；Codex `$post-review <slug> xiaohongshu`）
+- Twitter：Claude Code `/post-publish twitter <slug>`；Codex `$post-publish twitter <slug>`
 ```
 
 ## 命名规则

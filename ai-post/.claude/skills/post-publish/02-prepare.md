@@ -13,6 +13,8 @@ Format the article for clipboard per the platform rules. Do NOT modify the artic
 
 ## Step 4: Copy to Clipboard + Open Browser
 
+Clipboard writes and opening a browser are host/GUI side effects. Show what platform and URL will be used, then obtain explicit user approval immediately before either action. Preparing files and formatted text does not require approval. If approval is withheld, return the prepared path/text and publishing URL without changing the clipboard or launching a browser.
+
 **微信公众号 / 知乎 — generate Word first:**
 
 Pre-check: `python -c "import docx; print('ok')"`

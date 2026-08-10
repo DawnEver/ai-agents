@@ -11,6 +11,10 @@ allowed-tools:
 
 # /post-archive — Archive & Style Accumulation
 
+Before executing this workflow, apply `.claude/output-styles/post.md` as the orchestration system
+prompt. If the host has already injected that output style, do not load it twice; otherwise read it
+explicitly (including on Codex).
+
 Archive a completed article slug. Distills `ongoing/<slug>/` into a frozen archive at `archived/YYMMDD/<slug>/` — research notes, the assembled final article per platform, the images those finals reference, and the latest review verdict. The raw `2-draft/vN/` version chain is collapsed (the final assembled output is kept, intermediate revisions are dropped). Then extracts style fingerprints and updates `style/profile.md`. No editing — the article text is final.
 
 > **Archive contract** (what survives — Step 3 and the actual archived contents must match this exactly):

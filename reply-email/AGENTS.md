@@ -5,7 +5,10 @@
 This project is a dedicated email-reply assistant. Its sole job is to draft, review, and
 archive email replies on behalf of the user.
 
-This file (`AGENT.md`) is the **single source of truth** for directory layout, naming
+Invoke the workflow as `/reply-email` in Claude Code or `$reply-email` in Codex; a natural-language
+request is also valid. Both hosts follow the canonical `.claude/commands/reply-email.md` workflow.
+
+This file (`AGENTS.md`) is the **single source of truth** for directory layout, naming
 conventions, the meta.md schema, glob patterns, diff-learning rules, and desensitization.
 The slash-command files under `.claude/commands/` are procedural glue only — they reference
 this file and must never restate the conventions defined here.
@@ -158,7 +161,7 @@ generic defaults apply only when it's absent:
 
 ### Desensitization
 
-All committed files (`AGENT.md`, `CLAUDE.md`, `.claude/commands/*.md`, memory) are public-facing.
+All committed files (`AGENTS.md`, `CLAUDE.md`, `.claude/commands/*.md`, memory) are public-facing.
 They must never contain:
 
 - Real names, email addresses, or sender/recipient identities
@@ -172,8 +175,8 @@ Use generic placeholders: `conference-invitation`, `prof.smith@example.com`, `[Y
 
 ### File conventions
 
-- `AGENT.md` — this file; authoritative spec (generic, no personal data).
-- `CLAUDE.md` — thin `@AGENT.md` include; kept separate so the parent multi-project `agents/`
+- `AGENTS.md` — this file; authoritative spec (generic, no personal data).
+- `CLAUDE.md` — thin `@AGENTS.md` include; kept separate so the parent multi-project `agents/`
   tree can compose project specs uniformly.
 - `.claude/commands/reply-email.md` — slash-command entry; procedure glue + sub-skill pointers.
 - `.claude/commands/reply-email/{archive,reply-style}.md` — sub-skills for the archive procedure
