@@ -181,6 +181,17 @@ export async function launch(opts = {}) {
     ...env,
   };
 
+  // Strip the parent's VS Code integration env: a child launched from a VS Code
+  // terminal would otherwise inherit VSCODE_* + TERM_PROGRAM and pop the
+  // "Welcome to Claude Code for VS Code" onboarding gate on first launch in the
+  // fresh config dir — a dialog that can appear AFTER ready() and swallow the
+  // next Enter (observed: prompt typed, no request ever sent).
+  for (const k of Object.keys(childEnv)) {
+    if (/^VSCODE_/.test(k) || k === 'TERM_PROGRAM' || k === 'TERM_PROGRAM_VERSION') {
+      delete childEnv[k];
+    }
+  }
+
   if (observe === 'tap') {
     // claude-tap wrapper. All non-tap flags are forwarded to claude.
     bin = resolveClaudeTap();
@@ -354,7 +365,7 @@ export async function launch(opts = {}) {
     async ready(timeout = 60000) {
       const start = Date.now();
       // Single tokens (spaces are cursor-forward escapes → stripped text concatenates).
-      const DIALOG = /trustthisfolder|allowexternal|externalimports/i;
+      const DIALOG = /trustthisfolder|allowexternal|externalimports|welcome\s*to\s*claude\s*code\s*for|press\s*enter\s*to\s*continue/i;
       while (Date.now() - start < timeout) {
         // Inspect only the tail: the cumulative buffer keeps dismissed dialogs' text,
         // and a screen redraw pushes them out of this window once answered.
