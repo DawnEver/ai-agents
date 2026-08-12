@@ -22,6 +22,8 @@ Markdown is the **working format** (iteration, comparison, diffing); `.docx` is 
 | Edit | `02-edit.md` | edit the `.md` | The daily loop: AI and human iterate on markdown; anchors (`<!-- ccxN -->`) are the map, don't delete them |
 | Render | `03-render.md` | `python scripts/md2docx.py <in.md> <template.docx> [out.docx] [--track-changes]` | Patch the edited markdown back into the original template, styles preserved. `--track-changes` wraps AI-added content in Word revision marks (accept/reject in Review pane) |
 | PDF | `04-pdf.md` | `python scripts/to_pdf.py <in.docx> [out.pdf]` | Word COM conversion — only when a PDF is actually needed |
+| Build | `build_docx.py` | `python scripts/build_docx.py <content.py> <out_dir> [--baseline <docx>] [--name <stem>]` | Render a structured content module (Python: TITLE + CONTENT tuples) to a clean Word doc with a 4-level nested-bullet hierarchy (• – ▪ ·); with `--baseline` also emit a colour-coded change review vs that baseline |
+| Diff | `compare_docx.py` | `python scripts/compare_docx.py <original.docx> <revised.docx> <out.docx>` | Smart tracked-changes diff via Word's CompareDocuments engine (green insertions / red deletions / move markers, preserved text untouched) |
 
 ## How to execute
 
