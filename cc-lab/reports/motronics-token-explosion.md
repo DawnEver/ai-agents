@@ -1,7 +1,7 @@
-# motronics-studio token 消耗暴涨分析
+# [project] token 消耗暴涨分析
 
 - 日期: 2026-08-13
-- 数据源: `~/.claude/projects/D--MingyangBao-motronics-studio/*.jsonl`（权威逐轮 usage）
+- 数据源: `~/.claude/projects/D--[user]-[project]/*.jsonl`（权威逐轮 usage）
 - 方法: 逐会话/逐轮解析 usage 字段，按日聚合；采样用户提示词与上下文曲线
 
 ## 结论（一句话）
@@ -20,8 +20,8 @@
 
 机制：
 
-1. **08-12 两个会话同时从 flash 切到 pro**（按天模型分布: `2ef8b44a` 08-10/11 全 flash → 08-12 起 flash+pro → 08-13 全 pro；`01996d40` 同样 08-12 起出现 pro）。pro 输入/输出单价是 flash 的 3.1×，cache-hit 1.3×。同样的自主迭代工作量，切到 pro 后按约 3 倍计价。
-2. **08-12 是双会话并发峰值 + 模型切换叠加**: laplace 会话（flash）和 jmag 会话并行全速，pro 上已有 3,947 轮 → 单日 $23.5。
+1. **08-12 两个会话同时从 flash 切到 pro**（按天模型分布: `[session]` 08-10/11 全 flash → 08-12 起 flash+pro → 08-13 全 pro；`[session]` 同样 08-12 起出现 pro）。pro 输入/输出单价是 flash 的 3.1×，cache-hit 1.3×。同样的自主迭代工作量，切到 pro 后按约 3 倍计价。
+2. **08-12 是双会话并发峰值 + 模型切换叠加**: [subsystem] 会话（flash）和 [worktree] 会话并行全速，pro 上已有 3,947 轮 → 单日 $23.5。
 3. **08-13 工作量主体已迁移到 pro**: 5,950 轮在 pro（约 79%），即使总轮次从 12,312 降到 7,508，费用仍 $20.5。
 4. **底层放大器不变**: 每轮 60–80 万 cache_read 的上下文膨胀 + 自主循环轮次爆炸，是 8 天里"便宜的 flash"也能烧到 $12/天的基础；pro 切换把它 3 倍放大。
 
@@ -44,17 +44,17 @@
 
 | 会话 | 模型 | 跨度 | 轮次 | 计费token | cache_read | effort |
 |------|------|------|------|----------|-----------|--------|
-| `01996d40` | flash → 08-12 起含 pro | 08-07 → 08-13 (6天) | **27,095** | 49.8M | **10,546M** | — |
-| `2ef8b44a` | flash → 08-12 起切 pro | 08-10 → 08-13 (3.3天) | **16,412** | 38.4M | **6,073M** | — |
-| `55a23756` | deepseek-v4-flash | 08-06 (7h) | 2,103 | 4.9M | 740M | max |
-| `5998cc90` | deepseek-v4-flash | 08-06→07 | 1,705 | 3.2M | 881M | max |
+| `[session]` | flash → 08-12 起含 pro | 08-07 → 08-13 (6天) | **27,095** | 49.8M | **10,546M** | — |
+| `[session]` | flash → 08-12 起切 pro | 08-10 → 08-13 (3.3天) | **16,412** | 38.4M | **6,073M** | — |
+| `[session]` | deepseek-v4-flash | 08-06 (7h) | 2,103 | 4.9M | 740M | max |
+| `[session]` | deepseek-v4-flash | 08-06→07 | 1,705 | 3.2M | 881M | max |
 
 **其余 8 个 claude 会话合计不到 0.5M 计费 token**，可忽略。4 个 DeepSeek 会话 = 47k 轮次、17.2B cache-read、~96M 计费 token。
 
 ## 三个直接机制
 
 1. **自主迭代循环，轮次爆炸**
-   `01996d40` 6 天 27,095 轮、`2ef8b44a` 3.3 天 16,412 轮。真实用户文本提示其实不少（110 条 / 58 条），但**主导模式是用户委托无限自主循环**: "持续迭代直到完全对齐！"、"fan out 持续迭代！"、"`/goal` 设置: 迭代至完成全部计划"、"后面我一整天无法给你指导 请持续迭代直到完成任务"、"/compact 继续迭代"。会话在 `motronics-studio\.claude\worktrees\laplace-fanout`（WS2: laplace）和 jmag/femm worktree 各跑一条主线，一个指令驱动数千轮自动执行，深夜凌晨照常跑（曲线显示 00:00–05:00 活跃）。工具调用量: Bash 6319、Edit 2033、Read 1200（会话1）; Bash 3782、Edit 1025、Read 1156（会话2）。
+   `[session]` 6 天 27,095 轮、`[session]` 3.3 天 16,412 轮。真实用户文本提示其实不少（110 条 / 58 条），但**主导模式是用户委托无限自主循环**: "持续迭代直到完全对齐！"、"fan out 持续迭代！"、"`/goal` 设置: 迭代至完成全部计划"、"后面我一整天无法给你指导 请持续迭代直到完成任务"、"/compact 继续迭代"。会话在 `[project]\.claude\worktrees\[lane]`（WS2: [subsystem]）和 [worktree]/[worktree] worktree 各跑一条主线，一个指令驱动数千轮自动执行，深夜凌晨照常跑（曲线显示 00:00–05:00 活跃）。工具调用量: Bash 6319、Edit 2033、Read 1200（会话1）; Bash 3782、Edit 1025、Read 1156（会话2）。
 
 2. **上下文无限膨胀，压缩无效**
    无任何 `type:summary` 压缩事件（用户多次手动 `/compact`，但 cache_read 前缀仍单调涨到 **600–800k token/轮**，会话1 峰值 #8118 轮 = 812k）。DeepSeek v4 有 ~1M 上下文，自动压缩阈值可能一直够不到，手动 /compact 也没能把前缀压下去（或压缩后很快又涨回来）。于是上下文只增不减、连挂 6 天。
@@ -64,7 +64,7 @@
 
 ## 关于 traceme 报出的数字
 
-traceme 仪表盘 30 天报 **39.4M token / $1057**，与本地 jsonl 对不上，原因是**该快照为跨设备合并数据**：`~/.claude/traceme/sync-repo/` 里是加密的其它设备快照（`linxu@Linxus-MacBook-Air` 等），且本地这些巨型会话的 SessionStart hook（`traceme-hook.js`）全部 `timedOut:true`——traceme 根本没抓到它们，本地 sessions 表里这 4 个会话合计只记了 $34。所以：
+traceme 仪表盘 30 天报 **39.4M token / $1057**，与本地 jsonl 对不上，原因是**该快照为跨设备合并数据**：`~/.claude/traceme/sync-repo/` 里是加密的其它设备快照（`[device]` 等），且本地这些巨型会话的 SessionStart hook（`traceme-hook.js`）全部 `timedOut:true`——traceme 根本没抓到它们，本地 sessions 表里这 4 个会话合计只记了 $34。所以：
 - 仪表盘看到的"每日 token"如果含 cache_read 层，量级是几十亿（真实吞吐）；
 - 默认"计费 token"是几十 M（真实计费输入）；
 - $1057 里包含了我无法解密的跨设备部分，本机实际账单应按 DeepSeek 侧数据为准（按本机 jsonl × 配置价精确合计 ≈ **$87**，8 天）。
