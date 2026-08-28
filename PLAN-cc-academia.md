@@ -1,6 +1,7 @@
 # cc-academia — 重构与迁移计划
 
-> 状态：**实施中**。§0–§8 已落地并跑通（389 测试）；剩余 §11 Phase 5/7（skills 迁入、OneDrive 清理）。
+> 状态：**已实施完毕**。全部 7 个 phase 落地，395 测试通过，已推送 DawnEver/cc-market。
+> 实施中发现并修正的偏差记录在 §13。
 > 目标：把 literature-review / manuscript-review / reviewer-discovery 合并为**一个**
 > Claude + Codex 双 host 插件 `cc-academia`，自带唯一的 Python 库，
 > 落在既有 marketplace 仓 `Sync/claude/cc-market/cc-academia/`（GitHub public，DawnEver/cc-market）。
@@ -404,3 +405,34 @@ ai-agents/ (OneDrive)
 └── .claude/rules/MEMORY.md
 ```
 三个目录不再有 Python 代码与 `.claude/skills`。
+
+---
+
+## 13. 实施中与计划的偏差
+
+计划是推测，实施是证据。以下每条都是实施过程中发现计划有误或不足而改的。
+
+| 计划怎么写 | 实际怎么做 | 为什么 |
+|-----------|-----------|--------|
+| 仓库落 `Documents/PEMC/cc-academia`，自成 marketplace | 落 `cc-market/cc-academia/`，用既有 marketplace | 你的原意；且 cc-market 的 `gen-codex.mjs` 与 pre-push 钩子直接接住了新插件，一行没改 |
+| `configs/*.yaml` | `configs/*.toml` | stdlib `tomllib` 可读，零依赖，且与既有 lens 格式一致 |
+| `pyproject.toml` 版本为准，`release.py` 写四处 | `plugin.json` 为准，pyproject 用 hatch `dynamic` 派生 | cc-market 的 pre-push 钩子会 bump plugin.json；第二个版本源永远慢一拍 |
+| `acquire/types.py` 合入 `core/models.py` | 留在 `litreview/acquire/` | 它们是采集域概念（Attempt/Outcome/Source），不是跨工作流实体 |
+| `query.py` 与 `search/query.py` 「职责重叠」 | 合并了，但**不是**去重 | 一个管计划审批与评估，一个管布尔表达式构造 —— 互补而非重复 |
+| agent 前缀 `lr-` / `mr-` / `rd-` | `literature-*` / `manuscript-*` / `discovery-*` | 既有的 `literature-*` 已唯一且更可读；目标是防撞名，不是特定缩写 |
+| 仅迁 openalex/ieee/orcid | 另迁 s2 / arxiv / dblp | 旧测试覆盖它们，且 arXiv 的开放 PDF 链接最可靠 |
+
+### 实跑才暴露的三个缺陷
+
+单元测试全绿之后，用真实 API 端到端跑一遍才发现：
+
+1. **候选人列表未排序** —— `build_candidates` 遍历 dict，导致下游所有 `--limit` 切的是任意子集。
+2. **`enrich --limit` 默认 40** —— 机构信息是 COI 规则与地域判定的输入，而最终排名要等 COI 之后才知道；设上限会让榜首候选人**既没有机构、也没经过机构级 COI 筛查**。改为默认全量，且 report 会点名警告。
+3. **雇主列显示的是资助方** —— OpenAlex 会把多个机构标 current，取第一个就把"福建省教育厅"放进了编辑当作雇主读的那一列。改为按机构类型优先（大学 > 政府/资助方），同类型下取任职时长最长者。
+
+第 3 条不只是显示问题：机构直接驱动 same_institution / same_department 两条 COI 规则，认错机构等于削弱筛查。
+
+### 计划未预见但必须做的
+
+- **可选 extra 缺失时的行为**：裸 `uv sync` 会让 6 个采集测试无法收集、`lit-review` 直接崩在 import 上。拆出无依赖的 `acquire/options.py`，并用 `collect_ignore` 干净跳过。现在两种配置都绿（250 / 395）。
+- **fixture 脱敏**：IEEE 响应里带 `userInfo`（含订阅机构名）。public 仓必须在写入前剥掉。
