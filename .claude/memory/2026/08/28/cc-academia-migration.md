@@ -1,3 +1,19 @@
+# cc-academia migration (2026-08-28)
+
+Design record for merging literature-review, manuscript-review and
+reviewer-discovery into one cc-market plugin. Kept in memory rather than at the
+repository root: the plan is finished, the code is the current truth, and a
+stale plan next to working code gets read as documentation.
+
+The parts still worth returning to are §0.2 (eleven questions settled by probing
+live APIs, several of which contradict the vendor documentation) and §13 (where
+the implementation diverged from the plan, and the three defects only a live run
+exposed).
+
+Implementation lives in `Sync/claude/cc-market/cc-academia/`.
+
+---
+
 # cc-academia — 重构与迁移计划
 
 > 状态：**已实施完毕**。全部 7 个 phase 落地，395 测试通过，已推送 DawnEver/cc-market。

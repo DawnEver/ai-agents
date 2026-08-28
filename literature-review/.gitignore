@@ -1,5 +1,6 @@
-# Runtime artifacts (like manuscript-review's ongoing/archived)
-workspaces/
+# Research data: topics under review, and finished ones.
+ongoing/
+archived/
 
 # External dependency
 paper_pdf_ingest/

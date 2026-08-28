@@ -1,0 +1,18 @@
+{
+  "enabledPlugins": {
+    "cc-academia@cc-market": true
+  },
+  "permissions": {
+    "allow": [
+      "Bash(uv run:*)",
+      "Read(*/reviewer-discovery/**)",
+      "Grep(*/reviewer-discovery/**)",
+      "Edit(*/reviewer-discovery/ongoing/**)",
+      "Edit(*/reviewer-discovery/.claude/**)",
+      "Edit(*/reviewer-discovery/archived/**)"
+    ],
+    "deny": [
+      "Read(*/reviewer-discovery/ongoing/**/0-raw.pdf)"
+    ]
+  }
+}

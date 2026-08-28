@@ -1,6 +1,6 @@
-# reviewer-discovery — workspaces
+# reviewer-discovery — submissions under review
 
-Implemented as part of the **cc-academia** plugin:
+Implemented in the **cc-academia** plugin:
 
 ```
 Sync/claude/cc-market/cc-academia/skills/reviewer-discovery/
@@ -10,14 +10,21 @@ Sync/claude/cc-market/cc-academia/skills/reviewer-discovery/
 /cc-academia:reviewer-discovery <manuscript-pdf-or-slug>
 ```
 
-This directory holds per-submission workspaces under `ongoing/<slug>/`, plus any
-journal policy overrides you keep for yourself.
+| Path | What it is |
+|------|------------|
+| `ongoing/<slug>/` | submissions currently being matched to reviewers |
+| `archived/<slug>/` | finished runs |
 
-`Suggestions.md` is the original design conversation, kept for provenance. Where
-it and the implementation disagree, the implementation won on evidence — the
-reasoning is recorded in `../PLAN-cc-academia.md` §0.2.
+The plugin finds this directory by walking up from wherever you are, so nothing
+needs configuring. Set `ACADEMIA_CONTACT` to your own address in your personal
+settings if you want OpenAlex's polite pool — it is per-person, so it does not
+belong in a file that syncs across machines.
 
 ## Confidentiality
 
-Submissions are unpublished. Only `0-raw.pdf` and `1-manuscript/sanitized.json`
-exist here per workspace, and only the sanitized record is ever read by an agent.
+Submissions are unpublished. Each workspace holds `0-raw.pdf` and
+`1-manuscript/sanitized.json`, and only the sanitized record is ever read by an
+agent — enforced in the CLI, with a permission rule as a second lock.
+
+The design record, including which API assumptions turned out to be wrong, is in
+`.claude/memory/2026/08/28/cc-academia-migration.md`.

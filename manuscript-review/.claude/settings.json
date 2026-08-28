@@ -17,7 +17,11 @@
       "Edit(*/manuscript-review/templates/**)",
       "Edit(*/manuscript-review/CLAUDE.md)",
       "Read(*/manuscript-review/**)",
-      "Grep(*/manuscript-review/**)"
+      "Grep(*/manuscript-review/**)",
+      "Bash(uv run:*)"
     ]
+  },
+  "enabledPlugins": {
+    "cc-academia@cc-market": true
   }
 }

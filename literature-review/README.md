@@ -10,7 +10,8 @@ What remains here is data and personal configuration:
 
 | Path | What it is |
 |------|------------|
-| `workspaces/` | topic workspaces — briefs, candidates, PDFs, reading cards |
+| `ongoing/` | topics under review — briefs, candidates, PDFs, reading cards |
+| `archived/` | finished reviews |
 | `.env` | API keys for this machine |
 | `.claude/memory/` | engineering notes from building the pipeline |
 
@@ -20,14 +21,9 @@ What remains here is data and personal configuration:
 /cc-academia:literature-review <topic>
 ```
 
-Point the plugin at these workspaces by setting, once:
-
-```
-ACADEMIA_DATA_ROOT = <this repo>
-```
-
-in `~/.claude/settings.json` under `env`. The plugin then reads
-`literature-review/<slug>/` from here.
+The plugin finds this directory by walking up from wherever you are, so nothing
+needs configuring. `ACADEMIA_DATA_ROOT` overrides that if you keep research data
+somewhere else.
 
 ## Personal overrides
 

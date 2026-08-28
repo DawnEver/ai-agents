@@ -1,0 +1,7 @@
+# Submissions under review, and finished ones.
+# Unpublished manuscripts: never committed, on any branch.
+ongoing/
+archived/
+
+# Personal journal policy overrides.
+*.local.toml

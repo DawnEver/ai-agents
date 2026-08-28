@@ -5,9 +5,14 @@
       "Bash(ls:*)",
       "Bash(mkdir:*)",
       "Read(*/literature-review/**)",
-      "Edit(*/literature-review/workspaces/**)",
       "Edit(*/literature-review/.claude/**)",
-      "Grep(*/literature-review/**)"
+      "Grep(*/literature-review/**)",
+      "Bash(uv run:*)",
+      "Edit(*/literature-review/ongoing/**)",
+      "Edit(*/literature-review/archived/**)"
     ]
+  },
+  "enabledPlugins": {
+    "cc-academia@cc-market": true
   }
 }
