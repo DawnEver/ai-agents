@@ -1,10 +1,7 @@
 # manuscript-review — papers under review
 
-The workflow moved to the **cc-academia** plugin:
-
-```
-Sync/claude/cc-market/cc-academia/
-```
+The workflow ships in the public **cc-academia** plugin. This workspace does not
+assume where the plugin is installed.
 
 What remains here is material and data:
 
@@ -17,9 +14,13 @@ What remains here is material and data:
 
 ## Using it
 
-```
-/cc-academia:manuscript-review <pdf>
-```
+| Host | Invocation |
+|------|------------|
+| Claude Code only | Install `cc-academia`, then run `/cc-academia:manuscript-review <pdf>` |
+| Codex only | Install `cc-academia`, then invoke the `manuscript-review` skill with `<pdf>` |
+
+The package contains independent native manifests for both hosts; neither
+installation requires the other host.
 
 The plugin finds `ongoing/` by walking up from wherever you are; nothing needs
 configuring.

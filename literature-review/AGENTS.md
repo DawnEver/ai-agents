@@ -1,8 +1,8 @@
 # literature-review (data only)
 
-The pipeline lives in the `cc-academia` plugin under
-`Sync/claude/cc-market/cc-academia/`. Read its `AGENTS.md` for principles and
-`skills/literature-review/` for operations.
+The pipeline lives in the public `cc-academia` plugin. Read its `AGENTS.md` for
+principles and `skills/literature-review/` for operations. Never depend on the
+plugin's location on one developer's machine.
 
 This directory holds **research data**, which is confidential and never leaves it.
 

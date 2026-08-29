@@ -1,14 +1,16 @@
 # reviewer-discovery — submissions under review
 
-Implemented in the **cc-academia** plugin:
+Implemented in the public **cc-academia** plugin and usable from Claude Code or
+Codex. The workspace never assumes where that plugin is installed.
 
-```
-Sync/claude/cc-market/cc-academia/skills/reviewer-discovery/
-```
+| Host | Invocation |
+|------|------------|
+| Claude Code only | Install `cc-academia` from its marketplace, then run `/cc-academia:reviewer-discovery <manuscript-pdf-or-slug>` |
+| Codex only | Install `cc-academia` from its marketplace, then invoke the `reviewer-discovery` skill (or ask Codex to run reviewer discovery) with the same argument |
 
-```
-/cc-academia:reviewer-discovery <manuscript-pdf-or-slug>
-```
+The package contains native manifests for both hosts. Neither installation
+depends on the other host; the playbook derives its package root from its own
+loaded path, without any plugin-root environment variable.
 
 | Path | What it is |
 |------|------------|
@@ -26,5 +28,5 @@ Submissions are unpublished. Each workspace holds `0-raw.pdf` and
 `1-manuscript/sanitized.json`, and only the sanitized record is ever read by an
 agent — enforced in the CLI, with a permission rule as a second lock.
 
-The design record, including which API assumptions turned out to be wrong, is in
-`.claude/memory/2026/08/28/cc-academia-migration.md`.
+Implementation and design records belong in the plugin repository; this public
+workspace contains only host-neutral usage guidance and review data.
