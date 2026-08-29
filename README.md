@@ -4,6 +4,39 @@ Host-neutral workspaces for Claude Code and Codex. Each workflow can be used by
 someone who has installed only one of the two hosts; no host depends on the
 other's configuration directory or environment variables.
 
+## Getting started
+
+Clone anywhere **except** a cloud-synced folder — a sync daemon replicating `.git/`
+corrupts the index and destroys the reflog:
+
+```
+git clone https://github.com/DawnEver/ai-agents.git ~/Documents/Code/AI/ai-agents
+cd ~/Documents/Code/AI/ai-agents
+./scripts/link-agent-data.sh --local
+```
+
+### Where the data lives
+
+The repo carries code and contracts; it carries **no working data**. Drafts, archives, PDF
+corpora and review runs are gitignored — they are large, and some (`cc-docx/workspace`)
+hold real contact emails and partner names. A fresh clone therefore has none of the data
+directories, and each workspace needs them to exist before it can write.
+
+`scripts/link-agent-data.sh` provisions them, in one of two modes:
+
+| Mode | Command | What you get |
+| --- | --- | --- |
+| **Local** | `./scripts/link-agent-data.sh --local` | plain directories inside the repo. Nothing leaves the machine. **Use this unless you need several machines to share one dataset.** |
+| **Synced** | `./scripts/link-agent-data.sh "<path>/agent-data"` | symlinks into a folder you sync (OneDrive, Dropbox, Syncthing…). The data gets backup and cross-machine availability; the working tree still travels by git. |
+
+`--status` shows what each path currently is. The two modes are interchangeable — re-run
+with the other flag to switch. Either way the paths are gitignored, so `git status` stays
+clean and nothing sensitive is ever committed.
+
+In synced mode the data dir is resolved from the argument, `$AGENT_DATA_DIR`, or the
+`~/.claude/sync-dir` pointer's sibling — so it works across machines with different
+usernames without editing anything.
+
 ## Projects
 
 | Directory | Purpose |
