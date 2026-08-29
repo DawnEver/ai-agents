@@ -28,6 +28,37 @@
 
 set -euo pipefail
 
+# Git Bash's `ln -s` does NOT create a symlink by default: for a directory it silently
+# makes a recursive COPY. That is how 215M of agent-data ended up duplicated inside a
+# Windows working tree while this script cheerfully printed LINK for every entry -- and
+# because these paths are gitignored, `git status` stayed clean and hid it completely.
+# A copy is worse than a failure here: it drifts from the cloud original, and
+# cc-docx/workspace carries PII that is supposed to live in exactly one place.
+#
+# `nativestrict` makes ln FAIL instead of copying. Real failure is recoverable; a silent
+# copy is not.
+case "$(uname -s)" in
+  MINGW* | MSYS* | CYGWIN*) IS_WINDOWS=1; export MSYS=winsymlinks:nativestrict ;;
+  *) IS_WINDOWS=0 ;;
+esac
+
+# Create dest -> src as a genuine link, or return non-zero. On Windows a native symlink
+# needs Developer Mode or an elevated shell; a directory junction needs neither, so fall
+# back to one rather than leaving the user stuck.
+make_link() {
+  local src="$1" dest="$2"
+  if ln -sfn "$src" "$dest" 2>/dev/null && [[ -L "$dest" ]]; then
+    return 0
+  fi
+  if [[ $IS_WINDOWS -eq 1 ]]; then
+    rm -rf "$dest"
+    if cmd //c mklink //J "$(cygpath -w "$dest")" "$(cygpath -w "$src")" >/dev/null 2>&1; then
+      [[ -L "$dest" || -d "$dest" ]] && return 0
+    fi
+  fi
+  return 1
+}
+
 PATHS=(
   "ai-post/archived"
   "reply-email/archived"
@@ -131,12 +162,29 @@ for rel in "${PATHS[@]}"; do
   # Never clobber real content: only replace an existing symlink, or create a new one.
   if [[ -e "$dest" && ! -L "$dest" ]]; then
     printf 'SKIP  %-30s (real directory here — move it aside first)\n' "$rel"
+    # An older version of this script left copies exactly here (and --local makes them on
+    # purpose). Say so, but never delete: only a diff against the source can tell a stale
+    # copy from unsaved work.
+    printf '      if this is a copy left by an older run, compare it with\n'
+    printf '      %s and remove it once they match\n' "$src"
     missing=$((missing + 1))
     continue
   fi
 
   mkdir -p "$(dirname "$dest")"
-  ln -sfn "$src" "$dest"
+  if ! make_link "$src" "$dest"; then
+    printf 'ERR   %-30s could not create a link\n' "$rel" >&2
+    printf '      Enable Developer Mode (Windows Settings > For developers), run elevated,\n' >&2
+    printf '      or use --local if this machine does not need synced data.\n' >&2
+    missing=$((missing + 1))
+    continue
+  fi
+  # Assert rather than assume: printing LINK over a copy is the bug this replaces.
+  if [[ ! -L "$dest" && ! $(readlink -f "$dest") == "$(readlink -f "$src")" ]]; then
+    printf 'ERR   %-30s is a copy, not a link — refusing to report success\n' "$rel" >&2
+    missing=$((missing + 1))
+    continue
+  fi
   printf 'LINK  %-30s -> %s (%s files)\n' "$rel" "$src" "$(find -L "$dest" -type f 2>/dev/null | wc -l | tr -d ' ')"
 done
 
