@@ -1,8 +1,8 @@
 # manuscript-review (data only)
 
-The workflow lives in the `cc-academia` plugin under
-`Sync/claude/cc-market/cc-academia/`. Read its `AGENTS.md` for principles and
-`skills/manuscript-review/` for operations.
+The workflow lives in the public `cc-academia` plugin. Read its `AGENTS.md` for
+principles and `skills/manuscript-review/` for operations. Never depend on the
+plugin's location on one developer's machine.
 
 **Core principle, unchanged:** literature before consensus, consensus before
 fanout, fanout before draft, draft before polish. No opinion without reading

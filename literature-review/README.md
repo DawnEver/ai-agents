@@ -1,10 +1,7 @@
 # literature-review — workspaces
 
-The code and the skill workflow moved to the **cc-academia** plugin:
-
-```
-Sync/claude/cc-market/cc-academia/
-```
+The code and skill workflow ship in the public **cc-academia** plugin. This
+workspace does not assume where the plugin is installed.
 
 What remains here is data and personal configuration:
 
@@ -17,9 +14,13 @@ What remains here is data and personal configuration:
 
 ## Using it
 
-```
-/cc-academia:literature-review <topic>
-```
+| Host | Invocation |
+|------|------------|
+| Claude Code only | Install `cc-academia`, then run `/cc-academia:literature-review <topic>` |
+| Codex only | Install `cc-academia`, then invoke the `literature-review` skill with `<topic>` |
+
+The package contains independent native manifests for both hosts; neither
+installation requires the other host.
 
 The plugin finds this directory by walking up from wherever you are, so nothing
 needs configuring. `ACADEMIA_DATA_ROOT` overrides that if you keep research data
