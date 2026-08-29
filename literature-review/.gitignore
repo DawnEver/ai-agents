@@ -2,10 +2,6 @@
 ongoing/
 archived/
 
-# Pre-unification name. Still on disk because OneDrive holds a lock on it;
-# drop this line once `workspaces/` has been renamed to `ongoing/`.
-workspaces/
-
 # External dependency
 paper_pdf_ingest/
 
