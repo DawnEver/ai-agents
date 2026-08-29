@@ -32,3 +32,16 @@ cc-docx/workspace/
 
 # Sensitive-content patterns for the PII hook — local-only
 **/.claude/hooks/patterns.local
+
+# ── Bulk working data — lives outside the repo ────────────────────────────────
+# These are gitignored symlinks into <cloud>/Sync/agent-data/. The data is large
+# (215M), partly PII-bearing (cc-docx/workspace holds real contact emails and
+# partner names — see the note below), and deliberately never committed. It needs
+# BACKUP, not version control, so it lives in cloud storage while the working tree
+# does not. Recreate the links with scripts/link-agent-data.sh after a fresh clone.
+ai-post/archived
+reply-email/archived
+manuscript-review/archived
+manuscript-review/ongoing
+cc-docx/out
+cc-docx/workspace
