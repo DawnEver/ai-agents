@@ -1,4 +1,4 @@
-# literature-review — workspaces
+# literature-review — research data
 
 The code and skill workflow ship in the public **cc-academia** plugin. This
 workspace does not assume where the plugin is installed.
@@ -24,7 +24,8 @@ installation requires the other host.
 
 The plugin finds this directory by walking up from wherever you are, so nothing
 needs configuring. `ACADEMIA_DATA_ROOT` overrides that if you keep research data
-somewhere else.
+somewhere else; the plugin then appends `literature-review/ongoing/` and
+`literature-review/archived/`.
 
 ## Personal overrides
 

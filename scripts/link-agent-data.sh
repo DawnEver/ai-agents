@@ -65,6 +65,9 @@ PATHS=(
   "manuscript-review/archived"
   "manuscript-review/ongoing"
   "literature-review/ongoing"
+  "literature-review/archived"
+  "reviewer-discovery/ongoing"
+  "reviewer-discovery/archived"
   "cc-docx/out"
   "cc-docx/workspace"
 )

@@ -10,5 +10,6 @@ This repository contains independent agent projects. Before changing a child pro
 | `literature-review/` | Systematic literature-review pipeline |
 | `manuscript-review/` | Academic manuscript-review pipeline |
 | `reply-email/` | Drafting and archiving email replies |
+| `reviewer-discovery/` | Matching submissions to candidate reviewers |
 
 Do not run outward-facing publishing, email, browser, paid-model, or destructive archive actions without explicit user confirmation. Prefer each project's lightweight tests when validating cross-project changes.

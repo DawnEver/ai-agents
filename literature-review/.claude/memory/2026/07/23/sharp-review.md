@@ -338,7 +338,7 @@ README, AGENT.md, and several `.claude/skills/literature-review/*.md` files cont
 - **Category:** Bug
 - **Status:** OPEN
 - **Confidence:** single-reviewer
-- **Suggestion:** Document `--run-dir workspaces/<slug>/runs/<run-id>` if the code should create `ingest/` internally, and replace `success` with `succeeded` everywhere.
+- **Suggestion:** Document `--run-dir ongoing/<slug>/runs/<run-id>` if the code should create `ingest/` internally, and replace `success` with `succeeded` everywhere.
 
 `pdf_decompose.decompose_pdfs()` sets `ingest_root = run_dir / "ingest"`. The docs pass `--run-dir .../runs/<run-id>/ingest/`, which produces `.../ingest/ingest/ingest_manifest.json` instead of the documented `.../ingest/ingest_manifest.json`. The docs also list statuses `success`, `failed`, and `skipped`, but the code and `schemas/ingest_manifest.schema.json` use `succeeded`, `failed`, and `skipped`.
 
@@ -418,7 +418,7 @@ The step says the command uses PAPER_INGEST_ROOT and documents python scripts/li
 - **Confidence:** single-reviewer
 - **Suggestion:** Add a validate-workspace subcommand wired to schemas/workspace.schema.json, or remove the command from the step and describe the actual validation mechanism.
 
-The step instructs python scripts/lit_review.py validate-workspace --workspace workspaces/<slug>/workspace.yaml. python scripts/lit_review.py --help lists no validate-workspace subcommand, and scripts/lit_review.py has no dispatch branch for it. A user or orchestrator following step 00 will hit an unsupported command before the pipeline can start.
+The step instructs python scripts/lit_review.py validate-workspace --workspace ongoing/<slug>/workspace.yaml. python scripts/lit_review.py --help lists no validate-workspace subcommand, and scripts/lit_review.py has no dispatch branch for it. A user or orchestrator following step 00 will hit an unsupported command before the pipeline can start.
 
 ---
 
@@ -440,7 +440,7 @@ The resume rule says to run python scripts/lit_review.py queries-status --querie
 - **Confidence:** single-reviewer
 - **Suggestion:** Choose one storage model and update the skill files and CLI together; the simplest fix is to document research_brief.yaml under the active run directory if confirm-queries is meant to bind queries to the same run.
 
-Step 01 writes and confirms workspaces/<slug>/briefs/<brief-id>/research_brief.yaml. Step 02 writes queries to workspaces/<slug>/runs/<run-id>/queries.yaml and runs confirm-queries --run-dir workspaces/<slug>/runs/<run-id>. In code, confirm_queries reads run_dir / queries.yaml and then resolves brief_ref relative to that same run_dir, defaulting to run_dir / research_brief.yaml. Without an explicit copied brief_ref path strategy, the documented brief location does not match the code's default provenance chain.
+Step 01 writes and confirms ongoing/<slug>/briefs/<brief-id>/research_brief.yaml. Step 02 writes queries to ongoing/<slug>/runs/<run-id>/queries.yaml and runs confirm-queries --run-dir ongoing/<slug>/runs/<run-id>. In code, confirm_queries reads run_dir / queries.yaml and then resolves brief_ref relative to that same run_dir, defaulting to run_dir / research_brief.yaml. Without an explicit copied brief_ref path strategy, the documented brief location does not match the code's default provenance chain.
 
 ---
 
@@ -460,9 +460,9 @@ pdf_decompose.py writes per-paper statuses as succeeded, failed, or skipped, and
 - **Category:** Bug
 - **Status:** OPEN
 - **Confidence:** single-reviewer
-- **Suggestion:** Document --run-dir workspaces/<slug>/runs/<run-id> for acquire-pdf and match-pdfs, or rename the CLI argument if it is intentionally a download-root argument.
+- **Suggestion:** Document --run-dir ongoing/<slug>/runs/<run-id> for acquire-pdf and match-pdfs, or rename the CLI argument if it is intentionally a download-root argument.
 
-Step 04 documents --run-dir workspaces/<slug>/runs/<run-id>/download/. In scripts/pdf_acquire.py the code builds download_dir = run_dir / "download" / "pdfs", so the documented command writes into .../download/download/pdfs. match-pdfs has the same documented run-dir shape, which risks looking in the nested location rather than the intended run download area.
+Step 04 documents --run-dir ongoing/<slug>/runs/<run-id>/download/. In scripts/pdf_acquire.py the code builds download_dir = run_dir / "download" / "pdfs", so the documented command writes into .../download/download/pdfs. match-pdfs has the same documented run-dir shape, which risks looking in the nested location rather than the intended run download area.
 
 ---
 

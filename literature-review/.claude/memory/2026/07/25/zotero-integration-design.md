@@ -42,7 +42,7 @@ tags: [zotero, architecture, registry, mcp]
 - `literature_review/export/__init__.py` — exported new registry functions
 - `literature_review/cli.py` — added `zotero-sync` and `zotero-status` commands
 - `AGENT.md` — documented Zotero integration section
-- `workspaces/*/workspace.toml` — added `collection_name` field, `sync_attachments = true`
+- `ongoing/*/workspace.toml` — added `collection_name` field, `sync_attachments = true`
 
 ### Agent Workflow
 
