@@ -23,3 +23,21 @@ This data workspace must work with either host independently:
 
 Do not add machine-specific absolute paths or require configuration files from
 the other host.
+
+## Working across machines
+
+`ongoing/` and `archived/` are symlinks into synced storage; `./scripts/link-agent-data.sh`
+creates them from a fresh clone. The SQLite store is *not* synced — WAL mode and
+a file-level syncer corrupt each other — so what travels instead is the five
+things it cannot re-derive: invitations and their outcomes, verified ranks,
+addresses, corrected affiliations and doctorate years.
+
+`ACADEMIA_FACTS_SYNC=1` (set for this directory in `.claude/settings.json`) turns
+that export on; the folder follows the data root, so it lands in
+`cc-academia-facts/`, itself a symlink into the same synced storage. Every
+command merges the folder in on the way in and publishes on the way out, one
+subdirectory per device.
+
+These files hold real people's addresses and employment. Turning the export on
+is a deliberate act, which is why it is off by default and why nothing discovers
+a cloud folder on its own.

@@ -14,5 +14,8 @@
     "deny": [
       "Read(*/reviewer-discovery/ongoing/**/0-raw.pdf)"
     ]
+  },
+  "env": {
+    "ACADEMIA_FACTS_SYNC": "1"
   }
 }

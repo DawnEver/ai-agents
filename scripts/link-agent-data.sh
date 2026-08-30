@@ -71,6 +71,11 @@ MAPPINGS=(
   "reviewer-discovery/ongoing|reviewer-discovery/ongoing"
   "reviewer-discovery/archived|reviewer-discovery/archived"
   "cc-docx/workspace|cc-docx"
+  # The five facts the cc-academia store cannot re-derive — invitations and
+  # their outcomes, verified ranks, addresses, corrected affiliations, doctorate
+  # years. Line-oriented JSON, one subdirectory per device, so a syncer has no
+  # conflict to resolve. The SQLite store itself stays on local disk.
+  "cc-academia-facts|cc-academia-facts"
 )
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
