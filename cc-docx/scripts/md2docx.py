@@ -19,6 +19,7 @@ import io
 import os
 import re
 import sys
+from pathlib import Path
 from docx import Document
 from docx.table import Table
 from docx.text.paragraph import Paragraph
@@ -374,6 +375,13 @@ def insert_block(doc, body_elm, cursor, block, link_part, track=False):
 
 # ----------------------------------------------------------------- main
 
+def default_output_path(md_path, docx_path, today=None):
+    """Return a traceable output path inside the transcript's project."""
+    stem = os.path.splitext(os.path.basename(os.fspath(docx_path)))[0]
+    date = (today or datetime.date.today()).strftime("%y%m%d")
+    project_dir = os.path.dirname(os.path.abspath(os.fspath(md_path)))
+    return Path(project_dir) / "out" / f"{stem}-{date}.docx"
+
 def md2docx(md_path, docx_path, out_path, track_changes=False):
     template_path = os.path.normcase(os.path.abspath(docx_path))
     output_path = os.path.normcase(os.path.abspath(out_path))
@@ -443,11 +451,7 @@ def main():
     if len(args) > 2:
         out_path = args[2]
     else:
-        # default output name carries today's date so renders are traceable:
-        # out/<stem>-<yyMMdd>.docx
-        stem = os.path.splitext(os.path.basename(docx_path))[0]
-        date = datetime.date.today().strftime("%y%m%d")
-        out_path = os.path.join("out", f"{stem}-{date}.docx")
+        out_path = default_output_path(md_path, docx_path)
     md2docx(md_path, docx_path, out_path, track_changes=track)
 
 

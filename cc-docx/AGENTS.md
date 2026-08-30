@@ -24,7 +24,7 @@ This project is a Word ↔ Markdown round-trip harness. Read this before touchin
 - Headings: anchored headings keep their original Word style; new unanchored headings map md `#`-level → Heading 1–6.
 - Run-boundary spaces are preserved via `xml:space="preserve"` (without it Word silently drops spaces between runs — "adding ==GBP 200,000== by" renders as "addingGBP 200,000by").
 - `--track-changes` (review mode): rewritten blocks are wrapped in `w:ins` revision elements (author "AI Agent") so the user can accept/reject AI-added content in Word's Review pane. Blocks whose md content equals the template's current text are left untouched — no revision, and the template's own formatting (e.g. design highlights) survives. Unchanged detection normalises whitespace (double spaces, NBSP), curly quotes, and compares whole cells (template cells may split one sentence across paragraphs); a block is still treated as changed if the md adds bold (`**`) the template text doesn't carry (e.g. answer marks "Yes / **No**"). Consequence: re-extracting such a doc may surface template-intrinsic formatting (highlight marks, NBSP) that the md doesn't carry — expected, not a bug.
-- Writes a **new** output file. Never writes over the template. Default output name is `out/<stem>-<yyMMdd>.docx` (today's date suffix, so each render is traceable); pass an explicit output path to override.
+- Writes a **new** output file. Never writes over the template. Default output name is `<md-project>/out/<stem>-<yyMMdd>.docx`, beside the authoritative Markdown project's other files; pass an explicit output path to override.
 
 ### `to_pdf.py <input.docx> [output.pdf]`
 
@@ -39,6 +39,13 @@ This project is a Word ↔ Markdown round-trip harness. Read this before touchin
 4. Empty md cell/paragraph → cleared in the rendered docx. To *keep* original content, don't touch that block.
 5. Verify renders: re-extract the output with `docx2md` and diff against the input md. Content should match exactly.
 6. PDF last, never first. Ask yourself: does the user need a PDF, or a Word file? Default is Word.
+
+## Data layout
+
+- `workspace` is a local junction to the OneDrive data root; it is not source code and is never committed.
+- Active tasks live in `workspace/ongoing/<yyMMdd>-<kebab-case-slug>/`.
+- Completed tasks move intact to `workspace/archived/<yyMMdd>/<same-slug>/`.
+- Keep templates in the task's `src/`, authoritative Markdown and `project.toml` in the task root, and rendered DOCX/PDF files in that task's `out/`. There is no repository-level `out/`.
 
 ## Common failure modes
 

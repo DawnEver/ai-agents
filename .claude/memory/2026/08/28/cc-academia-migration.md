@@ -1,3 +1,10 @@
+---
+name: cc-academia-migration
+description: "Design record for merging literature-review, manuscript-review and reviewer-discovery into one cc-market plugin"
+metadata:
+  type: project
+---
+
 # cc-academia migration (2026-08-28)
 
 Design record for merging literature-review, manuscript-review and

@@ -4,7 +4,7 @@
 python scripts/docx2md.py <input.docx> [output.md]
 ```
 
-Default output name: `<input-stem>.md` next to the input. For KTP work, keep transcripts under `workspace/260805-ktp_proposal/`.
+Default output name: `<input-stem>.md` next to the input. Keep active transcripts under `workspace/ongoing/<yyMMdd>-<project>/`.
 
 ## What happens
 

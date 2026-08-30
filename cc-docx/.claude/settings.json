@@ -8,7 +8,6 @@
       "Bash(mkdir:*)",
       "Read(*/cc-docx/**)",
       "Write(*/cc-docx/workspace/**)",
-      "Write(*/cc-docx/out/**)",
       "Write(*/cc-docx/scripts/**)",
       "Write(*/cc-docx/.claude/skills/**)",
       "Write(*/cc-docx/.claude/memory/**)",

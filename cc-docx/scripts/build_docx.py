@@ -5,7 +5,7 @@ Loads a content module (Python file) and renders it as a clean Word document
 with a 4-level nested-bullet hierarchy (distinct glyphs per level), and — when a
 baseline document is given — a colour-coded review of changes against that baseline.
 
-Content module format (see workspace/260812-JoR/jor_content.py for an example):
+Content module format (see workspace/ongoing/260812-jor/jor_content.py for an example):
     TITLE   = "Document title"
     CONTENT = [ (kind, text, chg, change_desc), ... ]
         kind : l1|l2|l2p|l3|l4|p|table

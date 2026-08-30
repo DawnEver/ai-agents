@@ -1,6 +1,7 @@
 import sys
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
 
 from docx import Document
@@ -14,6 +15,13 @@ import md2docx  # noqa: E402
 
 
 class RoundTripSafetyTests(unittest.TestCase):
+    def test_default_output_is_in_project_out_directory(self):
+        md_path = ROOT / "workspace" / "ongoing" / "260805-example" / "draft.md"
+        template = ROOT / "templates" / "Form.docx"
+
+        expected = md_path.parent / "out" / f"Form-{date.today():%y%m%d}.docx"
+        self.assertEqual(md2docx.default_output_path(md_path, template), expected)
+
     def test_document_round_trips_except_transcript_filename(self):
         with tempfile.TemporaryDirectory() as directory:
             template = Path(directory) / "template.docx"

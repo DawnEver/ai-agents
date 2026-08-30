@@ -33,6 +33,10 @@ directories, and each workspace needs them to exist before it can write.
 with the other flag to switch. Either way the paths are gitignored, so `git status` stays
 clean and nothing sensitive is ever committed.
 
+`cc-docx/workspace` maps to the complete `agent-data/cc-docx` data root. Active tasks live
+under `workspace/ongoing/`, completed tasks under `workspace/archived/`, and every task
+keeps its own rendered deliverables in `<task>/out/`; there is no global `cc-docx/out`.
+
 In synced mode the data dir is resolved from the argument, `$AGENT_DATA_DIR`, or the
 `~/.claude/sync-dir` pointer's sibling — so it works across machines with different
 usernames without editing anything.

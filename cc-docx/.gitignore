@@ -1,9 +1,8 @@
 .DS_Store
 __pycache__/
 .scratch/
-out/
-# workspace/ transcripts contain real contact emails — kept local-only by
+# workspace/ contains OneDrive-backed task data with real contact emails — kept local-only by
 # choice (PII hook blocks commits). Compare snapshots with plain `diff`.
-# Each project lives in workspace/<yyMMdd>-<project>/ with a project.toml
-# recording source template paths, iteration count and delivery outputs.
+# Active projects live in workspace/ongoing/<yyMMdd>-<project>/; completed
+# projects move intact to workspace/archived/<yyMMdd>/<yyMMdd>-<project>/.
 workspace/

@@ -59,17 +59,18 @@ make_link() {
   return 1
 }
 
-PATHS=(
-  "ai-post/archived"
-  "reply-email/archived"
-  "manuscript-review/archived"
-  "manuscript-review/ongoing"
-  "literature-review/ongoing"
-  "literature-review/archived"
-  "reviewer-discovery/ongoing"
-  "reviewer-discovery/archived"
-  "cc-docx/out"
-  "cc-docx/workspace"
+# Each entry is repo destination|agent-data source. Most are identical; cc-docx
+# deliberately exposes its whole lifecycle data root through repo/workspace.
+MAPPINGS=(
+  "ai-post/archived|ai-post/archived"
+  "reply-email/archived|reply-email/archived"
+  "manuscript-review/archived|manuscript-review/archived"
+  "manuscript-review/ongoing|manuscript-review/ongoing"
+  "literature-review/ongoing|literature-review/ongoing"
+  "literature-review/archived|literature-review/archived"
+  "reviewer-discovery/ongoing|reviewer-discovery/ongoing"
+  "reviewer-discovery/archived|reviewer-discovery/archived"
+  "cc-docx/workspace|cc-docx"
 )
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -86,42 +87,6 @@ for arg in "$@"; do
   esac
 done
 
-describe() {
-  local dest="$1"
-  if [[ -L "$dest" ]]; then
-    echo "linked -> $(readlink "$dest")"
-  elif [[ -d "$dest" ]]; then
-    echo "local directory ($(find "$dest" -type f 2>/dev/null | wc -l | tr -d ' ') files)"
-  else
-    echo "missing"
-  fi
-}
-
-if [[ "$mode" == "status" ]]; then
-  echo "repo: $repo_root"
-  for rel in "${PATHS[@]}"; do printf '  %-30s %s\n' "$rel" "$(describe "$repo_root/$rel")"; done
-  exit 0
-fi
-
-if [[ "$mode" == "local" ]]; then
-  echo "repo: $repo_root"
-  echo "mode: local (plain directories, nothing synced)"
-  echo
-  for rel in "${PATHS[@]}"; do
-    dest="$repo_root/$rel"
-    if [[ -L "$dest" ]]; then
-      echo "SKIP  $rel — currently a symlink; remove it first if you want a local directory"
-      continue
-    fi
-    mkdir -p "$dest"
-    printf 'DIR   %-30s ready\n' "$rel"
-  done
-  echo
-  echo "Done. These paths are gitignored; nothing here will be committed."
-  exit 0
-fi
-
-# ── linked mode ──────────────────────────────────────────────────────────────
 # Resolve the data dir: explicit arg, $AGENT_DATA_DIR, then the sibling of the config
 # sync payload (~/.claude/sync-dir names it), which is where it lives on this fleet.
 resolve_data_dir() {
@@ -134,6 +99,58 @@ resolve_data_dir() {
   echo ""
 }
 
+same_target() {
+  local dest="$1" src="$2"
+  [[ -e "$dest" && -e "$src" ]] || return 1
+  [[ "$(readlink -f "$dest")" == "$(readlink -f "$src")" ]]
+}
+
+describe() {
+  local dest="$1" src="$2"
+  if [[ -L "$dest" ]]; then
+    echo "linked -> $(readlink "$dest")"
+  elif same_target "$dest" "$src"; then
+    echo "linked (directory junction) -> $src"
+  elif [[ -d "$dest" ]]; then
+    echo "local directory ($(find "$dest" -type f 2>/dev/null | wc -l | tr -d ' ') files)"
+  else
+    echo "missing"
+  fi
+}
+
+if [[ "$mode" == "status" ]]; then
+  echo "repo: $repo_root"
+  DATA="$(resolve_data_dir 2>/dev/null || true)"
+  for mapping in "${MAPPINGS[@]}"; do
+    IFS='|' read -r rel source_rel <<< "$mapping"
+    printf '  %-30s %s\n' "$rel" "$(describe "$repo_root/$rel" "${DATA:-/__missing__}/$source_rel")"
+  done
+  exit 0
+fi
+
+if [[ "$mode" == "local" ]]; then
+  echo "repo: $repo_root"
+  echo "mode: local (plain directories, nothing synced)"
+  echo
+  for mapping in "${MAPPINGS[@]}"; do
+    IFS='|' read -r rel _ <<< "$mapping"
+    dest="$repo_root/$rel"
+    if [[ -L "$dest" ]]; then
+      echo "SKIP  $rel — currently a symlink; remove it first if you want a local directory"
+      continue
+    fi
+    mkdir -p "$dest"
+    if [[ "$rel" == "cc-docx/workspace" ]]; then
+      mkdir -p "$dest/ongoing" "$dest/archived"
+    fi
+    printf 'DIR   %-30s ready\n' "$rel"
+  done
+  echo
+  echo "Done. These paths are gitignored; nothing here will be committed."
+  exit 0
+fi
+
+# ── linked mode ──────────────────────────────────────────────────────────────
 DATA="$(resolve_data_dir)"
 
 if [[ -z "$DATA" || ! -d "$DATA" ]]; then
@@ -152,8 +169,9 @@ echo "data: $DATA"
 echo
 
 missing=0
-for rel in "${PATHS[@]}"; do
-  src="$DATA/$rel"
+for mapping in "${MAPPINGS[@]}"; do
+  IFS='|' read -r rel source_rel <<< "$mapping"
+  src="$DATA/$source_rel"
   dest="$repo_root/$rel"
 
   if [[ ! -e "$src" ]]; then
@@ -163,6 +181,10 @@ for rel in "${PATHS[@]}"; do
   fi
 
   # Never clobber real content: only replace an existing symlink, or create a new one.
+  if same_target "$dest" "$src"; then
+    printf 'LINK  %-30s -> %s (%s files)\n' "$rel" "$src" "$(find -L "$dest" -type f 2>/dev/null | wc -l | tr -d ' ')"
+    continue
+  fi
   if [[ -e "$dest" && ! -L "$dest" ]]; then
     printf 'SKIP  %-30s (real directory here — move it aside first)\n' "$rel"
     # An older version of this script left copies exactly here (and --local makes them on

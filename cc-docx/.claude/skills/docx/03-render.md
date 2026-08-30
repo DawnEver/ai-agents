@@ -4,7 +4,7 @@
 python scripts/md2docx.py <input.md> <template.docx> [output.docx]
 ```
 
-Default output: `out/<template-stem>-<yyMMdd>.docx`. The renderer rejects an output path that resolves to the template itself.
+Default output: `<md-project>/out/<template-stem>-<yyMMdd>.docx`. The renderer rejects an output path that resolves to the template itself.
 
 ## What happens
 
@@ -19,8 +19,8 @@ Default output: `out/<template-stem>-<yyMMdd>.docx`. The renderer rejects an out
 ## Verify (mandatory)
 
 ```bash
-python scripts/docx2md.py out/X-<yyMMdd>.docx /tmp/x-re.md
-diff <(sed '1d; s/ *$//' workspace/x.md) <(sed '1d; s/ *$//; s/<!-- ccx[0-9]* --> //' /tmp/x-re.md)
+python scripts/docx2md.py workspace/ongoing/<project>/out/X-<yyMMdd>.docx /tmp/x-re.md
+diff <(sed '1d; s/ *$//' workspace/ongoing/<project>/x.md) <(sed '1d; s/ *$//; s/<!-- ccx[0-9]* --> //' /tmp/x-re.md)
 ```
 
 Expected diffs only: the transcript filename line, trailing whitespace, and `ccxN` anchors gained by previously-unanchored content. Anything else = bug, investigate before delivering.

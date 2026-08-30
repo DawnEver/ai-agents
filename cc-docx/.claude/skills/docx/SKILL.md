@@ -27,7 +27,7 @@ Markdown is the **working format** (iteration, comparison, diffing); `.docx` is 
 
 ## How to execute
 
-Read the phase file for the step you're at and follow it. This file is the map; phase files are the playbook. Default output is `out/` for rendered docx and `workspace/<yyMMdd>-<project>/` for transcripts. Each project lives in its own dated directory with a `project.toml` recording source template paths, iteration count and delivery outputs — bump `iteration` on every substantive draft revision.
+Read the phase file for the step you're at and follow it. This file is the map; phase files are the playbook. Active tasks live in `workspace/ongoing/<yyMMdd>-<project>/`; rendered files go in that task's `out/`. Each project has a `project.toml` recording source template paths, iteration count and delivery outputs — bump `iteration` on every substantive draft revision.
 
 ## Hard rules
 
@@ -43,15 +43,15 @@ Read the phase file for the step you're at and follow it. This file is the map; 
 
 ```bash
 # transcribe a template
-python scripts/docx2md.py "ref/Workplan.docx" workspace/260805-ktp_proposal/workplan.md
+python scripts/docx2md.py "ref/Workplan.docx" workspace/ongoing/260805-ktp-proposal/workplan.md
 
-# ...edit workspace/260805-ktp_proposal/workplan.md...
-# ...and bump `iteration` in workspace/260805-ktp_proposal/project.toml
+# ...edit workspace/ongoing/260805-ktp-proposal/workplan.md...
+# ...and bump `iteration` in that project's project.toml
 
 # render the filled Word deliverable (never overwrite the template;
-# default output name carries today's date, e.g. out/Workplan-260805.docx)
-python scripts/md2docx.py workspace/260805-ktp_proposal/workplan.md "ref/Workplan.docx" --track-changes
+# default output is workspace/ongoing/260805-ktp-proposal/out/Workplan-260805.docx)
+python scripts/md2docx.py workspace/ongoing/260805-ktp-proposal/workplan.md "ref/Workplan.docx" --track-changes
 
 # PDF only when needed
-python scripts/to_pdf.py out/Workplan-filled.docx
+python scripts/to_pdf.py workspace/ongoing/260805-ktp-proposal/out/Workplan-260805.docx
 ```
