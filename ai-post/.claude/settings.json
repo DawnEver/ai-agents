@@ -24,5 +24,8 @@
       "Grep(*/ai-post/**)",
       "Agent(takeover-image)"
     ]
+  },
+  "enabledPlugins": {
+    "sharp-review@cc-market": false
   }
 }
