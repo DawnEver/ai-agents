@@ -1,6 +1,7 @@
 {
   "enabledPlugins": {
-    "cc-academia@cc-market": true
+    "cc-academia@cc-market": true,
+    "sharp-review@cc-market": false
   },
   "permissions": {
     "allow": [

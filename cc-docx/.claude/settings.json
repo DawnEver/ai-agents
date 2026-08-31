@@ -14,5 +14,8 @@
       "Glob(*/cc-docx/**)",
       "Grep(*/cc-docx/**)"
     ]
+  },
+  "enabledPlugins": {
+    "sharp-review@cc-market": false
   }
 }
