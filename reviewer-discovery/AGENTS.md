@@ -11,7 +11,13 @@ command may ingest the raw PDF. Search requests contain derived keywords, not
 the abstract or manuscript body.
 
 Work in `ongoing/`; move completed work to `archived/` only when explicitly
-asked. Do not publish, email candidates, open a browser, or invoke a paid model
+asked.
+
+One file per case is handed over: `ongoing/<slug>/<slug>.xlsx`, sitting beside
+that case's `0-raw.pdf`. The numbered stage directories are working material —
+kept so a verdict can be disputed, not sent to anybody.
+
+Do not publish, email candidates, open a browser, or invoke a paid model
 without explicit confirmation.
 
 This data workspace must work with either host independently:
