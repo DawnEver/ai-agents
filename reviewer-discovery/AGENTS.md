@@ -47,3 +47,12 @@ subdirectory per device.
 These files hold real people's addresses and employment. Turning the export on
 is a deliberate act, which is why it is off by default and why nothing discovers
 a cloud folder on its own.
+
+## Change the tool at its source
+
+The workflow for this project ships as a plugin. Fix it in the plugin's own
+source checkout, never in the copy the host installed under `~/.claude/plugins/`
+or `~/.codex/` — that is a cache and the edit will be overwritten. If the source
+checkout cannot be discovered, ask the user for the path rather than guessing or
+editing the cache. Never commit an absolute path to it. See
+`../.claude/rules/TOOL-SOURCE.md`.

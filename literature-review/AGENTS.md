@@ -22,3 +22,12 @@ Project-level `.claude/memory/` may contain only generic, topic-agnostic
 engineering knowledge. Never write a topic slug, a paper title or a research
 finding there. If one is written by mistake, delete it and amend the commit
 rather than leaving it in history.
+
+## Change the tool at its source
+
+The workflow for this project ships as a plugin. Fix it in the plugin's own
+source checkout, never in the copy the host installed under `~/.claude/plugins/`
+or `~/.codex/` — that is a cache and the edit will be overwritten. If the source
+checkout cannot be discovered, ask the user for the path rather than guessing or
+editing the cache. Never commit an absolute path to it. See
+`../.claude/rules/TOOL-SOURCE.md`.

@@ -122,3 +122,12 @@ explicitly with `launch({ observe: 'none' })`; this is a degradation, not equiva
   session.mjs` reads the persisted per-agent jsonl (evidence layer 2) as a convenient
   structured view. Verify TUI actions by polling that jsonl — the alt-screen buffer echoes
   typed input, so `waitOutput` on your own text is a false positive.
+
+## Change the tool at its source
+
+The workflow for this project ships as a plugin. Fix it in the plugin's own
+source checkout, never in the copy the host installed under `~/.claude/plugins/`
+or `~/.codex/` — that is a cache and the edit will be overwritten. If the source
+checkout cannot be discovered, ask the user for the path rather than guessing or
+editing the cache. Never commit an absolute path to it. See
+`../.claude/rules/TOOL-SOURCE.md`.

@@ -52,3 +52,12 @@ This project is a Word ↔ Markdown round-trip harness. Read this before touchin
 - **"anchor not found"**: template was re-exported/re-downloaded after anchoring. Re-run `docx2md` on the fresh template (or copy bookmarks by editing the same file).
 - **Run-level formatting lost on replaced paragraphs**: patch-back replaces runs; character-level formatting from the original paragraph (e.g. a bold label word inside an answer slot) is not preserved — put emphasis in the md instead.
 - **Word open on the file** → `to_pdf.py` fails with a COM error; close Word first.
+
+## Change the tool at its source
+
+The workflow for this project ships as a plugin. Fix it in the plugin's own
+source checkout, never in the copy the host installed under `~/.claude/plugins/`
+or `~/.codex/` — that is a cache and the edit will be overwritten. If the source
+checkout cannot be discovered, ask the user for the path rather than guessing or
+editing the cache. Never commit an absolute path to it. See
+`../.claude/rules/TOOL-SOURCE.md`.

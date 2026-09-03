@@ -13,3 +13,22 @@ This repository contains independent agent projects. Before changing a child pro
 | `reviewer-discovery/` | Matching submissions to candidate reviewers |
 
 Do not run outward-facing publishing, email, browser, paid-model, or destructive archive actions without explicit user confirmation. Prefer each project's lightweight tests when validating cross-project changes.
+
+## Change the tool at its source
+
+The executable tooling ships as a plugin; these projects are data and workflow.
+A behaviour fix is therefore a change to the plugin's **source checkout**, never
+to the copy the host installed under `~/.claude/plugins/` or `~/.codex/`. That
+copy is a cache: an edit there is overwritten at the next update, invisible on
+every other machine, and missing from the history that explains it.
+
+Discover the source — a checkout the user has named, a repository whose `origin`
+matches the installed copy's remote, or a sibling checkout of it. **If none
+resolves, ask the user for the path**; do not fall back to editing the installed
+copy and do not guess. Never commit an absolute path to anyone's checkout: these
+projects sync across machines and hosts, where such a path is right on exactly
+one of them.
+
+Run the tests and commit in the source checkout. If the running session needs
+the change immediately, re-sync the installed copy from the source rather than
+editing it in place.

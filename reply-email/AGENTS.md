@@ -183,3 +183,12 @@ Use generic placeholders: `conference-invitation`, `prof.smith@example.com`, `[Y
   and the no-profile fallback style.
 - `style/profile.md`, `ongoing/`, `archived/` — local only, gitignored; never commit, never store
   in memory.
+
+## Change the tool at its source
+
+The workflow for this project ships as a plugin. Fix it in the plugin's own
+source checkout, never in the copy the host installed under `~/.claude/plugins/`
+or `~/.codex/` — that is a cache and the edit will be overwritten. If the source
+checkout cannot be discovered, ask the user for the path rather than guessing or
+editing the cache. Never commit an absolute path to it. See
+`../.claude/rules/TOOL-SOURCE.md`.
