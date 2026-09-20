@@ -35,6 +35,9 @@ this file and must never restate the conventions defined here.
    directory and presenting the draft is the end of this step — wait.
 6. Tell the user the draft is ready. The user edits `final.md` directly. Never touch `draft.md`
    after creation. Optional polish: only if the user explicitly asks, edit `final.md`.
+   - 6a. Build the importable files (see **Mail and calendar generation**) so the round can be
+     opened in a mail client instead of hand-pasted. Regenerate after every edit to `final.md`.
+     This is a convenience, not an approval — the archive gate below is unchanged.
 7. After approval (user says "归档" or "archive"), archive the round:
    - 7a. Move `ongoing/<topic>/` → `archived/<YYYY>/<MM>/<DD>/<topic>/` (apply the `-r<N>`
      suffix rule from **Naming conventions** if the same slug already archived today).
@@ -60,12 +63,15 @@ ongoing/<topic>/           — in-progress (local only, gitignored)
   original.txt             — raw incoming email (this round only)
   draft.md                 — AI's initial draft
   final.md                 — user-edited version (starts identical to draft.md)
+  <topic>.eml, <topic>.ics — generated importables, named after the round directory
+                             (see Mail and calendar generation)
 
 archived/<YYYY>/<MM>/<DD>/<topic>/  — one folder per exchange round (local only, gitignored)
   original.txt             — raw incoming email for this round only
   draft.md                 — AI's initial draft (preserved for diff learning)
   reply.md                 — sent reply (user's final.md, renamed after diff)
   meta.md                  — metadata + diff observations
+  <topic>.eml, <topic>.ics — the generated importables, moved here with the round
   (attachments)            — any material that came with the email (image/*.png, *.csv, …);
                              filenames are unconstrained, not part of the spec
 ```
@@ -173,13 +179,75 @@ Use generic placeholders: `conference-invitation`, `prof.smith@example.com`, `[Y
 `project-proposal`. Real data lives exclusively in gitignored paths — `ongoing/`, `archived/`,
 `style/profile.md`.
 
+### Mail and calendar generation
+
+`scripts/build_mail.py` turns a finished `final.md` into an `.eml` and an `.ics` next to it, so
+the round can be double-clicked into a mail client rather than pasted by hand. Zero
+dependencies (Python stdlib only), so it runs on any machine with `python3`.
+
+```bash
+python scripts/build_mail.py ongoing/<topic>/final.md
+```
+
+Addressing and event details live in a **flat frontmatter block** at the top of `final.md` —
+`key: value` lines split on the first colon only, so `subject: Re: something` needs no quoting
+and no YAML parser. Everything below the closing `---` is the email body.
+
+```
+---
+to: alice@example.com, "Smith, Bob" <bob@example.com>
+cc:
+subject: Re: Project meeting
+attach: booking-confirmation.pdf, image-1.png
+event.title: Project meeting
+event.start: 2026-03-04 09:00
+event.end: 2026-03-04 10:00
+event.timezone: Europe/Berlin
+event.location: Meeting room 2
+---
+```
+
+- **Address keys** — `to`, `cc`, `bcc`, `from`, `reply-to`. `to:`, or `event.title` +
+  `event.start`, is what makes the corresponding file get written; with neither, the command
+  has nothing to build.
+- **`attach`** — paths relative to the draft, comma-separated.
+- **Images** — `![alt](image-1.png)` anywhere in the body becomes an inline image, not an
+  attachment. Unreferenced files in the folder are ignored.
+- **`event.*`** — `title`, `start`, `end`, `timezone`, `utc`, `location`, `description`,
+  `attendees`, `organizer`, `method`, `uid`. `start` alone is an all-day event; add a time and
+  a `timezone` for a timed one. An all-day `end` is **exclusive** per RFC 5545, so a
+  two-day event on the 4th–5th is written `start: 2026-03-04` / `end: 2026-03-06`. The
+  builder warns whenever `end` is given, restating the last day actually included.
+- **Calendar semantics** — the default is a bare `VEVENT`: a personal appointment that
+  notifies nobody. `event.method: request` (with `event.organizer`) upgrades it to a real
+  meeting request.
+
+Behaviour worth knowing, because each is deliberate:
+
+- The `.eml` carries `X-Unsent: 1`, which is what makes Outlook open it as an **editable draft
+  with a Send button** instead of a received message. Clients that ignore the header still open
+  the file, just not in compose mode.
+- `From`, `Date` and `Message-ID` are **omitted** by default. Outlook supplies the account
+  identity for a draft, and a `From` it cannot resolve makes Send fail with "You can't send a
+  message on behalf of this user". Override with `--from` / `--date` only for non-Outlook use.
+- Output names come from the **round directory** (the topic slug), not the markdown filename,
+  because archiving renames `final.md` to `reply.md` at step 7d.
+- Warnings go to stderr and never block; `--strict` turns them into a non-zero exit. An
+  unknown frontmatter key is a warning — a typo silently dropping an attachment is the worst
+  failure available here.
+- Nothing is sent, ever. The command writes two local files.
+
 ### File conventions
 
 - `AGENTS.md` — this file; authoritative spec (generic, no personal data).
 - `CLAUDE.md` — thin `@AGENTS.md` include; kept separate so the parent multi-project `agents/`
   tree can compose project specs uniformly.
 - `.claude/commands/reply-email.md` — slash-command entry; procedure glue + sub-skill pointers.
-- `.claude/commands/reply-email/{archive,reply-style}.md` — sub-skills for the archive procedure
-  and the no-profile fallback style.
+- `.claude/commands/reply-email/{archive,reply-style,build-mail}.md` — sub-skills for the archive
+  procedure, the no-profile fallback style, and the `.eml`/`.ics` build.
+- `scripts/build_mail.py` — the generator CLI, with `mail_frontmatter.py` (frontmatter),
+  `mail_render.py` (body → HTML/plain) and `mail_ics.py` (calendar) beside it. Stdlib only,
+  cross-platform; `tests/test_mail.py` covers all four.
 - `style/profile.md`, `ongoing/`, `archived/` — local only, gitignored; never commit, never store
-  in memory.
+  in memory. Generated `.eml`/`.ics` files live in the round folder and are covered by the same
+  rule — they contain real addresses and reference numbers.

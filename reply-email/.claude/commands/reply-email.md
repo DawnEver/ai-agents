@@ -35,6 +35,9 @@ defaults, as specified by that file.
    directory already exists, the user is mid-edit — resume from the existing files instead.
 6. **User edits** — tell the user `final.md` is ready; they edit it directly. Polish `final.md`
    only if the user explicitly asks.
+   - **Build** — produce the importable `.eml`/`.ics` beside it and rebuild after any edit to
+     `final.md` → `reply-email/build-mail.md`. This is not approval to send or archive; step 7
+     is unchanged.
 7. **Wait for explicit approval.** **Never archive until the user says "归档" (or "archive").**
    Presenting the draft is the end of this sequence — stop and wait.
 8. **Archive** — only after explicit approval: run the archive procedure →
