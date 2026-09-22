@@ -19,8 +19,9 @@ this file and must never restate the conventions defined here.
 
 ### Replying to an email
 
-1. The user provides the incoming email (paste or describe) and their reply requirements or
-   draft (any language). Check for thread continuation (a referenced archive, or "接着之前的继续").
+1. The user provides the incoming email — pasted, described, or as a saved `.msg`/`.eml` file
+   (see **Reading incoming mail**) — plus their reply requirements or draft (any language).
+   Check for thread continuation (a referenced archive, or "接着之前的继续").
 2. Derive a kebab-case topic slug from the subject. For continuations, reuse the existing slug
    (see **Naming conventions**).
 3. Read `style/profile.md` for the user's configured style (see **Style**). If it doesn't
@@ -28,9 +29,11 @@ this file and must never restate the conventions defined here.
    only when neither exists.
 4. For continuations, load thread history (see **Thread reconstruction**) so the draft is aware
    of everything said before — don't re-ask answered questions.
-5. Create `ongoing/<topic>/` and write `original.txt` + `draft.md`. Then copy `draft.md` to
-   `final.md` with a shell command (`cp`), never by regenerating the content. If the directory
-   already exists, resume from the existing files (jump to step 6 — the user is editing).
+5. Create `ongoing/<topic>/` and write `original.txt` + `draft.md`. When the incoming mail
+   arrived as a file, let the reader write `original.txt` and its attachments rather than
+   retyping the body. Then copy `draft.md` to `final.md` with a shell command (`cp`), never by
+   regenerating the content. If the directory already exists, resume from the existing files
+   (jump to step 6 — the user is editing).
    **Never archive until the user explicitly says "归档" (or "archive").** Creating the ongoing
    directory and presenting the draft is the end of this step — wait.
 6. Tell the user the draft is ready. The user edits `final.md` directly. Never touch `draft.md`
@@ -179,6 +182,39 @@ Use generic placeholders: `conference-invitation`, `prof.smith@example.com`, `[Y
 `project-proposal`. Real data lives exclusively in gitignored paths — `ongoing/`, `archived/`,
 `style/profile.md`.
 
+### Reading incoming mail
+
+`scripts/read_mail.py` turns a saved `.msg` or `.eml` into the round's `original.txt`, with
+every attachment written beside it. Zero dependencies (Python stdlib only). It is the inbound
+counterpart to `build_mail.py`: reading a mail in, versus sending a reply out.
+
+```bash
+python scripts/read_mail.py "~/Downloads/message.msg" --out ongoing/<topic>
+```
+
+- **Format is detected from content, not the extension.** A `.msg` is an OLE compound file,
+  not RFC 822, so the stdlib `email` package cannot read it at all; `mail_msg.py` parses the
+  container directly. A `.msg`-named file that is not a compound file is an error, never a
+  silently mis-parsed `.eml`.
+- **Without `--out`, nothing is written** — the rendered `original.txt` goes to stdout, so the
+  message can be checked before it lands in a round folder. `--json` reports the envelope
+  (`from`, `to`, `cc`, `date`, `subject`, attachments) for programmatic use.
+- **`original.txt` carries a header block** — `From`, `To`, `Cc`, `Date`, `Subject`, `Source`,
+  then the body, then an `Attachments:` list. Those fields are where the reply's frontmatter
+  addresses come from; a `Source:` line records which file the round was read from.
+- **Attachments are written with counter-suffixed names** when a message reuses one
+  (`image.png`, `image-2.png`). Outlook names every inline image `image001.jpg`, so a naive
+  write keeps only the last one. Names are also flattened to a bare filename, because they
+  arrive from the network.
+- **Inline images appear in the body as `[inline image: <name>]`**, so an HTML-only mail that
+  carries its content in a screenshot is legible in the text file. `--plain` drops the markers.
+- **An HTML-only body is converted to text** with paragraph structure preserved; a
+  `text/plain` part, when present, is used verbatim instead.
+- **A body that is empty of content warns.** A forwarded mail is often signature-only, with
+  everything meaningful in a screenshot or attachment — read those images and write what they
+  show into `original.txt`, because the images are unreadable to anything that reads only text.
+- Warnings go to stderr and never block; `--strict` turns them into a non-zero exit.
+
 ### Mail and calendar generation
 
 `scripts/build_mail.py` turns a finished `final.md` into an `.eml` and an `.ics` next to it, so
@@ -248,6 +284,10 @@ Behaviour worth knowing, because each is deliberate:
 - `scripts/build_mail.py` — the generator CLI, with `mail_frontmatter.py` (frontmatter),
   `mail_render.py` (body → HTML/plain) and `mail_ics.py` (calendar) beside it. Stdlib only,
   cross-platform; `tests/test_mail.py` covers all four.
+- `scripts/read_mail.py` — the reader CLI, with `mail_read.py` (shared `ParsedMail` model,
+  HTML → text, `original.txt` rendering), `mail_msg.py` (Outlook `.msg`) and `mail_eml.py`
+  (RFC 822) beside it. Stdlib only, cross-platform; `tests/test_read_mail.py` covers all four.
 - `style/profile.md`, `ongoing/`, `archived/` — local only, gitignored; never commit, never store
-  in memory. Generated `.eml`/`.ics` files live in the round folder and are covered by the same
-  rule — they contain real addresses and reference numbers.
+  in memory. Generated `.eml`/`.ics` files and extracted `original.txt`/attachments live in the
+  round folder and are covered by the same rule — they contain real addresses and reference
+  numbers.
