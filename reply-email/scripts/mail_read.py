@@ -97,6 +97,9 @@ class ParsedMail:
 
     source: str = ""
     subject: str = ""
+    # The incoming Message-ID is what a reply's In-Reply-To/References must quote, so it
+    # is surfaced here and written into `original.txt` for the draft's frontmatter.
+    message_id: str = ""
     sender: Address = field(default_factory=Address)
     to: list[Address] = field(default_factory=list)
     cc: list[Address] = field(default_factory=list)
@@ -227,6 +230,8 @@ def render_original_txt(mail: ParsedMail, *, inline_images: bool = True) -> str:
         lines.append(f"Date: {format_date(mail.date)}")
     if mail.subject:
         lines.append(f"Subject: {mail.subject}")
+    if mail.message_id:
+        lines.append(f"Message-ID: {mail.message_id}")
     if mail.source:
         lines.append(f"Source: {mail.source}")
 

@@ -107,6 +107,24 @@ class FrontmatterParsingTests(unittest.TestCase):
         self.assertEqual(doc.event()["title"], "Kick-off")
         self.assertEqual(doc.event()["start"], "2026-09-29 09:00")
 
+    def test_threading_keys_are_known(self):
+        doc = mail_frontmatter.parse("---\nin-reply-to: <a@x>\n---\nBody\n")
+        self.assertEqual(doc.warnings, [])
+
+    def test_message_ids_accept_both_list_spellings(self):
+        header_form = mail_frontmatter.parse(
+            "---\nreferences: <root@x> <mid@x>\nin-reply-to: <mid@x>\n---\nBody\n"
+        )
+        self.assertEqual(header_form.message_ids("references"), ["<root@x>", "<mid@x>"])
+        self.assertEqual(header_form.message_ids("in-reply-to"), ["<mid@x>"])
+
+        list_form = mail_frontmatter.parse("---\nreferences: <root@x>, <mid@x>\n---\nBody\n")
+        self.assertEqual(list_form.message_ids("references"), ["<root@x>", "<mid@x>"])
+
+    def test_a_bare_message_id_is_bracketed(self):
+        doc = mail_frontmatter.parse("---\nin-reply-to: mid@x\n---\nBody\n")
+        self.assertEqual(doc.message_ids("in-reply-to"), ["<mid@x>"])
+
 
 class EscapeTests(unittest.TestCase):
     def test_text_escaping_covers_the_dangerous_characters(self):
@@ -477,9 +495,58 @@ class EmlBuildTests(unittest.TestCase):
         msg, _, _ = self.build("to: a@example.com", "Body\n", text_only=True)
         self.assertEqual(self.shape(msg), "plain")
 
-    def test_x_unsent_is_present_because_that_is_what_makes_it_a_draft(self):
+    def test_no_x_unsent_by_default_so_outlook_opens_it_as_received(self):
+        # Without the header Outlook shows Reply/Reply All; with it, it opens a compose
+        # window instead, which has no Reply. Received style is the default.
         msg, _, _ = self.build("to: a@example.com", "Body\n")
+        self.assertIsNone(msg["X-Unsent"])
+
+    def test_draft_mode_opts_back_into_the_compose_window(self):
+        msg, _, _ = self.build("to: a@example.com", "Body\n", draft=True)
         self.assertEqual(msg["X-Unsent"], "1")
+
+    def test_missing_from_warns_only_in_received_style(self):
+        _, _, warnings = self.build("to: a@example.com", "Body\n")
+        self.assertTrue(any("no from: address" in w for w in warnings))
+        # In draft mode Outlook supplies the account identity, so there is nothing to warn
+        # about.
+        _, _, draft_warnings = self.build("to: a@example.com", "Body\n", draft=True)
+        self.assertFalse(any("no from: address" in w for w in draft_warnings))
+
+    def test_threading_headers_are_emitted(self):
+        msg, _, warnings = self.build(
+            "to: a@example.com\nfrom: me@example.com\n"
+            "in-reply-to: <abc@example.com>\nreferences: <root@example.com>, <abc@example.com>",
+            "Body\n",
+        )
+        self.assertEqual(msg["In-Reply-To"], "<abc@example.com>")
+        # Both spellings of a References list land on the same header value.
+        self.assertEqual(msg["References"], "<root@example.com> <abc@example.com>")
+        self.assertEqual(warnings, [])
+
+    def test_from_in_the_frontmatter_is_honoured(self):
+        msg, _, _ = self.build("to: a@example.com\nfrom: me@example.com", "Body\n")
+        self.assertEqual(msg["From"], "me@example.com")
+
+    def test_from_flag_overrides_the_frontmatter(self):
+        msg, _, _ = self.build(
+            "to: a@example.com\nfrom: me@example.com", "Body\n", from_addr="other@example.com"
+        )
+        self.assertEqual(msg["From"], "other@example.com")
+
+    def test_bare_message_ids_get_their_brackets(self):
+        msg, _, _ = self.build("to: a@example.com\nin-reply-to: abc@example.com", "Body\n")
+        self.assertEqual(msg["In-Reply-To"], "<abc@example.com>")
+
+    def test_references_defaults_to_in_reply_to(self):
+        msg, _, _ = self.build("to: a@example.com\nin-reply-to: <abc@example.com>", "Body\n")
+        self.assertEqual(msg["References"], "<abc@example.com>")
+
+    def test_references_without_in_reply_to_warns(self):
+        _, _, warnings = self.build(
+            "to: a@example.com\nreferences: <root@example.com>", "Body\n"
+        )
+        self.assertTrue(any("Outlook threads on In-Reply-To" in w for w in warnings))
 
     def test_from_date_and_message_id_are_absent_by_default(self):
         msg, _, _ = self.build("to: a@example.com", "Body\n")
@@ -570,6 +637,30 @@ class EmlBuildTests(unittest.TestCase):
         )
         self.assertTrue(any("both inline and attached" in w for w in warnings))
 
+    def test_message_ids_are_never_rfc2047_encoded(self):
+        # An id long enough to need folding: the stdlib would otherwise encode it as
+        # `=3C...=40...`, which no client can thread on.
+        long_id = "<" + "A" * 70 + "@example.com>"
+        _msg, data, _ = self.build(f"to: a@example.com\nin-reply-to: {long_id}", "Body\n")
+
+        raw = data.decode("ascii", "replace")
+        self.assertNotIn("=?utf-8?", raw)
+        self.assertIn(long_id, raw.replace("\r\n ", ""))
+
+    def test_a_whole_references_chain_survives(self):
+        msg, data, _ = self.build(
+            "to: a@example.com\n"
+            "in-reply-to: <mid@example.com>\n"
+            "references: <" + "B" * 70 + "@example.com>, <other@example.com>, <mid@example.com>",
+            "Body\n",
+        )
+        # Re-parse: a single-id header would silently keep only the first entry.
+        reparsed = email.message_from_bytes(data, policy=email.policy.default)
+        ids = str(reparsed["References"]).split()
+        self.assertEqual(len(ids), 3)
+        self.assertEqual(ids[-1], "<mid@example.com>")
+        self.assertEqual(str(msg["In-Reply-To"]), "<mid@example.com>")
+
 
 class CommandLineTests(unittest.TestCase):
     def setUp(self):
@@ -608,6 +699,16 @@ class CommandLineTests(unittest.TestCase):
         out = self.dir / "out"
         self.assertEqual(build_mail.main([str(self.draft), "--name", "custom", "--out", str(out)]), 0)
         self.assertTrue((out / "custom.eml").is_file())
+
+    def test_as_draft_does_not_collide_with_the_positional_draft(self):
+        # Both used to land on args.draft, so the positional path made the flag always-on.
+        self.assertEqual(build_mail.main([str(self.draft), "--eml"]), 0)
+        plain = (self.dir / f"{self.dir.name}.eml").read_bytes()
+        self.assertNotIn(b"X-Unsent", plain)
+
+        self.assertEqual(build_mail.main([str(self.draft), "--eml", "--as-draft"]), 0)
+        drafted = (self.dir / f"{self.dir.name}.eml").read_bytes()
+        self.assertIn(b"X-Unsent: 1", drafted)
 
     def test_json_output_is_parseable(self):
         import contextlib

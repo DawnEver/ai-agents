@@ -216,12 +216,15 @@ def filetime(moment: datetime) -> bytes:
 
 
 SENT_AT = datetime(2026, 3, 4, 9, 15, tzinfo=timezone.utc)
+MESSAGE_ID = "<VI3SPR01MB09268AF5C01C71A902C3CCD0A5832@eurprd09.prod.outlook.com>"
+
 TRANSPORT = (
     "From: \"Smith, Alice\" <alice@example.com>\r\n"
     "To: Bob Jones <bob@example.com>\r\n"
     "CC: \"Carol Ng\" <carol@example.com>\r\n"
     "Subject: Operating point\r\n"
     "Date: Wed, 4 Mar 2026 09:15:00 +0000\r\n"
+    f"Message-ID: {MESSAGE_ID}\r\n"
 )
 
 
@@ -291,6 +294,20 @@ class MsgExtractTests(unittest.TestCase):
         mail = self.extract(sample_msg())
         self.assertEqual(mail.date, SENT_AT)
 
+    def test_message_id_is_read_so_a_reply_can_thread(self):
+        mail = self.extract(sample_msg())
+        self.assertEqual(mail.message_id, MESSAGE_ID)
+
+    def test_message_id_falls_back_to_the_mapi_property(self):
+        # No transport headers at all: the id still comes from PR_INTERNET_MESSAGE_ID.
+        root = [
+            unicode_prop(0x0037, "No headers"),
+            unicode_prop(0x1035, MESSAGE_ID),
+            props_stream([(PT_SYSTIME, 0x0039, filetime(SENT_AT))], header=True),
+        ]
+        mail = self.extract(build_cfb(root))
+        self.assertEqual(mail.message_id, MESSAGE_ID)
+
     def test_attachment_metadata_and_bytes(self):
         mail = self.extract(sample_msg(attachments=png_attachment()))
 
@@ -346,6 +363,7 @@ class EmlExtractTests(unittest.TestCase):
             b"From: Alice <alice@example.com>\r\n"
             b"To: Bob <bob@example.com>\r\n"
             b"Subject: Test\r\n"
+            b"Message-ID: <eml-id@example.com>\r\n"
             b'Date: Wed, 4 Mar 2026 09:15:00 +0000\r\n'
             b"MIME-Version: 1.0\r\n"
             b'Content-Type: multipart/mixed; boundary="B"\r\n\r\n'
@@ -371,6 +389,7 @@ class EmlExtractTests(unittest.TestCase):
         self.assertIn("\u00a3478.25", mail.body_plain)
         self.assertIn("caf\u00e9", mail.body_plain)
         self.assertEqual(str(mail.sender), "Alice <alice@example.com>")
+        self.assertEqual(mail.message_id, "<eml-id@example.com>")
         names = sorted(a.filename for a in mail.attachments)
         self.assertEqual(names, ["doc.pdf", "image001.png"])
         pdf = next(a for a in mail.attachments if a.filename == "doc.pdf")
@@ -486,6 +505,7 @@ class CommandLineTests(unittest.TestCase):
             self.assertEqual(code, 0)
             payload = json.loads(buffer.getvalue())
             self.assertEqual(payload["subject"], "Operating point")
+            self.assertEqual(payload["message_id"], MESSAGE_ID)
             self.assertEqual(payload["to"], ["Bob Jones <bob@example.com>"])
             self.assertEqual(payload["date"], "2026-03-04 09:15 UTC")
             self.assertEqual(payload["written"], [])  # nothing on disk without --out

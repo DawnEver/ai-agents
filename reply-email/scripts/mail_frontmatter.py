@@ -39,7 +39,10 @@ EVENT_KEYS = frozenset(
     }
 )
 
-KNOWN_KEYS = frozenset({"subject", "date"}) | ADDRESS_KEYS | PATH_KEYS | EVENT_KEYS
+# Threading headers. Their values are message-ids, not addresses or paths.
+THREAD_KEYS = frozenset({"in-reply-to", "references"})
+
+KNOWN_KEYS = frozenset({"subject", "date"}) | ADDRESS_KEYS | PATH_KEYS | EVENT_KEYS | THREAD_KEYS
 
 
 def _split_items(value: str) -> list[str]:
@@ -78,6 +81,9 @@ class ParsedDoc:
     def paths(self, key: str) -> list[str]:
         return split_paths(self.get(key))
 
+    def message_ids(self, key: str) -> list[str]:
+        return [normalize_message_id(item) for item in split_message_ids(self.get(key))]
+
     def event(self) -> dict[str, str]:
         return {k[len("event.") :]: v for k, v in self.fields.items() if k.startswith("event.")}
 
@@ -96,6 +102,45 @@ def split_paths(value: str) -> list[str]:
         if item:
             out.append(item)
     return out
+
+
+def split_message_ids(value: str) -> list[str]:
+    """Split a References/In-Reply-To value on commas or whitespace, outside the brackets.
+
+    Both spellings turn up: the header form `<a@x> <b@x>` copied from a mail client, and a
+    comma-separated list matching the rest of this file's syntax.
+    """
+    ids: list[str] = []
+    current: list[str] = []
+    depth = 0
+    for ch in value:
+        if ch == "<":
+            depth += 1
+        elif ch == ">":
+            depth = max(0, depth - 1)
+        if ch in ", \t" and depth == 0:
+            if "".join(current).strip():
+                ids.append("".join(current).strip())
+            current = []
+        else:
+            current.append(ch)
+    if "".join(current).strip():
+        ids.append("".join(current).strip())
+    return ids
+
+
+def normalize_message_id(value: str) -> str:
+    """Wrap a bare message-id in angle brackets; leave an already-bracketed one alone.
+
+    A missing pair of brackets is the difference between a header every client threads on
+    and one they silently ignore.
+    """
+    value = value.strip()
+    if not value:
+        return ""
+    if value.startswith("<") and value.endswith(">"):
+        return value
+    return f"<{value}>"
 
 
 def parse(source: str) -> ParsedDoc:

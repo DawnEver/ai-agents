@@ -2,13 +2,16 @@
 """Build an importable `.eml` and/or `.ics` next to a finished reply draft.
 
 The draft carries its addressing in a flat frontmatter block; the body below it is the
-email itself. The `.eml` is marked `X-Unsent: 1`, which is what makes Outlook open it as an
-**editable draft with a Send button** rather than as a received message. The `.ics` is a
-plain appointment unless the round asks for a real meeting request.
+email itself. By default the `.eml` is left unmarked, so Outlook opens it as a **received
+message** and Reply works; `--draft` adds `X-Unsent: 1` to open it as a compose window with
+a Send button instead. The two are mutually exclusive - a message cannot be both already
+sent and not yet sent. The `.ics` is a plain appointment unless the round asks for a real
+meeting request.
 
 Usage:
     python scripts/build_mail.py <final.md> [--out DIR] [--eml] [--ics] [--text-only]
-                                           [--name STEM] [--eol lf] [--strict] [--json]
+                                           [--name STEM] [--eol lf] [--draft] [--strict]
+                                           [--json]
 
 Exit codes:
     0  built successfully
@@ -21,6 +24,7 @@ archiving renames `final.md` to `reply.md`, so a filename-derived output would d
 from __future__ import annotations
 
 import argparse
+import email.headerregistry
 import json
 import mimetypes
 import sys
@@ -36,7 +40,45 @@ import mail_ics  # noqa: E402
 import mail_render  # noqa: E402
 
 CID_DOMAIN = "local"  # deliberately neutral: this project may be renamed
-SMTP = policy.SMTP  # CRLF line endings, which Outlook expects
+
+
+class MessageIDListHeader(email.headerregistry.UnstructuredHeader):
+    """One or more `<id>` tokens, folded only at the spaces between them.
+
+    Left unregistered, `EmailPolicy` treats such a header as unstructured prose and folds a
+    token too long for one line by RFC 2047-encoding it - `<abc@x>` comes out as
+    `=3Cabc=40x=3E`, which no client can thread on. `MessageIDHeader` avoids that but holds
+    a single id, so it would silently drop the rest of a References chain.
+    """
+
+    def fold(self, *, policy: email.policy.Policy) -> str:
+        name = self.name
+        lines: list[str] = []
+        current = ""
+        for token in str(self).split():
+            candidate = f"{current} {token}" if current else token
+            if current and len(name) + 2 + len(candidate) > policy.max_line_length:
+                lines.append(current)
+                current = token
+            else:
+                current = candidate
+        lines.append(current)
+        # A single id can exceed the line length and has nowhere to fold; that is legal
+        # (RFC 5322 allows 998 octets) and far better than mangling it.
+        # fold() returns the whole header, trailing line separator included.
+        return f"{name}: " + (policy.linesep + " ").join(lines) + policy.linesep
+
+
+def _threading_registry() -> email.headerregistry.HeaderRegistry:
+    """The default header registry, with the threading headers folding as id lists."""
+    registry = email.headerregistry.HeaderRegistry()
+    registry.map_to_type("in-reply-to", MessageIDListHeader)
+    registry.map_to_type("references", MessageIDListHeader)
+    return registry
+
+
+SMTP = policy.SMTP.clone(header_factory=_threading_registry())
+# CRLF line endings, which Outlook expects, plus the threading headers above.
 
 
 class BuildError(RuntimeError):
@@ -79,6 +121,7 @@ def build_eml(
     text_only: bool = False,
     from_addr: str = "",
     date_header: str = "",
+    draft: bool = False,
 ) -> tuple[bytes, list[str]]:
     """Assemble the message. Returns its bytes and any warnings."""
     warnings: list[str] = []
@@ -133,13 +176,38 @@ def build_eml(
             "bcc: is set - safe in Outlook, which strips it on send, but this .eml carries "
             "the blind list in the clear for anything else that sends it"
         )
-    if from_addr:
-        message["From"] = from_addr
+    # `from:` is an ordinary address key in the frontmatter; --from overrides it. In
+    # received style this is the address Reply will answer, so it is not cosmetic.
+    from_frontmatter = doc.addresses("from")
+    from_header = from_addr or (from_frontmatter[0] if from_frontmatter else "")
+    if from_header:
+        message["From"] = from_header
     if date_header:
         message["Date"] = date_header
     # Deliberately NO From/Date/Message-ID by default: Outlook supplies the account
     # identity for a draft, and a From it cannot resolve makes Send fail outright.
-    message["X-Unsent"] = "1"
+
+    in_reply_to = doc.message_ids("in-reply-to")
+    references = doc.message_ids("references") or in_reply_to
+    if in_reply_to:
+        message["In-Reply-To"] = " ".join(in_reply_to)
+    if references:
+        message["References"] = " ".join(references)
+    if references and not in_reply_to:
+        warnings.append(
+            "references: is set without in-reply-to: - Outlook threads on In-Reply-To, so "
+            "this may still arrive as a new conversation"
+        )
+
+    if draft:
+        # `X-Unsent: 1` makes Outlook open the file as an editable draft with a Send
+        # button - and therefore with no Reply button, since it is already a reply.
+        message["X-Unsent"] = "1"
+    elif not from_header:
+        warnings.append(
+            "no from: address - Outlook will show no sender on this received-style message, "
+            "and Reply will have no address to answer; set from: or pass --from"
+        )
 
     attachments = doc.paths("attach")
     for raw in attachments:
@@ -185,6 +253,14 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     )
     parser.add_argument("--from", dest="from_addr", default="", help="set a From header")
     parser.add_argument("--date", dest="date_header", default="", help="set a Date header")
+    # Named --as-draft, not --draft: the positional `draft` already owns that dest, and
+    # argparse would let the two silently clobber each other.
+    parser.add_argument(
+        "--as-draft",
+        dest="as_draft",
+        action="store_true",
+        help="mark the .eml X-Unsent: 1 so Outlook opens it as a compose window with Send",
+    )
     parser.add_argument("--strict", action="store_true", help="treat warnings as failure")
     parser.add_argument("--json", action="store_true", help="machine-readable result on stdout")
     return parser.parse_args(argv)
@@ -217,6 +293,7 @@ def main(argv: list[str] | None = None) -> int:
                 text_only=args.text_only,
                 from_addr=args.from_addr,
                 date_header=args.date_header,
+                draft=args.as_draft,
             )
             warnings.extend(eml_warnings)
             if args.eol == "lf":

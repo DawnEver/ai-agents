@@ -92,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
                     "ok": True,
                     "source": str(args.mail),
                     "subject": mail.subject,
+                    "message_id": mail.message_id,
                     "from": str(mail.sender),
                     "to": [str(address) for address in mail.to],
                     "cc": [str(address) for address in mail.cc],

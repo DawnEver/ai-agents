@@ -199,9 +199,10 @@ python scripts/read_mail.py "~/Downloads/message.msg" --out ongoing/<topic>
 - **Without `--out`, nothing is written** — the rendered `original.txt` goes to stdout, so the
   message can be checked before it lands in a round folder. `--json` reports the envelope
   (`from`, `to`, `cc`, `date`, `subject`, attachments) for programmatic use.
-- **`original.txt` carries a header block** — `From`, `To`, `Cc`, `Date`, `Subject`, `Source`,
-  then the body, then an `Attachments:` list. Those fields are where the reply's frontmatter
-  addresses come from; a `Source:` line records which file the round was read from.
+- **`original.txt` carries a header block** — `From`, `To`, `Cc`, `Date`, `Subject`,
+  `Message-ID`, `Source`, then the body, then an `Attachments:` list. Those fields are where
+  the reply's frontmatter comes from: the addresses fill `to:`/`cc:`, and the `Message-ID`
+  fills `in-reply-to:`. A `Source:` line records which file the round was read from.
 - **Attachments are written with counter-suffixed names** when a message reuses one
   (`image.png`, `image-2.png`). Outlook names every inline image `image001.jpg`, so a naive
   write keeps only the last one. Names are also flattened to a bare filename, because they
@@ -233,7 +234,9 @@ and no YAML parser. Everything below the closing `---` is the email body.
 ---
 to: alice@example.com, "Smith, Bob" <bob@example.com>
 cc:
+from: me@example.com
 subject: Re: Project meeting
+in-reply-to: <abc123@example.com>
 attach: booking-confirmation.pdf, image-1.png
 event.title: Project meeting
 event.start: 2026-03-04 09:00
@@ -245,7 +248,13 @@ event.location: Meeting room 2
 
 - **Address keys** — `to`, `cc`, `bcc`, `from`, `reply-to`. `to:`, or `event.title` +
   `event.start`, is what makes the corresponding file get written; with neither, the command
-  has nothing to build.
+  has nothing to build. `from:` is your own address and is what Outlook's Reply will answer,
+  so set it on any round built in the default received style.
+- **Threading keys** — `in-reply-to` and `references` take message-ids, comma- or
+  space-separated, with or without angle brackets (they are added if missing). `references`
+  defaults to the `in-reply-to` value. Take the id from the round's `original.txt`, where the
+  reader records the incoming `Message-ID`; a reply with neither key arrives as a new
+  conversation rather than in the thread.
 - **`attach`** — paths relative to the draft, comma-separated.
 - **Images** — `![alt](image-1.png)` anywhere in the body becomes an inline image, not an
   attachment. Unreferenced files in the folder are ignored.
@@ -260,12 +269,19 @@ event.location: Meeting room 2
 
 Behaviour worth knowing, because each is deliberate:
 
-- The `.eml` carries `X-Unsent: 1`, which is what makes Outlook open it as an **editable draft
-  with a Send button** instead of a received message. Clients that ignore the header still open
-  the file, just not in compose mode.
-- `From`, `Date` and `Message-ID` are **omitted** by default. Outlook supplies the account
-  identity for a draft, and a `From` it cannot resolve makes Send fail with "You can't send a
-  message on behalf of this user". Override with `--from` / `--date` only for non-Outlook use.
+- The `.eml` opens as a **received message** by default, so double-clicking it gives a reading
+  window with Reply and Reply All. `--as-draft` adds `X-Unsent: 1` instead, which opens a
+  compose window with a Send button — and therefore *no* Reply, since it is already a reply.
+  The two are mutually exclusive: no message is both already sent and not yet sent.
+- `Date` and `Message-ID` are **omitted** by default, and so is `From` — but `From` matters in
+  the default style, because it is the address Reply will answer. The builder warns when it is
+  missing. In draft mode Outlook supplies the account identity, so an unresolvable `From` makes
+  Send fail with "You can't send a message on behalf of this user"; set `from:` only when you
+  need it. `--from` / `--date` override the frontmatter for non-Outlook use.
+- `In-Reply-To` and `References` are written **unencoded**. The stdlib folds an unregistered
+  header over the line limit by RFC 2047-encoding it, which turns `<abc@x>` into
+  `=3Cabc=40x=3E` — a value no client can thread on. Both are registered as folded id lists
+  instead, so a long id stays literal and a whole `References` chain survives.
 - Output names come from the **round directory** (the topic slug), not the markdown filename,
   because archiving renames `final.md` to `reply.md` at step 7d.
 - Warnings go to stderr and never block; `--strict` turns them into a non-zero exit. An

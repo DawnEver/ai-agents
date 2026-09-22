@@ -132,6 +132,7 @@ def extract(path: Path) -> ParsedMail:
     return ParsedMail(
         source=str(path),
         subject=str(message.get("Subject") or "").strip(),
+        message_id=str(message.get("Message-ID") or "").strip(),
         sender=_first_address(message, "From"),
         to=_addresses(message, "To"),
         cc=_addresses(message, "Cc"),

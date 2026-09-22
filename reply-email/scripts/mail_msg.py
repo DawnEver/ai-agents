@@ -56,6 +56,7 @@ PID_MESSAGE_DELIVERY_TIME = 0x0E06
 PID_BODY = 0x1000
 PID_BODY_HTML = 0x1013
 PID_TRANSPORT_HEADERS = 0x007D
+PID_INTERNET_MESSAGE_ID = 0x1035
 PID_RECIP_TYPE = 0x0C15
 PID_RECIP_SMTP = 0x39FE
 PID_RECIP_DISPLAY_NAME = 0x3001
@@ -344,7 +345,7 @@ def _transport_headers(streams: dict[str, bytes]) -> dict[str, list[str]]:
         )
     except Exception:
         return {}
-    wanted = ("From", "To", "Cc", "Date", "Subject")
+    wanted = ("From", "To", "Cc", "Date", "Subject", "Message-ID")
     return {name: [str(value) for value in parsed.get_all(name, [])] for name in wanted}
 
 
@@ -495,6 +496,8 @@ def extract(path: Path) -> ParsedMail:
     return ParsedMail(
         source=str(path),
         subject=(headers.get("Subject") or [""])[0].strip() or _text(streams, PID_SUBJECT),
+        message_id=(headers.get("Message-ID") or [""])[0].strip()
+        or _text(streams, PID_INTERNET_MESSAGE_ID),
         sender=sender,
         to=to,
         cc=cc,
