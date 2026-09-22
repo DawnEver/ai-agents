@@ -548,6 +548,40 @@ class EmlBuildTests(unittest.TestCase):
         )
         self.assertTrue(any("Outlook threads on In-Reply-To" in w for w in warnings))
 
+    def test_message_id_can_be_set_to_build_a_reply_ready_scaffold(self):
+        # Standing in for a received message: it carries that message's own id, so the
+        # client derives the threading when the user hits Reply.
+        msg, data, warnings = self.build(
+            "from: them@example.com\nto: me@example.com\n"
+            "subject: Original\nmessage-id: <original@example.com>",
+            "Body\n",
+        )
+        self.assertEqual(msg["Message-ID"], "<original@example.com>")
+        self.assertEqual(msg["From"], "them@example.com")
+        self.assertIsNone(msg["In-Reply-To"])
+        self.assertEqual(warnings, [])
+
+    def test_message_id_is_not_rfc2047_encoded(self):
+        long_id = "<" + "C" * 70 + "@example.com>"
+        _msg, data, _ = self.build(f"to: a@example.com\nmessage-id: {long_id}", "Body\n")
+        raw = data.decode("ascii", "replace")
+        self.assertNotIn("=?utf-8?", raw)
+        self.assertIn(long_id, raw.replace("\r\n ", ""))
+
+    def test_a_message_that_replies_to_itself_warns(self):
+        _, _, warnings = self.build(
+            "to: a@example.com\nmessage-id: <same@example.com>\nin-reply-to: <same@example.com>",
+            "Body\n",
+        )
+        self.assertTrue(any("reply to itself" in w for w in warnings))
+
+    def test_only_one_message_id_is_used(self):
+        msg, _, warnings = self.build(
+            "to: a@example.com\nmessage-id: <one@example.com>, <two@example.com>", "Body\n"
+        )
+        self.assertEqual(msg["Message-ID"], "<one@example.com>")
+        self.assertTrue(any("takes one id" in w for w in warnings))
+
     def test_from_date_and_message_id_are_absent_by_default(self):
         msg, _, _ = self.build("to: a@example.com", "Body\n")
         for header in ("From", "Date", "Message-ID", "Sender"):

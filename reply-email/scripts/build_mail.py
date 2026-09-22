@@ -184,11 +184,26 @@ def build_eml(
         message["From"] = from_header
     if date_header:
         message["Date"] = date_header
-    # Deliberately NO From/Date/Message-ID by default: Outlook supplies the account
-    # identity for a draft, and a From it cannot resolve makes Send fail outright.
+    # Date and Message-ID are left to the client unless the frontmatter names them: a new
+    # message should get a new id, and a From Outlook cannot resolve makes Send fail with
+    # "You can't send a message on behalf of this user".
 
     in_reply_to = doc.message_ids("in-reply-to")
     references = doc.message_ids("references") or in_reply_to
+
+    own_ids = doc.message_ids("message-id")
+    if own_ids:
+        # Setting the id that a client would otherwise generate is what makes a file stand
+        # in for a specific message - the basis of a reply-ready scaffold.
+        message["Message-ID"] = own_ids[0]
+        if len(own_ids) > 1:
+            warnings.append(f"message-id: takes one id; using {own_ids[0]}")
+        if own_ids[0] in in_reply_to:
+            warnings.append(
+                "message-id: is also in in-reply-to: - the message would be a reply to "
+                "itself; set one or the other"
+            )
+
     if in_reply_to:
         message["In-Reply-To"] = " ".join(in_reply_to)
     if references:

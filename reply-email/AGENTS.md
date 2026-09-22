@@ -250,11 +250,21 @@ event.location: Meeting room 2
   `event.start`, is what makes the corresponding file get written; with neither, the command
   has nothing to build. `from:` is your own address and is what Outlook's Reply will answer,
   so set it on any round built in the default received style.
-- **Threading keys** — `in-reply-to` and `references` take message-ids, comma- or
-  space-separated, with or without angle brackets (they are added if missing). `references`
-  defaults to the `in-reply-to` value. Take the id from the round's `original.txt`, where the
-  reader records the incoming `Message-ID`; a reply with neither key arrives as a new
+- **Message-id keys** — `message-id`, `in-reply-to` and `references` take message-ids,
+  comma- or space-separated, with or without angle brackets (they are added if missing).
+  `references` defaults to the `in-reply-to` value, and `message-id` takes exactly one.
+  Take ids from the round's `original.txt`, where the reader records the incoming
+  `Message-ID`. A reply with neither `in-reply-to` nor `references` arrives as a new
   conversation rather than in the thread.
+- **Two shapes the `.eml` can take**, decided entirely by the frontmatter — there is no mode
+  flag, so any round can be built either way:
+  - **Outgoing reply** — `to:` the correspondent, `in-reply-to:` their id. The file is the
+    message you are about to send.
+  - **Reply-ready scaffold** — `from:` the correspondent, `to:` yourself, `message-id:` set
+    to *their* id, and no `in-reply-to:`. The file stands in for their message, so
+    double-clicking it and pressing Reply opens a compose window already addressed to them
+    and already in the thread, with the draft text in the quoted region. This is what makes
+    a round answerable in one click instead of hunting for the original.
 - **`attach`** — paths relative to the draft, comma-separated.
 - **Images** — `![alt](image-1.png)` anywhere in the body becomes an inline image, not an
   attachment. Unreferenced files in the folder are ignored.
@@ -278,10 +288,11 @@ Behaviour worth knowing, because each is deliberate:
   missing. In draft mode Outlook supplies the account identity, so an unresolvable `From` makes
   Send fail with "You can't send a message on behalf of this user"; set `from:` only when you
   need it. `--from` / `--date` override the frontmatter for non-Outlook use.
-- `In-Reply-To` and `References` are written **unencoded**. The stdlib folds an unregistered
-  header over the line limit by RFC 2047-encoding it, which turns `<abc@x>` into
-  `=3Cabc=40x=3E` — a value no client can thread on. Both are registered as folded id lists
-  instead, so a long id stays literal and a whole `References` chain survives.
+- Message-id headers are written **unencoded**. The stdlib folds an unregistered header over
+  the line limit by RFC 2047-encoding it, which turns `<abc@x>` into `=3Cabc=40x=3E` — a value
+  no client can thread on. `In-Reply-To` and `References` are registered as folded id lists
+  instead, so a long id stays literal and a whole chain survives; `Message-ID` is registered
+  as a single id by default and needs no help.
 - Output names come from the **round directory** (the topic slug), not the markdown filename,
   because archiving renames `final.md` to `reply.md` at step 7d.
 - Warnings go to stderr and never block; `--strict` turns them into a non-zero exit. An

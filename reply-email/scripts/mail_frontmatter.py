@@ -39,8 +39,9 @@ EVENT_KEYS = frozenset(
     }
 )
 
-# Threading headers. Their values are message-ids, not addresses or paths.
-THREAD_KEYS = frozenset({"in-reply-to", "references"})
+# Headers whose values are message-ids rather than addresses or paths. `message-id` is the
+# id of the message being built; the other two point back at what it answers.
+THREAD_KEYS = frozenset({"message-id", "in-reply-to", "references"})
 
 KNOWN_KEYS = frozenset({"subject", "date"}) | ADDRESS_KEYS | PATH_KEYS | EVENT_KEYS | THREAD_KEYS
 

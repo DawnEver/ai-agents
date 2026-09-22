@@ -19,9 +19,11 @@ in `AGENTS.md` (Reference → **Mail and calendar generation**) — do not resta
      guess.
    - `subject:` from the incoming subject, `Re:`-prefixed as the draft's own convention
      implies.
-   - `from:` your own address, so Outlook's Reply has somewhere to answer.
-   - `in-reply-to:` the incoming `Message-ID`, copied from the round's `original.txt`, so the
-     reply lands in the thread instead of starting a new conversation.
+   - the envelope, in whichever of the two shapes AGENTS.md describes the user wants. The
+     default is the **reply-ready scaffold**: `from:` the correspondent, `to:` the user,
+     `message-id:` the incoming id, and no `in-reply-to:`. Build the **outgoing reply**
+     (`to:` the correspondent, `from:` the user, `in-reply-to:` their id) when the user wants
+     to send the file as-is rather than answer it. All ids come from `original.txt`.
    - `attach:` for each file in the round folder that should travel with the reply, and
      `![alt](file.png)` in the body for each image that should appear inline.
 
@@ -38,9 +40,9 @@ in `AGENTS.md` (Reference → **Mail and calendar generation**) — do not resta
 
 4. **Hand over, and say what to do.** Tell the user the files are beside `final.md` and that
    double-clicking them is what imports them: the `.eml` opens as a received message in a
-   reading window with Reply available (add `--as-draft` to get a compose window with Send
-   instead), and the `.ics` offers to add the event. Remind them the draft is still not sent
-   and the archive gate has not moved.
+   reading window, so Reply gives a compose window already addressed and already in the
+   thread (`--as-draft` gives a compose window with Send instead), and the `.ics` offers to
+   add the event. Remind them the draft is still not sent and the archive gate has not moved.
 
 5. **Rebuild after edits.** Any later change to `final.md` — including one the user makes
    themselves — invalidates both files. Rebuild on request, or when you next touch the round.
