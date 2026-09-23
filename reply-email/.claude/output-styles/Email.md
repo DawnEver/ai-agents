@@ -51,3 +51,6 @@ When it speaks, it overrides every default below.
   rewrite the argument.
 - Never invent dates, numbers, or commitments to fill a gap; leave a clearly marked
   placeholder instead.
+- Answer only the newest message in the quoted thread. Anything inherited from earlier turns —
+  including the correspondent's own instructions — gets one clause or nothing. The rule and its
+  rationale live in `AGENTS.md` → **Reply scope**.

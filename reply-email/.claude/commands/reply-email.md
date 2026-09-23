@@ -29,7 +29,8 @@ defaults, as specified by that file.
    bootstrap from archived replies (AGENTS.md → Workflow step 3). If neither exists, use the
    fallback → `reply-email/reply-style.md`.
 4. **Thread history** — for continuations, reconstruct the thread by slug (AGENTS.md → Thread
-   reconstruction & globs). Draft with full context; don't re-ask answered questions.
+   reconstruction & globs). Draft with full context, then scope the reply to the newest message
+   only (AGENTS.md → Reply scope); don't re-ask or re-answer settled points.
 5. **Create ongoing & draft** — create `ongoing/<topic>/` with `original.txt` + `draft.md`,
    then copy `draft.md` to `final.md` with a shell `cp` (AGENTS.md → Workflow step 5). If the
    directory already exists, the user is mid-edit — resume from the existing files instead.

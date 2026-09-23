@@ -28,7 +28,8 @@ this file and must never restate the conventions defined here.
    exist, infer patterns from up to 5 recent archived replies. Fall back to generic guidelines
    only when neither exists.
 4. For continuations, load thread history (see **Thread reconstruction**) so the draft is aware
-   of everything said before — don't re-ask answered questions.
+   of everything said before — don't re-ask answered questions, and don't re-answer them either
+   (see **Reply scope**).
 5. Create `ongoing/<topic>/` and write `original.txt` + `draft.md`. When the incoming mail
    arrived as a file, let the reader write `original.txt` and its attachments rather than
    retyping the body. Then copy `draft.md` to `final.md` with a shell command (`cp`), never by
@@ -38,12 +39,25 @@ this file and must never restate the conventions defined here.
    directory and presenting the draft is the end of this step — wait.
 6. Tell the user the draft is ready. The user edits `final.md` directly. Never touch `draft.md`
    after creation. Optional polish: only if the user explicitly asks, edit `final.md`.
+   - **Read `final.md` first, and edit it — never `Write` over it.** The user annotates `final.md`
+     in place, including inline comments in their own language that are *instructions to resolve
+     into prose*, not text to send. A blind `Write` destroys them silently, and the loss stays
+     invisible until the user notices. Fold each comment's meaning into the sentence it sits on,
+     drop the comment itself, and ask when the intent is ambiguous.
+   - The user's own edits to `final.md` win: keep their wording and structure, and add nothing
+     back that they cut. Fix only outright language errors — a translation slip such as
+     "experience formula" for "empirical formula" — and report each fix so it can be reverted.
    - 6a. Build the importable files (see **Mail and calendar generation**) so the round can be
      opened in a mail client instead of hand-pasted. Regenerate after every edit to `final.md`.
      This is a convenience, not an approval — the archive gate below is unchanged.
 7. After approval (user says "归档" or "archive"), archive the round:
    - 7a. Move `ongoing/<topic>/` → `archived/<YYYY>/<MM>/<DD>/<topic>/` (apply the `-r<N>`
-     suffix rule from **Naming conventions** if the same slug already archived today).
+     suffix rule from **Naming conventions** if the same slug already archived today). A plain
+     `mv` fails with "Device or resource busy" under OneDrive, so copy and verify instead:
+     `cp -r`, then `diff -r` the two, then clear the source with
+     `python scripts/clear_ongoing.py ongoing/<topic>` — the script refuses unless the
+     archived copy is proven to cover every file, so it doubles as the check that the copy
+     landed. It knows `final.md` becomes `reply.md` (step 7d) and is not confused by it.
    - 7b. Diff `draft.md` vs `final.md` (before renaming) to identify what the user changed
      (see **Diff learning**).
    - 7c. Update style: promote patterns seen in ≥2 archives to `style/profile.md`; record
@@ -167,6 +181,27 @@ generic defaults apply only when it's absent:
 - Match the formality level of the incoming email.
 - Default to the language of the original email.
 - Keep replies focused; avoid filler ("I hope this email finds you well").
+
+### Reply scope
+
+`original.txt` holds the whole quoted thread, but a reply answers **only the newest message** in
+it. Every earlier quoted turn is context for understanding that message — never a to-do list, and
+never something to answer again.
+
+- **Answer only what's new.** The latest message is the sole prompt. If a line could have been
+  written without reading it, cut the line.
+- **Never restate the correspondent's own instructions.** Playing their method back to them ("as
+  you described, I'll do A, then B, then C") is their text in your voice: it reads as filler and
+  signals the mail wasn't thought about. Confirm by doing, or in one clause at most.
+- **Never re-answer a settled point.** If an earlier round already supplied the operating point,
+  the formula, or a commitment, it stays answered. Restating it spends the recipient's attention
+  on nothing they didn't already have.
+- **Acknowledgement is a word, not a paragraph.** "Understood", "Noted", "Will do" — then
+  straight to the substance. A reply whose only new content is an acknowledgment is a short
+  reply, not a padded one.
+- **New substance earns length; repetition never does.** The proposal, the finding, the number
+  the correspondent asked for — develop those. Everything inherited from the thread gets one
+  clause or nothing.
 
 ### Desensitization
 
@@ -314,6 +349,10 @@ Behaviour worth knowing, because each is deliberate:
 - `scripts/read_mail.py` — the reader CLI, with `mail_read.py` (shared `ParsedMail` model,
   HTML → text, `original.txt` rendering), `mail_msg.py` (Outlook `.msg`) and `mail_eml.py`
   (RFC 822) beside it. Stdlib only, cross-platform; `tests/test_read_mail.py` covers all four.
+- `scripts/clear_ongoing.py` — the post-archive cleanup CLI (step 7a). Removes a round from
+  `ongoing/` only after proving the archived copy holds every file, which is what makes it safe
+  to run unattended. Stdlib only, cross-platform; `tests/test_clear_ongoing.py` covers it, and
+  is mostly refusal cases — that is the part that matters.
 - `style/profile.md`, `ongoing/`, `archived/` — local only, gitignored; never commit, never store
   in memory. Generated `.eml`/`.ics` files and extracted `original.txt`/attachments live in the
   round folder and are covered by the same rule — they contain real addresses and reference
