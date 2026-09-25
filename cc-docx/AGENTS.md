@@ -14,7 +14,7 @@ This project is a Word ↔ Markdown round-trip harness. Read this before touchin
 - **Idempotent**: running twice on the same docx is safe (existing `ccx*` bookmarks are skipped, blocks already anchored keep their ids; new blocks get new ids).
 - Never modifies the input docx except adding bookmarks. If you need a pristine original, keep a copy.
 
-### `md2docx.py <input.md> <template.docx> [output.docx] [--track-changes]`
+### `md2docx.py <input.md> <template.docx> [output.docx] [--no-track-changes]`
 
 - Reads the **original** template (must still contain the `ccx*` bookmarks — use the copy that docx2md anchored, or the workflow breaks).
 - Walks md blocks in order; for each anchored block it replaces the docx block's content:
@@ -23,7 +23,7 @@ This project is a Word ↔ Markdown round-trip harness. Read this before touchin
   - unanchored block → inserted **after the previous anchored block** (same document position where you wrote it in the md)
 - Headings: anchored headings keep their original Word style; new unanchored headings map md `#`-level → Heading 1–6.
 - Run-boundary spaces are preserved via `xml:space="preserve"` (without it Word silently drops spaces between runs — "adding ==GBP 200,000== by" renders as "addingGBP 200,000by").
-- `--track-changes` (review mode): rewritten blocks are wrapped in `w:ins` revision elements (author "AI Agent") so the user can accept/reject AI-added content in Word's Review pane. Blocks whose md content equals the template's current text are left untouched — no revision, and the template's own formatting (e.g. design highlights) survives. Unchanged detection normalises whitespace (double spaces, NBSP), curly quotes, and compares whole cells (template cells may split one sentence across paragraphs); a block is still treated as changed if the md adds bold (`**`) the template text doesn't carry (e.g. answer marks "Yes / **No**"). Consequence: re-extracting such a doc may surface template-intrinsic formatting (highlight marks, NBSP) that the md doesn't carry — expected, not a bug.
+- **Review mode is the default for every project:** rewritten blocks are wrapped in `w:ins` revision elements (author "AI Agent") so the user can accept/reject AI-added content in Word's Review pane. Blocks whose md content equals the template's current text are left untouched — no revision, and the template's own formatting (e.g. design highlights) survives. Unchanged detection normalises whitespace (double spaces, NBSP), curly quotes, and compares whole cells (template cells may split one sentence across paragraphs); a block is still treated as changed if the md adds bold (`**`) the template text doesn't carry (e.g. answer marks "Yes / **No**"). Consequence: re-extracting such a doc may surface template-intrinsic formatting (highlight marks, NBSP) that the md doesn't carry — expected, not a bug. Use `--no-track-changes` only when the user explicitly requests a clean copy.
 - Writes a **new** output file. Never writes over the template. Default output name is `<md-project>/out/<stem>-<yyMMdd>.docx`, beside the authoritative Markdown project's other files; pass an explicit output path to override.
 
 ### `to_pdf.py <input.docx> [output.pdf]`
@@ -39,6 +39,7 @@ This project is a Word ↔ Markdown round-trip harness. Read this before touchin
 4. Empty md cell/paragraph → cleared in the rendered docx. To *keep* original content, don't touch that block.
 5. Verify renders: re-extract the output with `docx2md` and diff against the input md. Content should match exactly.
 6. PDF last, never first. Ask yourself: does the user need a PDF, or a Word file? Default is Word.
+7. All DOCX renders default to review mode. Do not use `--no-track-changes` unless the user explicitly asks for a clean, accepted-changes copy.
 
 ## Data layout
 

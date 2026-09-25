@@ -20,7 +20,7 @@ Markdown is the **working format** (iteration, comparison, diffing); `.docx` is 
 |-------|------|---------|--------------|
 | Extract | `01-extract.md` | `python scripts/docx2md.py <in.docx> [out.md]` | Transcribe to markdown; stamps invisible `ccxN` bookmarks into the docx so content can be patched back |
 | Edit | `02-edit.md` | edit the `.md` | The daily loop: AI and human iterate on markdown; anchors (`<!-- ccxN -->`) are the map, don't delete them |
-| Render | `03-render.md` | `python scripts/md2docx.py <in.md> <template.docx> [out.docx] [--track-changes]` | Patch the edited markdown back into the original template, styles preserved. `--track-changes` wraps AI-added content in Word revision marks (accept/reject in Review pane) |
+| Render | `03-render.md` | `python scripts/md2docx.py <in.md> <template.docx> [out.docx] [--no-track-changes]` | Patch the edited markdown back into the original template, styles preserved. Review mode is the default; `--no-track-changes` is an explicit clean-copy opt-out |
 | PDF | `04-pdf.md` | `python scripts/to_pdf.py <in.docx> [out.pdf]` | Word COM conversion — only when a PDF is actually needed |
 | Build | `build_docx.py` | `python scripts/build_docx.py <content.py> <out_dir> [--baseline <docx>] [--name <stem>]` | Render a structured content module (Python: TITLE + CONTENT tuples) to a clean Word doc with a 4-level nested-bullet hierarchy (• – ▪ ·); with `--baseline` also emit a colour-coded change review vs that baseline |
 | Diff | `compare_docx.py` | `python scripts/compare_docx.py <original.docx> <revised.docx> <out.docx>` | Smart tracked-changes diff via Word's CompareDocuments engine (green insertions / red deletions / move markers, preserved text untouched) |
@@ -38,6 +38,7 @@ Read the phase file for the step you're at and follow it. This file is the map; 
 5. Verify every render: re-extract the output and diff against the input md.
 6. **Honesty over padding.** Answer exactly what the question asks. For background/evidence questions, state only facts from the source material (fact-find form, accounts, provided CVs) — never fill gaps with generic project plans ("will work with…", "will ensure…", "in this role he will…"). When information is missing, admit it explicitly, mark the gap with `==(...)==` highlight, and wait for the user's decision — don't invent, don't pad to a word count.
 7. PDF last, never first. Ask: does the user need a PDF, or a Word file? Default is Word.
+8. **Review mode is mandatory by default for every project.** Rendered changes must remain accept/reject revisions unless the user explicitly requests a clean copy; only then use `--no-track-changes`.
 
 ## Examples
 
@@ -50,7 +51,7 @@ python scripts/docx2md.py "ref/Workplan.docx" workspace/ongoing/260805-ktp-propo
 
 # render the filled Word deliverable (never overwrite the template;
 # default output is workspace/ongoing/260805-ktp-proposal/out/Workplan-260805.docx)
-python scripts/md2docx.py workspace/ongoing/260805-ktp-proposal/workplan.md "ref/Workplan.docx" --track-changes
+python scripts/md2docx.py workspace/ongoing/260805-ktp-proposal/workplan.md "ref/Workplan.docx"
 
 # PDF only when needed
 python scripts/to_pdf.py workspace/ongoing/260805-ktp-proposal/out/Workplan-260805.docx
