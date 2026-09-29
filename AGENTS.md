@@ -6,6 +6,7 @@ This repository contains independent agent projects. Before changing a child pro
 | --- | --- |
 | `ai-post/` | Multi-platform article generation, review, publishing, and archiving |
 | `cc-docx/` | Word ↔ Markdown round-trip and delivery tooling |
+| `cc-slides/` | Template-faithful PowerPoint decks: spec → build → lint → PowerPoint preview |
 | `cc-lab/` | Claude Code PTY and trace experiment harness; not a Codex behavior harness |
 | `literature-review/` | Systematic literature-review pipeline |
 | `manuscript-review/` | Academic manuscript-review pipeline |
