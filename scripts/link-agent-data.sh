@@ -70,6 +70,8 @@ MAPPINGS=(
   "literature-review/archived|literature-review/archived"
   "reviewer-discovery/ongoing|reviewer-discovery/ongoing"
   "reviewer-discovery/archived|reviewer-discovery/archived"
+  "cc-uon/ongoing|cc-uon/ongoing"
+  "cc-uon/archived|cc-uon/archived"
   "cc-docx/workspace|cc-docx"
   "cc-slides/workspace|cc-slides"
   # The five facts the cc-academia store cannot re-derive — invitations and

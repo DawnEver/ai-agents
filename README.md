@@ -46,6 +46,7 @@ usernames without editing anything.
 
 | Directory | Purpose |
 |-----------|---------|
+| `cc-uon/` | UoN admin chores (`/expense`, `/supervision`) |
 | `reply-email/` | Draft and archive email replies (`$reply-email` in Codex, `/reply-email` in Claude Code) |
 | `ai-post/` | Multi-platform article generation, review, publishing and archiving (`$post-*` in Codex, `/post-*` in Claude Code) |
 | `manuscript-review/` | Confidential academic-paper review data for the public `cc-academia` plugin (`manuscript-review` skill in Codex, `/cc-academia:manuscript-review` in Claude Code) |
