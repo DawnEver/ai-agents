@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 scripts/*.py:*)",
+      "Bash(python scripts/*.py:*)",
+      "Bash(python3 -m unittest:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(mkdir:*)",
+      "Read(*/cc-slides/**)",
+      "Read(~/Library/Containers/com.microsoft.Powerpoint/Data/tmp/cc-slides/**)",
+      "Write(*/cc-slides/workspace/**)",
+      "Write(*/cc-slides/scripts/**)",
+      "Write(*/cc-slides/.claude/skills/**)",
+      "Write(*/cc-slides/.claude/memory/**)",
+      "Glob(*/cc-slides/**)",
+      "Grep(*/cc-slides/**)"
+    ]
+  }
+}
