@@ -34,6 +34,11 @@ Conventions (layout, authorization, browser pitfalls) live in `AGENTS.md`; value
    - Business Entertainment has no itemization but extra required fields: Expense relate to,
      Purpose of expense, annual event? (No), held on UoN campus? (No), and an attendee table
      (the user is pre-listed as employee attendee; put the full amount there).
+   - Airfare fields: Flight Type (International/Domestic), Flight Class (Coach), Ticket Number
+     (booking ref), Departure/Arrival City, Agency (airline), Passenger Name (required).
+   - Currency is sticky across Create Another. To change it, type the code into the Currency
+     LOV, wait for the suggestion, and click it — Tab alone fails ("Autocompletion failed").
+     Assert the currency before entering each amount.
    - Daily/policy-rate warnings are non-blocking but add a required Justification field.
    6. Selects ignore a JS `value` change: focus them via JS, then type the option text + Tab.
    7. **Create Another** for the next line — it resets Cost Centre to 99999; refill it.
