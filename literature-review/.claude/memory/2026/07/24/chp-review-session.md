@@ -1,3 +1,10 @@
+---
+name: chp-review-session
+description: Multi-provider search (Semantic Scholar, arXiv, DBLP), Zotero sync modes, paywall acquisition tactics — the implementation record from that session
+metadata:
+  type: engineering
+---
+
 # CHP Literature Review — Session Summary
 
 2026-07-24 | Multi-provider search + Zotero sync
