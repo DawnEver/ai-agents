@@ -6,12 +6,13 @@ Reads a `docx2md.py` transcript (.md), walks the ORIGINAL template .docx
 with the md's content. Original layout and styles survive; unanchored
 (new) blocks are inserted after the previous anchored block.
 
-Usage:  python scripts/md2docx.py <input.md> <template.docx> [output.docx] [--track-changes]
+Usage:  python scripts/md2docx.py <input.md> <template.docx> [output.docx] [--no-track-changes]
 
-`--track-changes` (review mode): rewritten blocks are wrapped in w:ins
+Review mode is the default: rewritten blocks are wrapped in w:ins
 revision elements (author "AI Agent") so the user can accept or
 reject AI-added content in Word's Review pane. Blocks whose md content
 equals the template's current text are left untouched (no revision).
+Use `--no-track-changes` only when the user explicitly requests a clean copy.
 """
 import copy
 import datetime
@@ -21,6 +22,7 @@ import re
 import sys
 from pathlib import Path
 from docx import Document
+from docx.oxml import OxmlElement
 from docx.table import Table
 from docx.text.paragraph import Paragraph
 from docx.oxml.ns import qn
@@ -34,10 +36,18 @@ HEADER_LINE = re.compile(
     r"^>\s*\*\*(HEADER|FOOTER)\*\*\s*(?:<!--\s*(ccx\d+)\s*-->)?\s*(.*)$")
 
 # Track-changes (review mode): inserted content is wrapped in w:ins so the
-# user can accept/reject it in Word's Review pane. Enabled with --track-changes.
+# user can accept/reject it in Word's Review pane. This is the default.
 TRACK_FLAG = "--track-changes"
+NO_TRACK_FLAG = "--no-track-changes"
 AUTHOR = "AI Agent"
 DATE = "2026-08-05T00:00:00Z"
+
+
+def enable_track_revisions(doc):
+    """Ensure Word opens the output with revision tracking enabled."""
+    settings = doc.settings.element
+    if settings.find(qn("w:trackRevisions")) is None:
+        settings.append(OxmlElement("w:trackRevisions"))
 
 # ------------------------------------------------------------ inline markdown
 
@@ -382,7 +392,7 @@ def default_output_path(md_path, docx_path, today=None):
     project_dir = os.path.dirname(os.path.abspath(os.fspath(md_path)))
     return Path(project_dir) / "out" / f"{stem}-{date}.docx"
 
-def md2docx(md_path, docx_path, out_path, track_changes=False):
+def md2docx(md_path, docx_path, out_path, track_changes=True):
     template_path = os.path.normcase(os.path.abspath(docx_path))
     output_path = os.path.normcase(os.path.abspath(out_path))
     same_file = template_path == output_path
@@ -394,6 +404,8 @@ def md2docx(md_path, docx_path, out_path, track_changes=False):
     with io.open(md_path, encoding="utf-8") as f:
         md_text = f.read()
     doc = Document(docx_path)
+    if track_changes:
+        enable_track_revisions(doc)
     body_elm = doc.element.body
     anchors = build_anchor_map(doc)
     link_part = doc.part
@@ -443,8 +455,9 @@ def md2docx(md_path, docx_path, out_path, track_changes=False):
 
 
 def main():
-    args = [a for a in sys.argv[1:] if a != TRACK_FLAG]
-    track = TRACK_FLAG in sys.argv
+    flags = {TRACK_FLAG, NO_TRACK_FLAG}
+    args = [a for a in sys.argv[1:] if a not in flags]
+    track = NO_TRACK_FLAG not in sys.argv
     if len(args) < 2:
         sys.exit(__doc__)
     md_path, docx_path = args[0], args[1]

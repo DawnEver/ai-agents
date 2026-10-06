@@ -50,8 +50,12 @@ python scripts/docx2md.py ref/Form.docx workspace/ongoing/260805-myproject/form.
 #    ...and bump `iteration` in that project's project.toml
 
 # 3. render the patched Word deliverable (default name gets today's date)
-python scripts/md2docx.py workspace/ongoing/260805-myproject/form.md ref/Form.docx --track-changes
+python scripts/md2docx.py workspace/ongoing/260805-myproject/form.md ref/Form.docx
 #    → workspace/ongoing/260805-myproject/out/Form-260805.docx
+
+# Review mode is the default. Only use this explicit opt-out when the user
+# requests a clean copy without revisions:
+# python scripts/md2docx.py workspace/ongoing/260805-myproject/form.md ref/Form.docx --no-track-changes
 
 # 4. PDF only when needed
 python scripts/to_pdf.py workspace/ongoing/260805-myproject/out/Form-260805.docx
@@ -63,6 +67,7 @@ python scripts/to_pdf.py workspace/ongoing/260805-myproject/out/Form-260805.docx
 - Never delete bookmark anchors from the md (they are the round-trip map); unanchored blocks insert, they don't overwrite
 - Re-extract to verify after any render: `docx2md` on the output should equal the input md (modulo your edits)
 - PDF conversion opens Word invisibly; OneDrive-synced files are fine, but don't convert a file Word has open
+- Review mode is the default for every project; clean rendering requires the explicit `--no-track-changes` opt-out
 
 ## Work areas
 

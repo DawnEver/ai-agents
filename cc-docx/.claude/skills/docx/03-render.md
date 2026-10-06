@@ -1,10 +1,12 @@
 # Phase 3 — Render: markdown → docx (the daily delivery)
 
 ```bash
-python scripts/md2docx.py <input.md> <template.docx> [output.docx]
+python scripts/md2docx.py <input.md> <template.docx> [output.docx] [--no-track-changes]
 ```
 
 Default output: `<md-project>/out/<template-stem>-<yyMMdd>.docx`. The renderer rejects an output path that resolves to the template itself.
+
+Review mode is the default for every project: changed content is written as revisions by "AI Agent" and Word tracking is enabled. Use `--no-track-changes` only when the user explicitly requests a clean copy with changes already accepted.
 
 ## What happens
 

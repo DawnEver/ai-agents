@@ -1,6 +1,6 @@
 ---
 name: reply-email
-description: Codex entry point for the canonical Claude email-reply command. Use to draft, resume, polish, or archive email replies while preserving the explicit archive-approval gate.
+description: Codex entry point for the canonical Claude email-reply command. Use to draft, resume, polish, build importable .eml/.ics files, or archive email replies while preserving the explicit archive-approval gate.
 ---
 
 # Canonical workflow

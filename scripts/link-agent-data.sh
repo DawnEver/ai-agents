@@ -59,8 +59,8 @@ make_link() {
   return 1
 }
 
-# Each entry is repo destination|agent-data source. Most are identical; cc-docx
-# deliberately exposes its whole lifecycle data root through repo/workspace.
+# Each entry is repo destination|agent-data source. Most are identical; cc-docx and
+# cc-slides deliberately expose their whole lifecycle data root through repo/workspace.
 MAPPINGS=(
   "ai-post/archived|ai-post/archived"
   "reply-email/archived|reply-email/archived"
@@ -70,7 +70,10 @@ MAPPINGS=(
   "literature-review/archived|literature-review/archived"
   "reviewer-discovery/ongoing|reviewer-discovery/ongoing"
   "reviewer-discovery/archived|reviewer-discovery/archived"
+  "cc-uon/ongoing|cc-uon/ongoing"
+  "cc-uon/archived|cc-uon/archived"
   "cc-docx/workspace|cc-docx"
+  "cc-slides/workspace|cc-slides"
   # The five facts the cc-academia store cannot re-derive — invitations and
   # their outcomes, verified ranks, addresses, corrected affiliations, doctorate
   # years. Line-oriented JSON, one subdirectory per device, so a syncer has no
@@ -145,7 +148,7 @@ if [[ "$mode" == "local" ]]; then
       continue
     fi
     mkdir -p "$dest"
-    if [[ "$rel" == "cc-docx/workspace" ]]; then
+    if [[ "$rel" == */workspace ]]; then
       mkdir -p "$dest/ongoing" "$dest/archived"
     fi
     printf 'DIR   %-30s ready\n' "$rel"

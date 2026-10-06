@@ -2,5 +2,10 @@
   "outputStyle": "Email",
   "enabledPlugins": {
     "sharp-review@cc-market": false
+  },
+  "permissions": {
+    "allow": [
+      "Bash(python scripts/clear_ongoing.py:*)"
+    ]
   }
 }

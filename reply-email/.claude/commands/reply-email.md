@@ -29,12 +29,16 @@ defaults, as specified by that file.
    bootstrap from archived replies (AGENTS.md → Workflow step 3). If neither exists, use the
    fallback → `reply-email/reply-style.md`.
 4. **Thread history** — for continuations, reconstruct the thread by slug (AGENTS.md → Thread
-   reconstruction & globs). Draft with full context; don't re-ask answered questions.
+   reconstruction & globs). Draft with full context, then scope the reply to the newest message
+   only (AGENTS.md → Reply scope); don't re-ask or re-answer settled points.
 5. **Create ongoing & draft** — create `ongoing/<topic>/` with `original.txt` + `draft.md`,
    then copy `draft.md` to `final.md` with a shell `cp` (AGENTS.md → Workflow step 5). If the
    directory already exists, the user is mid-edit — resume from the existing files instead.
 6. **User edits** — tell the user `final.md` is ready; they edit it directly. Polish `final.md`
    only if the user explicitly asks.
+   - **Build** — produce the importable `.eml`/`.ics` beside it and rebuild after any edit to
+     `final.md` → `reply-email/build-mail.md`. This is not approval to send or archive; step 7
+     is unchanged.
 7. **Wait for explicit approval.** **Never archive until the user says "归档" (or "archive").**
    Presenting the draft is the end of this sequence — stop and wait.
 8. **Archive** — only after explicit approval: run the archive procedure →
