@@ -1,17 +1,4 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(python:*)",
-      "Bash(ls:*)",
-      "Bash(mkdir:*)",
-      "Read(*/literature-review/**)",
-      "Edit(*/literature-review/.claude/**)",
-      "Grep(*/literature-review/**)",
-      "Bash(uv run:*)",
-      "Edit(*/literature-review/ongoing/**)",
-      "Edit(*/literature-review/archived/**)"
-    ]
-  },
   "enabledPlugins": {
     "cc-academia@cc-market": true,
     "sharp-review@cc-market": false
