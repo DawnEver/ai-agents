@@ -63,3 +63,12 @@ repos/<repo-slug>/  — cached clones, keyed by repo, shared across articles (gi
 - **三方会审 is mandatory**: every article passes review before publish. Verdicts persist in `2-draft/vN/review-verdict.md`.
 - **repos/, ongoing/, archived/, style/private/ are gitignored**. style/profile.md, style/published/, and config/ are committed.
 - **Version chain**: v1 (AI baseline) → v2 (user edits) → v3+ (review rounds). Missing files inherit from previous version. The latest vN IS the final article.
+
+## Change the tool at its source
+
+The workflow for this project ships as a plugin. Fix it in the plugin's own
+source checkout, never in the copy the host installed under `~/.claude/plugins/`
+or `~/.codex/` — that is a cache and the edit will be overwritten. If the source
+checkout cannot be discovered, ask the user for the path rather than guessing or
+editing the cache. Never commit an absolute path to it. See
+`../.claude/rules/TOOL-SOURCE.md`.

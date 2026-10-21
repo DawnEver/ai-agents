@@ -1,0 +1,33 @@
+# One-off personal overlay — NOT the shipped policy, and NOT in the plugin.
+#
+# It applies only while ACADEMIA_CONFIG_DIR points at this directory:
+#
+#   ACADEMIA_CONFIG_DIR=configs uv run --project "<plugin-root>" rev-disc report --slug tec-01134-2026
+#
+# Written 2026-10-02 for TEC-01134-2026 and TEC-01040-2026. Delete this file and
+# the runs fall back to the plugin's configs/coi.toml, unchanged — nothing here
+# is inherited by a later TEC submission unless this directory is pointed at
+# again, which is the point of it being here rather than in the plugin.
+#
+# Why: `[activity.related_journals]` counts journal papers among the evidence
+# *this run harvested* for each person, so the count is bounded by the search
+# corpus rather than by the person's actual record. On both of these manuscripts
+# nobody reached the floor of three — median 1, maximum 2 — so `require` removed
+# 139 of 179 candidates on one and 199 of 210 on the other, for what is a small
+# corpus and not a weak reviewer. (The TTE run it was written for behaves the
+# same way: 141 of 166 filtered, median 1.)
+#
+# As a preference the signal is kept and the exclusion is not: a thin journal
+# record still costs score and is still stated in its own audit column, so an
+# editor reading a borderline name sees the count and decides.
+journal = "IEEE Transactions on Energy Conversion"
+
+[activity.related_journals]
+mode = "prefer"
+min_publications = 3
+
+# These two runs only: the editor requires contact coverage for invitable
+# candidates, not dedicated address discovery for do_not_invite candidates.
+[coverage]
+invitable_email = 0.90
+other_email = 0.0

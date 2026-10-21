@@ -1,6 +1,8 @@
 import sys
 import tempfile
 import unittest
+import zipfile
+from datetime import date
 from pathlib import Path
 
 from docx import Document
@@ -14,6 +16,13 @@ import md2docx  # noqa: E402
 
 
 class RoundTripSafetyTests(unittest.TestCase):
+    def test_default_output_is_in_project_out_directory(self):
+        md_path = ROOT / "workspace" / "ongoing" / "260805-example" / "draft.md"
+        template = ROOT / "templates" / "Form.docx"
+
+        expected = md_path.parent / "out" / f"Form-{date.today():%y%m%d}.docx"
+        self.assertEqual(md2docx.default_output_path(md_path, template), expected)
+
     def test_document_round_trips_except_transcript_filename(self):
         with tempfile.TemporaryDirectory() as directory:
             template = Path(directory) / "template.docx"
@@ -38,6 +47,44 @@ class RoundTripSafetyTests(unittest.TestCase):
             first_lines = first_md.read_text(encoding="utf-8").splitlines()[1:]
             second_lines = second_md.read_text(encoding="utf-8").splitlines()[1:]
             self.assertEqual(first_lines, second_lines)
+
+    def test_render_uses_review_mode_by_default(self):
+        with tempfile.TemporaryDirectory() as directory:
+            template = Path(directory) / "template.docx"
+            transcript = Path(directory) / "template.md"
+            output = Path(directory) / "output.docx"
+            doc = Document()
+            doc.add_paragraph("Original")
+            doc.save(template)
+            docx2md.docx2md(str(template))
+            transcript.write_text("<!-- ccx1 --> Changed\n", encoding="utf-8")
+
+            md2docx.md2docx(str(transcript), str(template), str(output))
+
+            with zipfile.ZipFile(output) as package:
+                document_xml = package.read("word/document.xml")
+                settings_xml = package.read("word/settings.xml")
+            self.assertIn(b'<w:ins w:id="1" w:author="AI Agent"', document_xml)
+            self.assertIn(b"<w:trackRevisions", settings_xml)
+
+    def test_clean_render_requires_explicit_opt_out(self):
+        with tempfile.TemporaryDirectory() as directory:
+            template = Path(directory) / "template.docx"
+            transcript = Path(directory) / "template.md"
+            output = Path(directory) / "output.docx"
+            doc = Document()
+            doc.add_paragraph("Original")
+            doc.save(template)
+            docx2md.docx2md(str(template))
+            transcript.write_text("<!-- ccx1 --> Changed\n", encoding="utf-8")
+
+            md2docx.md2docx(
+                str(transcript), str(template), str(output), track_changes=False
+            )
+
+            with zipfile.ZipFile(output) as package:
+                document_xml = package.read("word/document.xml")
+            self.assertNotIn(b"<w:ins", document_xml)
 
     def test_table_separator_has_the_effective_column_count(self):
         doc = Document()

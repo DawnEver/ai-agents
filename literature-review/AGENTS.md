@@ -6,13 +6,28 @@ plugin's location on one developer's machine.
 
 This directory holds **research data**, which is confidential and never leaves it.
 
+Active reviews live in `ongoing/<slug>/`; completed ones in `archived/<slug>/`.
+These are the only valid data directories for this workflow. The plugin locates
+them by walking up from wherever you are; `ACADEMIA_DATA_ROOT` overrides that if
+you keep research data outside the repository. Do not add machine-specific
+absolute paths here.
+
 ## Memory privacy guardrail
 
 Research-topic content never enters project-level memory. Workspace material —
 briefs, concept taxonomies, paper lists, screening outcomes, findings — lives
-only inside `workspaces/<slug>/` and its own scoped memory.
+only inside `ongoing/<slug>/` and its own scoped memory.
 
 Project-level `.claude/memory/` may contain only generic, topic-agnostic
 engineering knowledge. Never write a topic slug, a paper title or a research
 finding there. If one is written by mistake, delete it and amend the commit
 rather than leaving it in history.
+
+## Change the tool at its source
+
+The workflow for this project ships as a plugin. Fix it in the plugin's own
+source checkout, never in the copy the host installed under `~/.claude/plugins/`
+or `~/.codex/` — that is a cache and the edit will be overwritten. If the source
+checkout cannot be discovered, ask the user for the path rather than guessing or
+editing the cache. Never commit an absolute path to it. See
+`../.claude/rules/TOOL-SOURCE.md`.

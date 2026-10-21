@@ -1,3 +1,6 @@
 archived/
 ongoing/
 style/
+
+# Python bytecode from scripts/ and tests/ — same rule as cc-docx.
+__pycache__/

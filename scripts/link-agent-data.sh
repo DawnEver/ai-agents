@@ -1,48 +1,174 @@
 #!/usr/bin/env bash
-# link-agent-data.sh — relink this working tree to the bulk data that lives outside it.
+# link-agent-data.sh — provision the bulk working data this repo does not track.
 #
-#   ./scripts/link-agent-data.sh [/path/to/agent-data]
+#   ./scripts/link-agent-data.sh            # link to synced data (auto-resolve)
+#   ./scripts/link-agent-data.sh <path>     # link to synced data at <path>
+#   ./scripts/link-agent-data.sh --local    # local-only: plain directories, no sync
+#   ./scripts/link-agent-data.sh --status   # report what each path currently is
 #
-# Why the split: this repo's working tree must NOT live in cloud storage — a sync daemon
-# replicating .git/ corrupts the index and destroys the reflog (it did, on 2026-08-29).
-# But some of the working data is not a git matter at all: it is large, partly PII-bearing,
-# and deliberately never committed. That data wants BACKUP, which cloud storage is good at.
+# WHY THIS EXISTS
 #
-# So: the tree travels via GitHub, the data sits in <cloud>/Sync/agent-data/, and these
-# gitignored symlinks join them. Run this after a fresh clone, or when the cloud path
-# changes (different machine, different username — the fleet has both `linxu` and
-# `ezxmb14`).
+# Each workspace writes bulk data — drafts, archives, PDF corpora, review runs. None of it
+# is committed: it is large, and some of it (cc-docx/workspace) holds real contact emails
+# and partner names. So a fresh clone has the code and the contracts but none of the data
+# directories, and every workspace needs them to exist before it can write.
+#
+# Two ways to satisfy that:
+#
+#   --local   plain directories inside the repo. Nothing leaves the machine. This is the
+#             right default for a single machine, and for anyone using the repo publicly.
+#
+#   (linked)  symlinks into a synced folder, e.g. <cloud>/Sync/agent-data. Use this when
+#             several machines share one dataset. The data gets BACKUP and cross-machine
+#             availability; the working tree still travels by git and never sits in cloud
+#             storage — a sync daemon replicating .git/ corrupts the index and destroys the
+#             reflog, which is what prompted this split on 2026-08-29.
+#
+# Both modes are gitignored and interchangeable: switch by re-running with the other flag.
 
 set -euo pipefail
 
-LINKS=(
-  "ai-post/archived"
-  "reply-email/archived"
-  "manuscript-review/archived"
-  "manuscript-review/ongoing"
-  "cc-docx/out"
-  "cc-docx/workspace"
+# Git Bash's `ln -s` does NOT create a symlink by default: for a directory it silently
+# makes a recursive COPY. That is how 215M of agent-data ended up duplicated inside a
+# Windows working tree while this script cheerfully printed LINK for every entry -- and
+# because these paths are gitignored, `git status` stayed clean and hid it completely.
+# A copy is worse than a failure here: it drifts from the cloud original, and
+# cc-docx/workspace carries PII that is supposed to live in exactly one place.
+#
+# `nativestrict` makes ln FAIL instead of copying. Real failure is recoverable; a silent
+# copy is not.
+case "$(uname -s)" in
+  MINGW* | MSYS* | CYGWIN*) IS_WINDOWS=1; export MSYS=winsymlinks:nativestrict ;;
+  *) IS_WINDOWS=0 ;;
+esac
+
+# Create dest -> src as a genuine link, or return non-zero. On Windows a native symlink
+# needs Developer Mode or an elevated shell; a directory junction needs neither, so fall
+# back to one rather than leaving the user stuck.
+make_link() {
+  local src="$1" dest="$2"
+  if ln -sfn "$src" "$dest" 2>/dev/null && [[ -L "$dest" ]]; then
+    return 0
+  fi
+  if [[ $IS_WINDOWS -eq 1 ]]; then
+    rm -rf "$dest"
+    if cmd //c mklink //J "$(cygpath -w "$dest")" "$(cygpath -w "$src")" >/dev/null 2>&1; then
+      [[ -L "$dest" || -d "$dest" ]] && return 0
+    fi
+  fi
+  return 1
+}
+
+# Each entry is repo destination|agent-data source. Most are identical; cc-docx and
+# cc-slides deliberately expose their whole lifecycle data root through repo/workspace.
+MAPPINGS=(
+  "ai-post/archived|ai-post/archived"
+  "reply-email/archived|reply-email/archived"
+  "manuscript-review/archived|manuscript-review/archived"
+  "manuscript-review/ongoing|manuscript-review/ongoing"
+  "literature-review/ongoing|literature-review/ongoing"
+  "literature-review/archived|literature-review/archived"
+  "reviewer-discovery/ongoing|reviewer-discovery/ongoing"
+  "reviewer-discovery/archived|reviewer-discovery/archived"
+  "cc-uon/ongoing|cc-uon/ongoing"
+  "cc-uon/archived|cc-uon/archived"
+  "cc-docx/workspace|cc-docx"
+  "cc-slides/workspace|cc-slides"
+  # The five facts the cc-academia store cannot re-derive — invitations and
+  # their outcomes, verified ranks, addresses, corrected affiliations, doctorate
+  # years. Line-oriented JSON, one subdirectory per device, so a syncer has no
+  # conflict to resolve. The SQLite store itself stays on local disk.
+  "cc-academia-facts|cc-academia-facts"
 )
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# Resolve the data dir: explicit arg, then $AGENT_DATA_DIR, then the sibling of the
-# claude-config sync payload (~/.claude/sync-dir names it), then a plain guess.
+mode="link"
+explicit=""
+for arg in "$@"; do
+  case "$arg" in
+    --local)  mode="local" ;;
+    --status) mode="status" ;;
+    -h|--help) sed -n '2,30p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -*) echo "unknown flag: $arg" >&2; exit 2 ;;
+    *)  explicit="$arg" ;;
+  esac
+done
+
+# Resolve the data dir: explicit arg, $AGENT_DATA_DIR, then the sibling of the config
+# sync payload (~/.claude/sync-dir names it), which is where it lives on this fleet.
 resolve_data_dir() {
-  [[ $# -gt 0 && -n "${1:-}" ]] && { echo "$1"; return; }
+  [[ -n "$explicit" ]] && { echo "$explicit"; return; }
   [[ -n "${AGENT_DATA_DIR:-}" ]] && { echo "$AGENT_DATA_DIR"; return; }
   if [[ -f "$HOME/.claude/sync-dir" ]]; then
     local payload; payload="$(tr -d '\n' < "$HOME/.claude/sync-dir")"
     [[ -n "$payload" ]] && { echo "$(dirname "$payload")/agent-data"; return; }
   fi
-  echo "$HOME/OneDrive/Sync/agent-data"
+  echo ""
 }
 
-DATA="$(resolve_data_dir "$@")"
+same_target() {
+  local dest="$1" src="$2"
+  [[ -e "$dest" && -e "$src" ]] || return 1
+  [[ "$(readlink -f "$dest")" == "$(readlink -f "$src")" ]]
+}
 
-if [[ ! -d "$DATA" ]]; then
-  echo "ERR  agent-data not found: $DATA" >&2
-  echo "     Pass the path explicitly, or set AGENT_DATA_DIR." >&2
+describe() {
+  local dest="$1" src="$2"
+  if [[ -L "$dest" ]]; then
+    echo "linked -> $(readlink "$dest")"
+  elif same_target "$dest" "$src"; then
+    echo "linked (directory junction) -> $src"
+  elif [[ -d "$dest" ]]; then
+    echo "local directory ($(find "$dest" -type f 2>/dev/null | wc -l | tr -d ' ') files)"
+  else
+    echo "missing"
+  fi
+}
+
+if [[ "$mode" == "status" ]]; then
+  echo "repo: $repo_root"
+  DATA="$(resolve_data_dir 2>/dev/null || true)"
+  for mapping in "${MAPPINGS[@]}"; do
+    IFS='|' read -r rel source_rel <<< "$mapping"
+    printf '  %-30s %s\n' "$rel" "$(describe "$repo_root/$rel" "${DATA:-/__missing__}/$source_rel")"
+  done
+  exit 0
+fi
+
+if [[ "$mode" == "local" ]]; then
+  echo "repo: $repo_root"
+  echo "mode: local (plain directories, nothing synced)"
+  echo
+  for mapping in "${MAPPINGS[@]}"; do
+    IFS='|' read -r rel _ <<< "$mapping"
+    dest="$repo_root/$rel"
+    if [[ -L "$dest" ]]; then
+      echo "SKIP  $rel — currently a symlink; remove it first if you want a local directory"
+      continue
+    fi
+    mkdir -p "$dest"
+    if [[ "$rel" == */workspace ]]; then
+      mkdir -p "$dest/ongoing" "$dest/archived"
+    fi
+    printf 'DIR   %-30s ready\n' "$rel"
+  done
+  echo
+  echo "Done. These paths are gitignored; nothing here will be committed."
+  exit 0
+fi
+
+# ── linked mode ──────────────────────────────────────────────────────────────
+DATA="$(resolve_data_dir)"
+
+if [[ -z "$DATA" || ! -d "$DATA" ]]; then
+  echo "ERR  no synced agent-data directory found${DATA:+: $DATA}" >&2
+  echo >&2
+  echo "     If you sync data across machines, pass the path or set AGENT_DATA_DIR:" >&2
+  echo "       ./scripts/link-agent-data.sh \"<cloud>/Sync/agent-data\"" >&2
+  echo >&2
+  echo "     If you only use this repo on one machine, you do not need any of that:" >&2
+  echo "       ./scripts/link-agent-data.sh --local" >&2
   exit 1
 fi
 
@@ -51,31 +177,53 @@ echo "data: $DATA"
 echo
 
 missing=0
-for rel in "${LINKS[@]}"; do
-  src="$DATA/$rel"
+for mapping in "${MAPPINGS[@]}"; do
+  IFS='|' read -r rel source_rel <<< "$mapping"
+  src="$DATA/$source_rel"
   dest="$repo_root/$rel"
 
   if [[ ! -e "$src" ]]; then
-    printf 'SKIP  %-32s (no data at %s)\n' "$rel" "$src"
+    printf 'SKIP  %-30s (no data at %s)\n' "$rel" "$src"
     missing=$((missing + 1))
     continue
   fi
 
   # Never clobber real content: only replace an existing symlink, or create a new one.
+  if same_target "$dest" "$src"; then
+    printf 'LINK  %-30s -> %s (%s files)\n' "$rel" "$src" "$(find -L "$dest" -type f 2>/dev/null | wc -l | tr -d ' ')"
+    continue
+  fi
   if [[ -e "$dest" && ! -L "$dest" ]]; then
-    printf 'SKIP  %-32s (real directory here — move it aside first)\n' "$rel"
+    printf 'SKIP  %-30s (real directory here — move it aside first)\n' "$rel"
+    # An older version of this script left copies exactly here (and --local makes them on
+    # purpose). Say so, but never delete: only a diff against the source can tell a stale
+    # copy from unsaved work.
+    printf '      if this is a copy left by an older run, compare it with\n'
+    printf '      %s and remove it once they match\n' "$src"
     missing=$((missing + 1))
     continue
   fi
 
   mkdir -p "$(dirname "$dest")"
-  ln -sfn "$src" "$dest"
-  printf 'LINK  %-32s -> %s (%s files)\n' "$rel" "$src" "$(find -L "$dest" -type f 2>/dev/null | wc -l | tr -d ' ')"
+  if ! make_link "$src" "$dest"; then
+    printf 'ERR   %-30s could not create a link\n' "$rel" >&2
+    printf '      Enable Developer Mode (Windows Settings > For developers), run elevated,\n' >&2
+    printf '      or use --local if this machine does not need synced data.\n' >&2
+    missing=$((missing + 1))
+    continue
+  fi
+  # Assert rather than assume: printing LINK over a copy is the bug this replaces.
+  if [[ ! -L "$dest" && ! $(readlink -f "$dest") == "$(readlink -f "$src")" ]]; then
+    printf 'ERR   %-30s is a copy, not a link — refusing to report success\n' "$rel" >&2
+    missing=$((missing + 1))
+    continue
+  fi
+  printf 'LINK  %-30s -> %s (%s files)\n' "$rel" "$src" "$(find -L "$dest" -type f 2>/dev/null | wc -l | tr -d ' ')"
 done
 
 echo
 if [[ $missing -gt 0 ]]; then
-  echo "Done with $missing skipped. Check the cloud client has finished downloading."
-  exit 1
+  echo "Done with $missing skipped — those workspaces have no synced data yet."
+  echo "Create them locally instead with: ./scripts/link-agent-data.sh --local"
 fi
-echo "Done. \`git status\` should be clean — these paths are gitignored."
+echo "\`git status\` should be clean — these paths are gitignored."

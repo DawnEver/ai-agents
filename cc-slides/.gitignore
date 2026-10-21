@@ -1,0 +1,5 @@
+.DS_Store
+__pycache__/
+.scratch/
+# workspace/ links to synced task data (client templates, unpublished figures) — never committed.
+workspace

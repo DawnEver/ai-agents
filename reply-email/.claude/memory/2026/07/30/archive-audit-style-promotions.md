@@ -1,3 +1,10 @@
+---
+name: archive-audit-style-promotions
+description: "Periodic full-archive audit of every meta.md diff note, promoting themes seen in >=2 archives into style/profile.md — per-round archiving under-promotes otherwise"
+metadata:
+  type: project
+---
+
 # Full-archive audit → style promotions (2026-07-30)
 
 Method: read **all** archived `meta.md` files (27 at the time), extract every `## Diff notes`

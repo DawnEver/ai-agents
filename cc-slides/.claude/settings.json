@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 scripts/*.py:*)",
+      "Bash(python scripts/*.py:*)",
+      "Bash(python3 -m unittest:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Read(~/Library/Containers/com.microsoft.Powerpoint/Data/tmp/cc-slides/**)"
+    ]
+  }
+}

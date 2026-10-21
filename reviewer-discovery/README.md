@@ -15,7 +15,11 @@ loaded path, without any plugin-root environment variable.
 | Path | What it is |
 |------|------------|
 | `ongoing/<slug>/` | submissions currently being matched to reviewers |
+| `ongoing/<slug>/<slug>.xlsx` | **the deliverable** — one workbook per case, named after it |
 | `archived/<slug>/` | finished runs |
+
+The workbook is the only file meant to leave the workspace. The numbered stage
+directories beside it are working material, kept so a verdict can be disputed.
 
 The plugin finds this directory by walking up from wherever you are, so nothing
 needs configuring. Set `ACADEMIA_CONTACT` to your own address in your personal

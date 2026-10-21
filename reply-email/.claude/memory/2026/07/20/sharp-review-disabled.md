@@ -5,9 +5,20 @@ metadata:
   type: project
 ---
 
-The user asked to stop automatic sharp-review in this repo. The sharp-review plugin (cc-market)
-has no `enabled: false` flag; its Stop hook reads trigger thresholds from the committed,
-shareable `.claude/sharp-review.json` (via `scripts/lib/config.mjs` → `loadReviewConfig`).
+**Update 2026-08-31:** the threshold trick stopped working — plugin 1.1.45 fired the Stop hook
+anyway (`firedSources: diff`), so the config file alone no longer suppresses it. The plugin is
+now disabled outright via `.claude/settings.json`:
+
+```json
+"enabledPlugins": { "sharp-review@cc-market": false }
+```
+
+`.claude/sharp-review.json` with unreachable thresholds is kept in place as belt-and-braces.
+To re-enable, remove the `enabledPlugins` entry.
+
+**Original approach (superseded):** the user asked to stop automatic sharp-review in this repo.
+The sharp-review plugin (cc-market) has no `enabled: false` flag; its Stop hook reads trigger
+thresholds from the committed, shareable `.claude/sharp-review.json` (via `scripts/lib/config.mjs` → `loadReviewConfig`).
 The supported opt-out is setting unreachable thresholds there:
 
 - `thresholds.wave0` / `thresholds.wave1`: 1,000,000 lines / 10,000 files
