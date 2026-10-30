@@ -30,6 +30,10 @@ contract: `AGENTS.md`. Run scripts from the `cc-slides/` directory.
 
 ## How to execute
 
+For scientific or engineering comparison decks, read
+[Analysis presentations](references/analysis-presentations.md) when planning the narrative,
+selecting plots, or reviewing evidence and readability.
+
 Read the phase file for the step you're at and follow it. Tasks live in
 `workspace/ongoing/<yyMMdd>-<slug>/` (`deck.toml`, `project.toml`, `src/`, `figures/`, `out/`);
 bump `iteration` in `project.toml` on each substantive rebuild and append delivered files to
