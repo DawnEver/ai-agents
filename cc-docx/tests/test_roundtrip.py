@@ -1,3 +1,4 @@
+import base64
 import sys
 import tempfile
 import unittest
@@ -6,6 +7,7 @@ from datetime import date
 from pathlib import Path
 
 from docx import Document
+from docx.oxml.ns import qn
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -138,6 +140,29 @@ class RoundTripSafetyTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "ccx1"):
                 md2docx.md2docx(str(transcript), str(template), str(output))
             self.assertFalse(output.exists())
+
+    def test_image_line_inserts_pictures_side_by_side(self):
+        with tempfile.TemporaryDirectory() as directory:
+            d = Path(directory)
+            template, transcript, output = d / "t.docx", d / "t.md", d / "o.docx"
+            png = d / "fig.png"
+            png.write_bytes(base64.b64decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk"
+                "YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="))
+            doc = Document()
+            doc.add_paragraph("Original")
+            doc.save(template)
+            docx2md.docx2md(str(template))
+            transcript.write_text(
+                "<!-- ccx1 --> Original\n\n![a](fig.png) ![b](fig.png)\n",
+                encoding="utf-8")
+
+            md2docx.md2docx(str(transcript), str(template), str(output))
+
+            out = Document(output)
+            drawings = out.element.body.findall(".//" + qn("w:drawing"))
+            self.assertEqual(len(drawings), 2)
+            self.assertNotIn("![", "".join(p.text for p in out.paragraphs))
 
 
 if __name__ == "__main__":

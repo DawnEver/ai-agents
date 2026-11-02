@@ -29,7 +29,7 @@ Two converters, one contract:
 | Script | Direction | What it does |
 |--------|-----------|--------------|
 | `scripts/docx2md.py` | docx → md | Full-fidelity transcript: headings, emphasis, code, links, lists, tables (merged-cell aware), headers/footers. Every block gets an invisible bookmark anchor (`ccxN`) in the docx and a `<!-- ccxN -->` comment in the md |
-| `scripts/md2docx.py` | md → docx | Patch-back: walks the **original** template, finds each anchor, replaces that block's content. Unanchored (new) blocks insert after the previous anchor. Original styles/layout survive |
+| `scripts/md2docx.py` | md → docx | Patch-back: walks the **original** template, finds each anchor, replaces that block's content. Unanchored (new) blocks insert after the previous anchor. A line of `![caption](path)` images inserts pictures. Original styles/layout survive |
 | `scripts/to_pdf.py` | docx → pdf | Word COM (win32com). Not part of the daily loop — call only when a PDF is actually needed |
 
 ## Usage
