@@ -34,6 +34,10 @@ HEADING_LINE = re.compile(r"^(#{1,6})\s*(?:<!--\s*(ccx\d+)\s*-->)?\s*(.*)$")
 LIST_LINE = re.compile(r"^\s*(?:[-*]|\d+\.)\s+(?:<!--\s*(ccx\d+)\s*-->)?\s*(.*)$")
 HEADER_LINE = re.compile(
     r"^>\s*\*\*(HEADER|FOOTER)\*\*\s*(?:<!--\s*(ccx\d+)\s*-->)?\s*(.*)$")
+# A line made only of `![alt](path)` images → one centred picture paragraph;
+# several images on one line share the text width side by side.
+IMAGE_TOKEN = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)\)")
+IMAGE_LINE = re.compile(r"^\s*(?:!\[[^\]]*\]\([^)\s]+\)\s*)+$")
 
 # Track-changes (review mode): inserted content is wrapped in w:ins so the
 # user can accept/reject it in Word's Review pane. This is the default.
@@ -293,6 +297,11 @@ def _parse_md_full(text):
                            "text": m.group(2)})
             i += 1
             continue
+        if not pending and IMAGE_LINE.match(line):
+            blocks.append({"kind": "image", "anchor": None,
+                           "paths": [m.group(2) for m in IMAGE_TOKEN.finditer(line)]})
+            i += 1
+            continue
         m = PARA_ANCHOR.match(line)  # extraction format: <!-- ccxN --> text
         if m:
             blocks.append({"kind": "para", "anchor": m.group(1),
@@ -369,6 +378,8 @@ def insert_block(doc, body_elm, cursor, block, link_part, track=False):
         cursor.addnext(tbl)
         sync_table(t, block["rows"], link_part, track=track)
         return tbl
+    if block["kind"] == "image":
+        return _insert_images(doc, body_elm, cursor, block["paths"], track)
     # paragraph-like
     if block["kind"] == "heading":
         style = f"Heading {block.get('level', 1)}"
@@ -380,6 +391,30 @@ def insert_block(doc, body_elm, cursor, block, link_part, track=False):
     ins_ctx = {"n": 0} if track else None
     for text_i, fmt in parse_inline(block.get("text", "")):
         _new_run(p, text_i, fmt, link_part, ins_ctx)
+    return p._p
+
+
+def _insert_images(doc, body_elm, cursor, paths, track):
+    """Centred paragraph holding the pictures, scaled to share text width."""
+    sec = doc.sections[-1]
+    width = int((sec.page_width - sec.left_margin - sec.right_margin)
+                * 0.95 / len(paths))
+    p = doc.add_paragraph()
+    p.alignment = 1  # centre
+    body_elm.remove(p._p)
+    cursor.addnext(p._p)
+    for n, path in enumerate(paths, 1):
+        if not os.path.isfile(path):
+            raise FileNotFoundError(f"image not found: {path}")
+        run = p.add_run()
+        run.add_picture(path, width=width)
+        if n < len(paths):
+            run.add_text(" ")
+        if track:
+            ins = _make_element(p._p, "w:ins", {
+                qn("w:id"): str(90000 + n), qn("w:author"): AUTHOR, qn("w:date"): DATE})
+            run._r.addprevious(ins)
+            ins.append(run._r)
     return p._p
 
 
@@ -411,6 +446,10 @@ def md2docx(md_path, docx_path, out_path, track_changes=True):
     link_part = doc.part
 
     blocks = _parse_md_full(md_text)
+    md_dir = os.path.dirname(os.path.abspath(md_path))
+    for block in blocks:  # image paths are relative to the md file
+        if block["kind"] == "image":
+            block["paths"] = [os.path.join(md_dir, p) for p in block["paths"]]
     anchor_errors = []
     for block in blocks:
         anchor = block["anchor"]

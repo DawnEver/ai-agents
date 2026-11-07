@@ -3,22 +3,8 @@
   "permissions": {
     "allow": [
       "Bash(marker:*)",
-      "Bash(python:*)",
-      "Bash(ls:*)",
-      "Bash(mkdir:*)",
       "Bash(mv:*)",
-      "Bash(cp:*)",
-      "Read(*/manuscript-review/**)",
-      "Edit(*/manuscript-review/ongoing/**)",
-      "Edit(*/manuscript-review/archived/**)",
-      "Edit(*/manuscript-review/style/**)",
-      "Edit(*/manuscript-review/critiques-library/**)",
-      "Edit(*/manuscript-review/.claude/**)",
-      "Edit(*/manuscript-review/templates/**)",
-      "Edit(*/manuscript-review/CLAUDE.md)",
-      "Read(*/manuscript-review/**)",
-      "Grep(*/manuscript-review/**)",
-      "Bash(uv run:*)"
+      "Bash(cp:*)"
     ]
   },
   "enabledPlugins": {
