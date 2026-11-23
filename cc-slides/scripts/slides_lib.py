@@ -9,6 +9,8 @@ from pptx.enum.shapes import MSO_SHAPE_TYPE, PP_PLACEHOLDER
 from pptx.opc.constants import RELATIONSHIP_TYPE as RT
 from pptx.oxml.ns import qn
 
+import omml
+
 if sys.version_info >= (3, 11):
     import tomllib
 else:  # pragma: no cover
@@ -156,7 +158,8 @@ def _as_rpr(el):
 
 def set_text(tx_body, text):
     """Replace all paragraphs of an a:txBody / p:txBody with `text`, keeping the first paragraph's
-    paragraph and run formatting. Two leading spaces per indent level; **bold** supported."""
+    paragraph and run formatting. Two leading spaces per indent level; **bold** supported;
+    `$...$` / whole-paragraph `$$...$$` become native equations (omml.py), `\\$` is a literal $."""
     paras = tx_body.findall(qn("a:p"))
     proto = paras[0] if paras else etree.Element(qn("a:p"))
     ppr = proto.find(qn("a:pPr"))
@@ -181,18 +184,22 @@ def set_text(tx_body, text):
             end.tag = qn("a:endParaRPr")
             p.append(end)
             continue
-        for seg, bold in split_bold(stripped):
-            for k, piece in enumerate(seg.split(BR)):
-                if k:
-                    etree.SubElement(p, qn("a:br")).append(copy.deepcopy(rpr))
-                if not piece:
-                    continue
-                r = etree.SubElement(p, qn("a:r"))
-                run_rpr = copy.deepcopy(rpr)
-                if bold:
-                    run_rpr.set("b", "1")
-                r.append(run_rpr)
-                etree.SubElement(r, qn("a:t")).text = piece
+        for kind, span in omml.split_math(stripped):
+            if kind != "text":
+                p.append(omml.equation(span, rpr, display=kind == "display"))
+                continue
+            for seg, bold in split_bold(span):
+                for k, piece in enumerate(seg.split(BR)):
+                    if k:
+                        etree.SubElement(p, qn("a:br")).append(copy.deepcopy(rpr))
+                    if not piece:
+                        continue
+                    r = etree.SubElement(p, qn("a:r"))
+                    run_rpr = copy.deepcopy(rpr)
+                    if bold:
+                        run_rpr.set("b", "1")
+                    r.append(run_rpr)
+                    etree.SubElement(r, qn("a:t")).text = piece
 
 
 def get_text(tx_body):
@@ -207,6 +214,8 @@ def get_text(tx_body):
                 chunks.append((BR, None))
                 continue
             t = r.findtext(qn("a:t")) or ""
+            if r.getparent().tag != f"{{{omml.MC_NS}}}Fallback":
+                t = t.replace("$", "\\$")  # an equation's fallback run already reads $LaTeX$
             rp = r.find(qn("a:rPr"))
             chunks.append((t, rp is not None and rp.get("b") in ("1", "true")))
         merged = []
