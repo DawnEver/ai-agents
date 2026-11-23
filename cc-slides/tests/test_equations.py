@@ -68,8 +68,8 @@ class EquationTests(unittest.TestCase):
     def test_latex_spacing_survives_as_space_characters(self):
         tx = body(r"$a \qquad b \, c$")
         text = "".join(t.text for t in tx.iter(f"{M}t"))
-        self.assertIn("20032003", text)  # qquad = 2 em
-        self.assertIn("2009", text)  # , = thin space
+        self.assertIn("\u2003\u2003", text)  # \qquad = 2 em
+        self.assertIn("\u2009", text)  # \, = thin space
 
     def test_bold_span_may_contain_an_equation(self):
         tx = body("**peak at $k = 4.59$** here")

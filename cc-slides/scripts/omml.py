@@ -86,9 +86,9 @@ def _spaces_to_text(mathml):
     for sp in list(mathml.iter(f"{{{MML_NS}}}mspace")):
         width = sp.get("width", "0em")
         em = float(width[:-2]) if width.endswith("em") else 0.0
-        text = "2003" * int(em)
+        text = "\u2003" * int(em)
         rest = em - int(em)
-        text += "2005" if rest >= 0.25 else "2009" if rest >= 0.1 else ""
+        text += "\u2005" if rest >= 0.25 else "\u2009" if rest >= 0.1 else ""
         if not text:
             sp.getparent().remove(sp)
             continue
