@@ -23,6 +23,7 @@ from fixtures import make_template  # noqa: E402
 DECK_STYLE = "{93296810-A885-4BE3-A3E7-6D5BEEA58F35}"
 A14 = "{http://schemas.microsoft.com/office/drawing/2010/main}m"
 M_JC = "{http://schemas.openxmlformats.org/officeDocument/2006/math}jc"
+M_VAL = "{http://schemas.openxmlformats.org/officeDocument/2006/math}val"
 
 
 def add_pattern_table(slide):
@@ -108,7 +109,7 @@ class ApplyTableStyleTests(unittest.TestCase):
     def test_equation_stays_native_and_follows_the_alignment(self):
         tc = cells(self.target)[0][1]
         self.assertIsNotNone(tc.find(".//" + A14))
-        self.assertEqual(tc.find(".//" + M_JC).get(M_JC), "center")
+        self.assertEqual(tc.find(".//" + M_JC).attrib, {M_VAL: "center"})
         self.assertEqual(lib.get_table(self.target._element), self.rows)
 
     def test_pattern_without_a_table_is_an_error(self):

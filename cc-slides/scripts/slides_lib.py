@@ -288,7 +288,8 @@ def set_table(graphic_frame_el, rows):
             set_text(tc.find(qn("a:txBody")), str(value))
 
 
-M_JC = "{http://schemas.openxmlformats.org/officeDocument/2006/math}jc"
+M_NS = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
+M_JC, M_VAL = M_NS + "jc", M_NS + "val"
 _BEFORE_FILL = {qn("a:ln")}
 
 
@@ -339,7 +340,7 @@ def _style_cell(tc, role):
             p.insert(0, copy.deepcopy(role_ppr))
             algn = role_ppr.get("algn", "l")
         for jc in p.iter(M_JC):
-            jc.set(M_JC, JC.get(algn, "left"))
+            jc.set(M_VAL, JC.get(algn, "left"))
     for rpr in tc.iter(qn("a:rPr"), qn("a:endParaRPr")):
         if size:
             rpr.set("sz", size)
