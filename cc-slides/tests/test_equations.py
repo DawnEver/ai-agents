@@ -62,8 +62,7 @@ class EquationTests(unittest.TestCase):
             body("$$x = 1$ tail")
 
     def test_get_text_round_trips_equations_and_literal_dollars(self):
-        text = "costs \$5 and $x^2$
-$$\frac{a}{b}$$"
+        text = "costs \\$5 and $x^2$\n$$\\frac{a}{b}$$"
         self.assertEqual(slides_lib.get_text(body(text)), text)
 
     def test_bad_latex_is_a_hard_error(self):
