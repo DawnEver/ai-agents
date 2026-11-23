@@ -46,3 +46,5 @@ bump `iteration` in `project.toml` on each substantive rebuild and append delive
    say so and ask.
 5. The first preview in a session opens PowerPoint in the background — say so once.
 6. PDF last, never first.
+7. Content rulings (`AGENTS.md`): formulas are native equations (`$...$`), never plain text;
+   explanations go phenomenon -> cause -> conclusion; no filler captions under figures.

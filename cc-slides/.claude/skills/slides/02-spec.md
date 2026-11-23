@@ -28,6 +28,8 @@ Guidance:
 - Order slides the way the user will talk through them; say which order you chose.
 - Titles: derive from inputs (`total_loss_w` → "Total Loss Map"); don't add claims, platform names
   or conclusions that aren't in the inputs.
+- Formulas: `$...$` inline, a whole paragraph `$$...$$` displayed -> native equations
+  (TOML basic strings need `\frac`; literal strings `'...'` do not). `\$` is a literal dollar.
 - `""` leaves a slot empty (it is dropped, not left with template content).
 - Too many items for a pattern is an error — pick or define a pattern with more slots instead.
 - For long, regular series, it is fine to generate `deck.toml` with a short script; the TOML stays
