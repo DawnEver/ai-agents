@@ -52,7 +52,7 @@ class TextRoundTripTests(unittest.TestCase):
                     .replace("Sub point", "Changed sub")
                     .replace("| 1000 | 93.2 |", "| 1000 | 94.0 |\n| 2000 | 95.1 |"))
         md_path, out = self.dir / "deck.md", self.dir / "out.pptx"
-        md_path.write_text(edited)
+        md_path.write_text(edited, encoding="utf-8")
         md2slides.apply(md_path, self.src, out)
         again = slides2md.to_markdown(out)
         self.assertEqual(again.split("\n", 1)[1], edited.split("\n", 1)[1])  # line 1 names the source file
@@ -79,7 +79,7 @@ class RoundTripEdgeCaseTests(unittest.TestCase):
             src, md_path, out = d / "a.pptx", d / "a.md", d / "b.pptx"
             prs.save(src)
             md = slides2md.to_markdown(src)
-            md_path.write_text(md)
+            md_path.write_text(md, encoding="utf-8")
             md2slides.apply(md_path, src, out)
             return md, slides2md.to_markdown(out), Presentation(out)
 
