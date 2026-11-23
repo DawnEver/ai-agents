@@ -26,6 +26,7 @@ XSL_CANDIDATES = (
     r"C:\Program Files\Microsoft Office\Office16\MML2OMML.XSL",
     "/Applications/Microsoft Word.app/Contents/Resources/mathml2omml.xsl",
 )
+MML_NS = "http://www.w3.org/1998/Math/MathML"
 _TOKEN = re.compile(r"\\\$|\$\$|\$")
 
 
@@ -80,6 +81,23 @@ def split_math(line):
     return parts
 
 
+def _spaces_to_text(mathml):
+    r"""MML2OMML drops <mspace>; \quad, \, ... survive as em / four-per-em / thin spaces."""
+    for sp in list(mathml.iter(f"{{{MML_NS}}}mspace")):
+        width = sp.get("width", "0em")
+        em = float(width[:-2]) if width.endswith("em") else 0.0
+        text = " " * int(em)
+        rest = em - int(em)
+        text += " " if rest >= 0.25 else " " if rest >= 0.1 else ""
+        if not text:
+            sp.getparent().remove(sp)
+            continue
+        mtext = etree.Element(f"{{{MML_NS}}}mtext")
+        mtext.text = text
+        mtext.tail = sp.tail
+        sp.getparent().replace(sp, mtext)
+
+
 def latex_to_omml(latex):
     """LaTeX -> <m:oMath>. Raises ValueError for LaTeX latex2mathml cannot parse."""
     from latex2mathml.converter import convert
@@ -90,6 +108,7 @@ def latex_to_omml(latex):
     for el in mathml.iter():
         if el.text and el.text.startswith("\\"):
             raise ValueError(f"bad LaTeX {latex!r}: unknown command {el.text}")
+    _spaces_to_text(mathml)
     omath = _transform()(mathml).getroot()
     if omath is None or omath.tag != _m("oMath"):
         raise ValueError(f"bad LaTeX {latex!r}: MML2OMML produced no equation")
@@ -97,8 +116,7 @@ def latex_to_omml(latex):
 
 
 def _math_rpr(rpr, upright):
-    out = copy.deepcopy(rpr)
-    out.attrib.pop("b", None)
+    out = copy.deepcopy(rpr)  # bold only when the equation sits inside **...**
     out.set("i", "0" if upright else "1")
     for tag in ("a:latin", "a:ea", "a:cs", "a:sym", "a:hlinkClick", "a:hlinkMouseOver", "a:rtl", "a:extLst"):
         for old in out.findall(qn(tag)):

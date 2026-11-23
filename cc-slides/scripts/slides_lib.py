@@ -191,21 +191,21 @@ def set_text(tx_body, text):
             end.tag = qn("a:endParaRPr")
             p.append(end)
             continue
-        for kind, span in omml.split_math(stripped):
-            if kind != "text":
-                p.append(omml.equation(span, rpr, display=kind == "display"))
-                continue
-            for seg, bold in split_bold(span):
-                for k, piece in enumerate(seg.split(BR)):
+        for seg, bold in split_bold(stripped):
+            seg_rpr = copy.deepcopy(rpr)
+            if bold:
+                seg_rpr.set("b", "1")
+            for kind, span in omml.split_math(seg):
+                if kind != "text":
+                    p.append(omml.equation(span, seg_rpr, display=kind == "display"))
+                    continue
+                for k, piece in enumerate(span.split(BR)):
                     if k:
                         etree.SubElement(p, qn("a:br")).append(copy.deepcopy(rpr))
                     if not piece:
                         continue
                     r = etree.SubElement(p, qn("a:r"))
-                    run_rpr = copy.deepcopy(rpr)
-                    if bold:
-                        run_rpr.set("b", "1")
-                    r.append(run_rpr)
+                    r.append(copy.deepcopy(seg_rpr))
                     etree.SubElement(r, qn("a:t")).text = piece
 
 

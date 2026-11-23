@@ -65,6 +65,20 @@ class EquationTests(unittest.TestCase):
         text = "costs \\$5 and $x^2$\n$$\\frac{a}{b}$$"
         self.assertEqual(slides_lib.get_text(body(text)), text)
 
+    def test_latex_spacing_survives_as_space_characters(self):
+        tx = body(r"$a \qquad b \, c$")
+        text = "".join(t.text for t in tx.iter(f"{M}t"))
+        self.assertIn("  ", text)  # \qquad = 2 em
+        self.assertIn(" ", text)  # \, = thin space
+
+    def test_bold_span_may_contain_an_equation(self):
+        tx = body("**peak at $k = 4.59$** here")
+        p = tx.find(qn("a:p"))
+        runs = [(r.findtext(qn("a:t")), r.find(qn("a:rPr")).get("b")) for r in p.findall(qn("a:r"))]
+        self.assertEqual(runs, [("peak at ", "1"), (" here", None)])
+        self.assertIsNotNone(p.find(f".//{M}oMath"))
+        self.assertEqual({r.find(qn("a:rPr")).get("b") for r in p.iter(f"{M}r")}, {"1"})
+
     def test_bad_latex_is_a_hard_error(self):
         with self.assertRaisesRegex(ValueError, "LaTeX"):
             body(r"$\frac{1}{$")
