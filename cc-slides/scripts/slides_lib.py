@@ -286,3 +286,65 @@ def set_table(graphic_frame_el, rows):
             raise ValueError(f"table row has {len(values)} cells but the table has {ncols} columns")
         for tc, value in zip(tr.findall(qn("a:tc")), list(values) + [""] * (ncols - len(values))):
             set_text(tc.find(qn("a:txBody")), str(value))
+
+
+M_JC = "{http://schemas.openxmlformats.org/officeDocument/2006/math}jc"
+_BEFORE_FILL = {qn("a:ln")}
+
+
+def first_table(slide):
+    """The first table graphic frame of a slide, or ValueError."""
+    for shape in slide.shapes:
+        if getattr(shape, "has_table", False) and shape.has_table:
+            return shape._element
+    raise ValueError("slide has no table to copy a table style from")
+
+
+def apply_table_style(graphic_frame_el, pattern_frame_el):
+    """Give a table the look of a pattern table: its tblPr (style id + first-row/column/band flags),
+    and per cell ROLE (header row / first column / body, i.e. pattern cell [min(r,1)][min(c,1)])
+    its tcPr, paragraph properties, font size and run fill. Text, bold and equations are kept."""
+    pat = [tr.findall(qn("a:tc")) for tr in table_rows(pattern_frame_el)]
+    tbl, pat_tbl = graphic_frame_el.find(".//" + qn("a:tbl")), pattern_frame_el.find(".//" + qn("a:tbl"))
+    if not pat or pat_tbl is None or tbl is None:
+        raise ValueError("pattern has no table to copy a table style from")
+    old = tbl.find(qn("a:tblPr"))
+    new = copy.deepcopy(pat_tbl.find(qn("a:tblPr")))
+    if old is not None:
+        tbl.replace(old, new)
+    else:
+        tbl.insert(0, new)
+    for r, tr in enumerate(table_rows(graphic_frame_el)):
+        prow = pat[min(r, len(pat) - 1, 1)]
+        for c, tc in enumerate(tr.findall(qn("a:tc"))):
+            _style_cell(tc, prow[min(c, len(prow) - 1, 1)])
+
+
+def _style_cell(tc, role):
+    role_ppr = role.find(".//" + qn("a:pPr"))
+    role_rpr = next(role.iter(qn("a:rPr"), qn("a:endParaRPr")), None)
+    size = role_rpr.get("sz") if role_rpr is not None else None
+    fill = role_rpr.find(qn("a:solidFill")) if role_rpr is not None else None
+    old_tcpr, new_tcpr = tc.find(qn("a:tcPr")), role.find(qn("a:tcPr"))
+    if old_tcpr is not None:
+        tc.remove(old_tcpr)
+    if new_tcpr is not None:
+        tc.append(copy.deepcopy(new_tcpr))
+    algn = "l"
+    for p in tc.find(qn("a:txBody")).findall(qn("a:p")):
+        old = p.find(qn("a:pPr"))
+        if old is not None:
+            p.remove(old)
+        if role_ppr is not None:
+            p.insert(0, copy.deepcopy(role_ppr))
+            algn = role_ppr.get("algn", "l")
+        for jc in p.iter(M_JC):
+            jc.set(M_JC, JC.get(algn, "left"))
+    for rpr in tc.iter(qn("a:rPr"), qn("a:endParaRPr")):
+        if size:
+            rpr.set("sz", size)
+        for f in rpr.findall(qn("a:solidFill")):
+            rpr.remove(f)
+        if fill is not None:
+            at = 1 if len(rpr) and rpr[0].tag in _BEFORE_FILL else 0
+            rpr.insert(at, copy.deepcopy(fill))

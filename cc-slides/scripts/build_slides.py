@@ -16,6 +16,8 @@ Spec (paths relative to the spec file):
     [patterns.three-up]
     slide  = 19                              # 1-based template slide
     static = ["Logo"]                        # optional: shapes never treated as slots
+    table_style = 40                         # optional: tables take the style of the first
+                                             # table on template slide 40 (the deck's own look)
 
     [[slides]]
     keep = 1                                 # template slide 1, unchanged
@@ -87,7 +89,7 @@ def _place_picture(slide, box_shape, path, fit):
     return pic
 
 
-def _render_slide(prs, pattern_slide, entry, static, base, slide_no):
+def _render_slide(prs, pattern_slide, entry, static, base, slide_no, table_style=None):
     slide = prs.slides.add_slide(pattern_slide.slide_layout)
     for ph in list(slide.placeholders):  # the pattern supplies every shape explicitly
         ph._element.getparent().remove(ph._element)
@@ -124,7 +126,10 @@ def _render_slide(prs, pattern_slide, entry, static, base, slide_no):
         if label.startswith("image"):
             _place_picture(slide, shape, *value)
         elif label.startswith("table"):
-            lib.set_table(lib.copy_shape(shape._element, src_part, slide), value)
+            frame = lib.copy_shape(shape._element, src_part, slide)
+            lib.set_table(frame, value)
+            if table_style is not None:
+                lib.apply_table_style(frame, table_style)
         else:  # title / text
             el = lib.copy_shape(shape._element, src_part, slide)
             lib.set_text(lib.shape_tx_body(el), str(value))
@@ -156,7 +161,12 @@ def build(spec_path, output=None):
             raise ValueError(f"{what}: template slide {n!r} out of range 1..{len(original)}")
         return original[n - 1]
 
-    patterns = {name: (template_slide(p["slide"], f"pattern {name!r}"), set(p.get("static", [])))
+    def style_source(name, p):
+        n = p.get("table_style")
+        return None if n is None else lib.first_table(template_slide(n, f"pattern {name!r} table_style"))
+
+    patterns = {name: (template_slide(p["slide"], f"pattern {name!r}"), set(p.get("static", [])),
+                       style_source(name, p))
                 for name, p in spec.get("patterns", {}).items()}
 
     order = []
@@ -167,8 +177,8 @@ def build(spec_path, output=None):
         name = entry.get("pattern")
         if name not in patterns:
             raise ValueError(f"slide {no}: unknown pattern {name!r}; defined: {sorted(patterns)}")
-        pattern_slide, static = patterns[name]
-        order.append(_render_slide(prs, pattern_slide, entry, static, base, no).slide_id)
+        pattern_slide, static, table_style = patterns[name]
+        order.append(_render_slide(prs, pattern_slide, entry, static, base, no, table_style).slide_id)
     if not order:
         raise ValueError("spec defines no slides")
 

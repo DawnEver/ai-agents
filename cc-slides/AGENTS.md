@@ -43,7 +43,10 @@ and looked at**. Markdown appears only for wording edits of an existing deck (`s
   LaTeX → MathML (`latex2mathml`) → OMML (Office's `MML2OMML.XSL`, or `$CC_SLIDES_MML2OMML`).
   The fallback run keeps `$LaTeX$`, so `slides2md` round-trips it. An unbalanced `$`, `$$` sharing
   a paragraph, unparsable LaTeX or a missing XSL → hard error, never plain text.
-- Tables: row count follows the spec (extra rows copy the last row), columns are fixed.
+- Tables: row count follows the spec (extra rows copy the last row), columns are fixed. A
+  pattern's `table_style = N` gives its tables the style of the first table on template slide N
+  (tblPr + style id; per cell role -- header row / first column / body -- tcPr, alignment, size,
+  run fill); text, bold and equations are kept.
 - **Unfilled slots are dropped** — template content never leaks into generated slides.
 - More items than slots, unknown pattern, missing file, out-of-range slide → hard error.
 - Template slides not listed with `keep` (including pattern slides) are removed.
@@ -63,6 +66,11 @@ and looked at**. Markdown appears only for wording edits of an existing deck (`s
   `slide-NN.png`, and `contact.png` tiles all slides. Windows without Ghostscript: PowerPoint
   exports each `slide-NN.png` itself (COM, read-only, `WithWindow=False` — never the user's focus). Default out_dir
   `<deck dir>/preview/<deck stem>/`. Read `contact.png` first.
+
+### `restyle_tables.py <deck.pptx> --pattern-slide N --slides 23,24 -o <out.pptx>`
+
+- Same restyle for an existing deck: every table on `--slides` takes the style of the first table
+  on slide N. Writes a new file (refuses the input path); nothing else changes.
 
 ### `to_pdf.py <deck.pptx> [output.pdf]` — on demand only
 
@@ -97,6 +105,10 @@ and looked at**. Markdown appears only for wording edits of an existing deck (`s
    (figure, table, numbers) first, then the mechanism (equations), then the conclusion.
 3. **No filler under figures.** No caption that repeats the title or names the view ("contour
    view"); text under a figure must add information.
+4. **Tables use the deck's own table style.** A generated table copies the style of a pattern
+   table from the deck (style id, cell properties, alignment, font size, fills --
+   `table_style = N` on a pattern, or `restyle_tables.py` for an existing deck), never a generic
+   style such as python-pptx's default.
 
 ## Hard rules
 
