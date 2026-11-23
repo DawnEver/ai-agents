@@ -2,6 +2,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from PIL import Image
@@ -27,6 +28,26 @@ class PreviewUnitTests(unittest.TestCase):
 
     def test_mac_staging_dir_is_inside_powerpoint_sandbox(self):
         self.assertIn("com.microsoft.Powerpoint", str(powerpoint.MAC_STAGING))
+
+    def test_windows_without_ghostscript_exports_png_through_powerpoint(self):
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            page = make_image(d / "page.png", (320, 180))
+            with mock.patch.object(preview_slides, "find_ghostscript", return_value=None),                     mock.patch.object(preview_slides.platform, "system", return_value="Windows"),                     mock.patch.object(powerpoint, "export_png", return_value=[page]) as png,                     mock.patch.object(powerpoint, "export_pdf") as pdf:
+                pages, sheet = preview_slides.preview(d / "deck.pptx", d, dpi=96)
+            png.assert_called_once_with(d / "deck.pptx", d, 96)
+            pdf.assert_not_called()
+            self.assertEqual(pages, [page])
+            self.assertTrue(sheet.exists())
+
+    def test_ghostscript_present_keeps_the_pdf_route(self):  # planted control
+        with tempfile.TemporaryDirectory() as d:
+            d = Path(d)
+            page = make_image(d / "page.png", (320, 180))
+            with mock.patch.object(preview_slides, "find_ghostscript", return_value="gs"),                     mock.patch.object(preview_slides, "rasterize", return_value=[page]),                     mock.patch.object(powerpoint, "export_png") as png,                     mock.patch.object(powerpoint, "export_pdf", return_value=d / "deck.pdf") as pdf:
+                preview_slides.preview(d / "deck.pptx", d)
+            png.assert_not_called()
+            pdf.assert_called_once()
 
     def test_default_preview_dir(self):
         p = Path("/x/task/out/deck-260930.pptx")

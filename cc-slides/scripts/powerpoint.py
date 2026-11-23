@@ -4,7 +4,8 @@ macOS: AppleScript. PowerPoint is sandboxed — it cannot read /tmp or most path
 prompt, and scripted `open` fails with -9074 — so the deck is staged inside PowerPoint's own
 container, opened with `open -a`, saved as PDF via an HFS path, copied back, and the staging
 directory removed. AppleScript "save as PNG" silently writes nothing, hence PDF + Ghostscript.
-Windows: COM (pywin32). Elsewhere: LibreOffice `soffice` as a best-effort fallback.
+Windows: COM (pywin32), always read-only and windowless (never takes the user's focus); without
+Ghostscript, `export_png` has PowerPoint write the slide PNGs itself. Elsewhere: LibreOffice `soffice` as a best-effort fallback.
 """
 import os
 import platform
@@ -101,6 +102,30 @@ def _export_pdf_windows(deck, pdf):
         pres.SaveAs(str(pdf), 32)  # ppSaveAsPDF
     finally:
         pres.Close()
+
+
+def export_png(deck, out_dir, dpi=80):
+    """Windows only: PowerPoint exports every slide as out_dir/slide-NN.png (no Ghostscript)."""
+    if platform.system() != "Windows":
+        raise PowerPointError("direct PNG export needs PowerPoint on Windows; install Ghostscript")
+    try:
+        import win32com.client  # type: ignore
+    except ImportError as e:  # pragma: no cover
+        raise PowerPointError("pywin32 is required on Windows: pip install pywin32") from e
+    deck, out_dir = Path(deck).resolve(), Path(out_dir).resolve()
+    app = win32com.client.Dispatch("PowerPoint.Application")
+    pres = app.Presentations.Open(str(deck), ReadOnly=True, Untitled=False, WithWindow=False)
+    try:
+        w = round(pres.PageSetup.SlideWidth * dpi / 72)  # slide size is in points
+        h = round(pres.PageSetup.SlideHeight * dpi / 72)
+        pages = []
+        for i in range(1, pres.Slides.Count + 1):
+            page = out_dir / f"slide-{i:02d}.png"
+            pres.Slides(i).Export(str(page), "PNG", w, h)
+            pages.append(page)
+    finally:
+        pres.Close()
+    return pages
 
 
 def _export_pdf_soffice(deck, pdf):

@@ -4,11 +4,13 @@
 Usage:
     python scripts/preview_slides.py <deck.pptx> [out_dir] [--dpi 80] [--columns 3]
 
-PowerPoint exports a PDF (see powerpoint.py), Ghostscript rasterises it. Default out_dir is
+PowerPoint exports a PDF (see powerpoint.py), Ghostscript rasterises it. On Windows without
+Ghostscript, PowerPoint exports the slide PNGs directly (read-only, windowless COM). Default out_dir is
 <deck dir>/preview/<deck stem>/ → slide-01.png … and contact.png. Read contact.png first,
 then individual slides for detail.
 """
 import argparse
+import platform
 import shutil
 import subprocess
 import sys
@@ -26,8 +28,12 @@ def default_preview_dir(deck):
     return deck.parent / "preview" / deck.stem
 
 
+def find_ghostscript():
+    return next((shutil.which(n) for n in GS_NAMES if shutil.which(n)), None)
+
+
 def rasterize(pdf, out_dir, dpi=80):
-    gs = next((shutil.which(n) for n in GS_NAMES if shutil.which(n)), None)
+    gs = find_ghostscript()
     if not gs:
         raise powerpoint.PowerPointError("Ghostscript not found (brew install ghostscript / choco install ghostscript)")
     for old in out_dir.glob("slide-*.png"):
@@ -63,8 +69,12 @@ def preview(deck, out_dir=None, dpi=80, columns=3):
     deck = Path(deck)
     out_dir = Path(out_dir) if out_dir else default_preview_dir(deck)
     out_dir.mkdir(parents=True, exist_ok=True)
-    pdf = powerpoint.export_pdf(deck, out_dir / f"{deck.stem}.pdf")
-    pages = rasterize(pdf, out_dir, dpi)
+    for old in out_dir.glob("slide-*.png"):
+        old.unlink()
+    if find_ghostscript() is None and platform.system() == "Windows":
+        pages = powerpoint.export_png(deck, out_dir, dpi)
+    else:
+        pages = rasterize(powerpoint.export_pdf(deck, out_dir / f"{deck.stem}.pdf"), out_dir, dpi)
     if not pages:
         raise powerpoint.PowerPointError("rasterisation produced no pages")
     return pages, contact_sheet(pages, out_dir / "contact.png", columns)
