@@ -71,8 +71,11 @@ Full spec reference: `scripts/build_slides.py` docstring; engineering contract: 
 python3 -m pip install -r requirements.txt
 ```
 
-Preview/PDF: Microsoft PowerPoint (macOS or Windows) and Ghostscript (`brew install ghostscript`).
-Building, inspecting, linting and the wording round-trip need neither.
+Preview/PDF: Microsoft PowerPoint (macOS or Windows) and Ghostscript (`brew install ghostscript`);
+on Windows, preview works without Ghostscript (PowerPoint exports the PNGs).
+Equations (`$...$` in `texts`, native PowerPoint math) need Office's `MML2OMML.XSL` (shipped with
+Microsoft Office; elsewhere set `CC_SLIDES_MML2OMML`). Building without equations, inspecting,
+linting and the wording round-trip need none of these.
 
 ## Work areas
 

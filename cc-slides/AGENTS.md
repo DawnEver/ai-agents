@@ -38,6 +38,11 @@ and looked at**. Markdown appears only for wording edits of an existing deck (`s
   symmetric crop), `stretch` (explicit opt-in to distortion). `""` leaves a slot empty.
 - Text: replaces the slot's paragraphs keeping the first paragraph's paragraph/run formatting;
   two leading spaces per indent level; `**bold**`; `\n` separates paragraphs.
+- Equations: `$LaTeX$` inline, a whole paragraph `$$LaTeX$$` displayed, `\$` a literal dollar.
+  Each becomes a native, editable PowerPoint equation (OMML in `a14:m`, slot size, Cambria Math):
+  LaTeX → MathML (`latex2mathml`) → OMML (Office's `MML2OMML.XSL`, or `$CC_SLIDES_MML2OMML`).
+  The fallback run keeps `$LaTeX$`, so `slides2md` round-trips it. An unbalanced `$`, `$$` sharing
+  a paragraph, unparsable LaTeX or a missing XSL → hard error, never plain text.
 - Tables: row count follows the spec (extra rows copy the last row), columns are fixed.
 - **Unfilled slots are dropped** — template content never leaks into generated slides.
 - More items than slots, unknown pattern, missing file, out-of-range slide → hard error.
@@ -55,7 +60,8 @@ and looked at**. Markdown appears only for wording edits of an existing deck (`s
 ### `preview_slides.py <deck.pptx> [out_dir] [--dpi 80] [--columns 3]`
 
 - Microsoft PowerPoint exports a PDF (`powerpoint.py`), Ghostscript rasterises it to
-  `slide-NN.png`, and `contact.png` tiles all slides. Default out_dir
+  `slide-NN.png`, and `contact.png` tiles all slides. Windows without Ghostscript: PowerPoint
+  exports each `slide-NN.png` itself (COM, read-only, `WithWindow=False` — never the user's focus). Default out_dir
   `<deck dir>/preview/<deck stem>/`. Read `contact.png` first.
 
 ### `to_pdf.py <deck.pptx> [output.pdf]` — on demand only
@@ -82,6 +88,15 @@ and looked at**. Markdown appears only for wording edits of an existing deck (`s
 - Windows: COM via pywin32 (`SaveAs(pdf, 32)`). Other OSes: LibreOffice fallback (lower fidelity).
 - Previewing opens and closes the deck in PowerPoint in the background; tell the user before the
   first preview of a session.
+
+## Content rules (user rulings 2026-11-23)
+
+1. **Equations are equations.** Every formula on a slide is a native equation (`$...$`), never
+   plain text such as `k = (P_DC + P_AC)/P_DC` or Unicode pseudo-subscripts.
+2. **Phenomenon first, then cause.** An explanation slide (or sequence) shows what is observed
+   (figure, table, numbers) first, then the mechanism (equations), then the conclusion.
+3. **No filler under figures.** No caption that repeats the title or names the view ("contour
+   view"); text under a figure must add information.
 
 ## Hard rules
 

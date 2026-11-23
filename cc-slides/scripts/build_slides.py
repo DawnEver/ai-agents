@@ -24,7 +24,8 @@ Spec (paths relative to the spec file):
     pattern = "three-up"
     title   = "Efficiency Map"
     images  = ["a.png", { path = "b.png", fit = "cover" }, ""]   # "" leaves a slot empty
-    texts   = ["Caption line\\n  indented **bold** line"]
+    texts   = ["Caption line\\n  indented **bold** line",
+               "$$k = 1 + \\frac{P_{AC}}{P_{DC}}$$"]  # $..$ / $$..$$ = native equation (omml.py)
     tables  = [[["Speed", "Eff"], ["1000", "93.2"]]]
     notes   = "Speaker notes"
 """
