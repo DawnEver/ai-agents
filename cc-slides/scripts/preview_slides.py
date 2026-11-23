@@ -19,6 +19,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 import powerpoint
+import slides_lib as lib
 
 GS_NAMES = ("gs", "gswin64c", "gswin32c")
 
@@ -81,6 +82,7 @@ def preview(deck, out_dir=None, dpi=80, columns=3):
 
 
 def main(argv=None):
+    lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("deck")
     ap.add_argument("out_dir", nargs="?")

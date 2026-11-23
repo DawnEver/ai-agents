@@ -122,6 +122,7 @@ def lint(path):
 
 
 def main(argv=None):
+    lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("deck")
     ap.add_argument("--strict", action="store_true", help="warnings also fail")

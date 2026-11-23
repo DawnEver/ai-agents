@@ -1,3 +1,5 @@
+import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -17,6 +19,17 @@ from fixtures import W, make_image, make_template  # noqa: E402
 
 
 class InspectTests(unittest.TestCase):
+    def test_cli_prints_non_ascii_on_a_cp1252_console(self):
+        with tempfile.TemporaryDirectory() as d:
+            prs = Presentation(make_template(Path(d)))
+            prs.slides[0].shapes.title.text = "42 → 48 A, δ ≈ 2.6 mm"
+            prs.save(Path(d) / "u.pptx")
+            env = dict(os.environ, PYTHONIOENCODING="cp1252")
+            r = subprocess.run([sys.executable, str(ROOT / "scripts" / "inspect_slides.py"), str(Path(d) / "u.pptx")],
+                               capture_output=True, env=env)
+        self.assertEqual(r.returncode, 0, r.stderr.decode(errors="replace"))
+        self.assertIn("→".encode(), r.stdout)
+
     def test_reports_slots_in_reading_order(self):
         with tempfile.TemporaryDirectory() as d:
             info = inspect_slides.inspect(make_template(Path(d)))

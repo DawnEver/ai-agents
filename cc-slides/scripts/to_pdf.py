@@ -9,9 +9,11 @@ import subprocess
 import sys
 
 import powerpoint
+import slides_lib as lib
 
 
 def main(argv=None):
+    lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("deck")
     ap.add_argument("output", nargs="?")

@@ -23,6 +23,13 @@ R_NS = "{http://schemas.openxmlformats.org/officeDocument/2006/relationships}"
 BR = "<br>"  # in text: a line break (a:br) inside a paragraph
 
 
+def utf8_stdout():
+    """Scripts print arrows and units; a Windows console defaults to cp1252 and would crash."""
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
+
+
 def load_toml(path):
     with open(path, "rb") as f:
         return tomllib.load(f)

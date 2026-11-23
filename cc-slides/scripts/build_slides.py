@@ -193,6 +193,7 @@ def build(spec_path, output=None):
 
 
 def main(argv=None):
+    lib.utf8_stdout()
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("spec")
     ap.add_argument("output", nargs="?")
