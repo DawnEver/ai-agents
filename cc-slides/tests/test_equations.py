@@ -79,6 +79,13 @@ class EquationTests(unittest.TestCase):
         self.assertIsNotNone(p.find(f".//{M}oMath"))
         self.assertEqual({r.find(qn("a:rPr")).get("b") for r in p.iter(f"{M}r")}, {"1"})
 
+    def test_lone_inline_equation_keeps_paragraph_alignment(self):
+        p = body("$I_{rms}$").find(qn("a:p"))
+        self.assertEqual(p.find(f".//{M}oMathParaPr/{M}jc").get(f"{M}val"), "left")
+        self.assertEqual(slides_lib.get_text(body("$I_{rms}$")), "$I_{rms}$")
+        mixed = body("current $I$ here").find(qn("a:p"))  # planted control: text beside it
+        self.assertIsNone(mixed.find(f".//{M}oMathPara"))
+
     def test_bad_latex_is_a_hard_error(self):
         with self.assertRaisesRegex(ValueError, "LaTeX"):
             body(r"$\frac{1}{$")

@@ -126,9 +126,11 @@ def _math_rpr(rpr, upright):
     return out
 
 
-def equation(latex, rpr, display=False):
+def equation(latex, rpr, display=False, jc=None):
     """An mc:AlternateContent holding the equation, to append to an a:p. `rpr` is the slot's run
-    formatting (size, colour), applied to every math run in the Cambria Math font."""
+    formatting (size, colour), applied to every math run in the Cambria Math font. PowerPoint
+    shows a paragraph holding nothing but an equation as display math: `jc` ("left", "center",
+    "right"; display default "centerGroup") aligns it, and an inline source with `jc` stays `$..$`."""
     omath = latex_to_omml(latex)
     for r in omath.iter(_m("r")):
         for foreign in [c for c in r if not c.tag.startswith(f"{{{M_NS}}}")]:
@@ -140,10 +142,10 @@ def equation(latex, rpr, display=False):
     alt = etree.Element(f"{{{MC_NS}}}AlternateContent", nsmap={"mc": MC_NS})
     choice = etree.SubElement(alt, f"{{{MC_NS}}}Choice", nsmap={"a14": A14_NS}, Requires="a14")
     holder = etree.SubElement(choice, f"{{{A14_NS}}}m")
-    if display:
+    if display or jc:
         para = etree.SubElement(holder, _m("oMathPara"), nsmap={"m": M_NS})
-        jc = etree.SubElement(etree.SubElement(para, _m("oMathParaPr")), _m("jc"))
-        jc.set(_m("val"), "centerGroup")
+        jc_el = etree.SubElement(etree.SubElement(para, _m("oMathParaPr")), _m("jc"))
+        jc_el.set(_m("val"), jc or "centerGroup")
         para.append(omath)
     else:
         holder.append(omath)

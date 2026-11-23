@@ -163,6 +163,9 @@ def _as_rpr(el):
     return rpr
 
 
+JC = {"l": "left", "ctr": "center", "r": "right", "just": "left", "dist": "left"}
+
+
 def set_text(tx_body, text):
     """Replace all paragraphs of an a:txBody / p:txBody with `text`, keeping the first paragraph's
     paragraph and run formatting. Two leading spaces per indent level; **bold** supported;
@@ -190,6 +193,16 @@ def set_text(tx_body, text):
             end = copy.deepcopy(rpr)
             end.tag = qn("a:endParaRPr")
             p.append(end)
+            continue
+        segments = split_bold(stripped)
+        lone = len(segments) == 1 and omml.split_math(segments[0][0])
+        if lone and len(lone) == 1 and lone[0][0] == "inline":
+            # PowerPoint would centre an equation-only paragraph; keep the paragraph's alignment
+            algn = new_ppr.get("algn", "l") if ppr is not None or level else "l"
+            seg_rpr = copy.deepcopy(rpr)
+            if segments[0][1]:
+                seg_rpr.set("b", "1")
+            p.append(omml.equation(lone[0][1], seg_rpr, jc=JC.get(algn, "left")))
             continue
         for seg, bold in split_bold(stripped):
             seg_rpr = copy.deepcopy(rpr)
