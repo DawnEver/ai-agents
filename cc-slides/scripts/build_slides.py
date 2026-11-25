@@ -30,6 +30,10 @@ Spec (paths relative to the spec file):
                "$$k = 1 + \\frac{P_{AC}}{P_{DC}}$$"]  # $..$ / $$..$$ = native equation (omml.py)
     tables  = [[["Speed", "Eff"], ["1000", "93.2"]]]
     notes   = "Speaker notes"
+
+    [[slides]]
+    keep = 3                                 # a kept slide may gain text boxes (inches)
+    add_texts = [{ text = "$$P = 3 I^2 R$$", left = 0.5, top = 5.8, width = 5.0, height = 1.2, size = 14 }]
 """
 import argparse
 import sys
@@ -38,6 +42,7 @@ from pathlib import Path
 
 from PIL import Image
 from pptx import Presentation
+from pptx.util import Inches, Pt
 
 import slides_lib as lib
 
@@ -140,6 +145,59 @@ def _render_slide(prs, pattern_slide, entry, static, base, slide_no, table_style
     return slide
 
 
+_BOX_KEYS = ("left", "top", "width", "height")
+
+
+class _Box:
+    """A declared box (EMU) standing in for a pattern slot, for `add_images`."""
+
+    def __init__(self, left, top, width, height, name):
+        self.left, self.top, self.width, self.height, self.name = left, top, width, height, name
+
+
+def _add_text_box(slide, item, slide_no):
+    """One text box on a kept slide at its declared inches; same text syntax as a slot (equations, **bold**)."""
+    missing = [k for k in ("text", *_BOX_KEYS) if k not in item]
+    if missing:
+        raise ValueError(f"slide {slide_no}: add_texts entry lacks {', '.join(missing)} (inches)")
+    box = slide.shapes.add_textbox(*(Inches(float(item[k])) for k in _BOX_KEYS))
+    box.text_frame.word_wrap = True
+    run = box.text_frame.paragraphs[0].add_run()
+    run.text = " "
+    run.font.size = Pt(float(item.get("size", 14)))
+    lib.set_text(box.text_frame._txBody, str(item["text"]))
+    return box
+
+
+def _add_table(slide, source_frame, source_part, item, slide_no):
+    """A copy of a deck table (its own style) at the declared inches, re-gridded to the rows' column count."""
+    missing = [k for k in ("rows", *_BOX_KEYS) if k not in item]
+    if missing:
+        raise ValueError(f"slide {slide_no}: add_tables entry lacks {', '.join(missing)}")
+    rows = item["rows"]
+    ncols = max(len(r) for r in rows)
+    frame = lib.copy_shape(source_frame, source_part, slide)
+    lib.set_table_columns(frame, ncols, Inches(float(item["width"])))
+    lib.set_table(frame, rows)
+    # Rows share the declared height; `size` (pt) sets every cell's text, so the table fits its box.
+    for tr in lib.table_rows(frame):
+        tr.set("h", str(int(Inches(float(item["height"]))) // len(rows)))
+    if "size" in item:
+        sz = str(int(float(item["size"]) * 100))
+        for tag in ("a:rPr", "a:endParaRPr"):
+            for rpr in frame.iter(lib.qn(tag)):
+                rpr.set("sz", sz)
+        for tc_pr in frame.iter(lib.qn("a:tcPr")):
+            for side in ("marT", "marB"):
+                tc_pr.set(side, "18000")
+    xfrm = frame.find(lib.qn("p:xfrm"))
+    xfrm.find(lib.qn("a:off")).set("x", str(int(Inches(float(item["left"])))))
+    xfrm.find(lib.qn("a:off")).set("y", str(int(Inches(float(item["top"])))))
+    xfrm.find(lib.qn("a:ext")).set("cx", str(int(Inches(float(item["width"])))))
+    xfrm.find(lib.qn("a:ext")).set("cy", str(int(Inches(float(item["height"])))))
+    return frame
+
+
 def build(spec_path, output=None):
     spec_path = Path(spec_path).absolute()
     spec = lib.load_toml(spec_path)
@@ -169,16 +227,37 @@ def build(spec_path, output=None):
                        style_source(name, p))
                 for name, p in spec.get("patterns", {}).items()}
 
+    def add_extras(slide, entry, no):
+        """`add_texts` / `add_images` / `add_tables` on a kept or rendered slide, each at its declared inches."""
+        for item in entry.get("add_texts", []):
+            _add_text_box(slide, item, no)
+        for item in entry.get("add_images", []):
+            missing = [k for k in ("path", *_BOX_KEYS) if k not in item]
+            if missing:
+                raise ValueError(f"slide {no}: add_images entry lacks {', '.join(missing)}")
+            path, fit = _image_item(item, base)
+            box = _Box(*(Inches(float(item[k])) for k in _BOX_KEYS), name=Path(item["path"]).stem)
+            _place_picture(slide, box, path, fit)
+        for item in entry.get("add_tables", []):
+            source = lib.first_table(template_slide(item.get("style_slide"), f"slide {no} add_tables style_slide"))
+            _add_table(slide, source, original[item["style_slide"] - 1].part, item, no)
+        if entry.get("add_texts") or entry.get("add_tables") or entry.get("add_images"):
+            lib.renumber_shape_ids(slide)
+
     order = []
     for no, entry in enumerate(spec.get("slides", []), start=1):
         if "keep" in entry:
-            order.append(template_slide(entry["keep"], f"slide {no}").slide_id)
+            kept = template_slide(entry["keep"], f"slide {no}")
+            add_extras(kept, entry, no)
+            order.append(kept.slide_id)
             continue
         name = entry.get("pattern")
         if name not in patterns:
             raise ValueError(f"slide {no}: unknown pattern {name!r}; defined: {sorted(patterns)}")
         pattern_slide, static, table_style = patterns[name]
-        order.append(_render_slide(prs, pattern_slide, entry, static, base, no, table_style).slide_id)
+        rendered = _render_slide(prs, pattern_slide, entry, static, base, no, table_style)
+        add_extras(rendered, entry, no)
+        order.append(rendered.slide_id)
     if not order:
         raise ValueError("spec defines no slides")
 

@@ -266,6 +266,31 @@ def get_table(graphic_frame_el):
             for tr in table_rows(graphic_frame_el)]
 
 
+def set_table_columns(graphic_frame_el, ncols, width_emu):
+    """Re-grid a table to `ncols` equal columns over `width_emu`: extra columns copy the last cell of each row
+    (its style), surplus columns are removed. The one place a table's column count changes."""
+    if ncols < 1:
+        raise ValueError("a table needs at least one column")
+    grid = graphic_frame_el.find(".//" + qn("a:tblGrid"))
+    cols = grid.findall(qn("a:gridCol"))
+    for tr in table_rows(graphic_frame_el):
+        tcs = tr.findall(qn("a:tc"))
+        while len(tcs) < ncols:
+            new = copy.deepcopy(tcs[-1])
+            tcs[-1].addnext(new)
+            tcs.append(new)
+        for tc in tcs[ncols:]:
+            tr.remove(tc)
+    while len(cols) < ncols:
+        new = copy.deepcopy(cols[-1])
+        cols[-1].addnext(new)
+        cols.append(new)
+    for col in cols[ncols:]:
+        grid.remove(col)
+    for col in grid.findall(qn("a:gridCol")):
+        col.set("w", str(int(width_emu) // ncols))
+
+
 def set_table(graphic_frame_el, rows):
     """Fill a table; row count follows `rows` (extra rows deep-copy the last row), columns are fixed."""
     trs = table_rows(graphic_frame_el)

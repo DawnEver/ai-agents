@@ -143,6 +143,20 @@ class TableStyleInDecksTests(unittest.TestCase):
         build_slides.build(spec, out)
         self.assertEqual(self.style_id(Presentation(out).slides[0]), DECK_STYLE)
 
+    def test_add_tables_copies_a_deck_table_at_its_inches_with_the_rows_column_count(self):
+        spec = self.dir / "deck.toml"
+        spec.write_text('template = "template.pptx"\n[[slides]]\nkeep = 1\n'
+                        'add_tables = [{ style_slide = 3, left = 0.3, top = 1.3, width = 6.5, height = 3.0, '
+                        'rows = [["Motor", "A", "B", "C", "D"], ["Poles", "6", "12", "6", "6"]] }]\n')
+        out = self.dir / "out.pptx"
+        build_slides.build(spec, out)
+        frame = next(s for s in Presentation(out).slides[0].shapes if s.has_table)
+        self.assertEqual(self.style_id(Presentation(out).slides[0]), DECK_STYLE)
+        self.assertEqual((len(frame.table.rows), len(frame.table.columns)), (2, 5))
+        self.assertEqual(frame.table.cell(1, 4).text, "6")
+        self.assertAlmostEqual(frame.left / 914400, 0.3, places=3)
+        self.assertAlmostEqual(sum(c.width for c in frame.table.columns) / 914400, 6.5, places=2)
+
     def test_restyle_cli_writes_a_new_deck_touching_only_listed_slides(self):
         out = self.dir / "restyled.pptx"
         restyle_tables.main([str(self.template), "--pattern-slide", "3", "--slides", "4", "-o", str(out)])

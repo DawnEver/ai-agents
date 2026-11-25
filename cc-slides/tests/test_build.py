@@ -149,6 +149,60 @@ class BuildTests(unittest.TestCase):
         self.assertEqual(len([n for n in names if re.match(r"ppt/slides/slide\d+\.xml$", n)]), 2)
 
 
+class KeepAddTextTests(unittest.TestCase):
+    """A kept slide may take extra text boxes (an equation under an existing figure) without being rebuilt."""
+
+    SPEC = """
+template = "template.pptx"
+
+[[slides]]
+keep = 1
+add_texts = [{ text = "$$P = 3 I^2 R$$\\nwhere R is the phase resistance", left = 0.5, top = 5.8, width = 5.0, height = 1.2, size = 14 }]
+"""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+        self.template = make_template(self.dir)
+        self.spec = self.dir / "deck.toml"
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_kept_slide_gains_a_text_box_at_its_inches_with_a_native_equation(self):
+        before = sha(self.template)
+        self.spec.write_text(self.SPEC)
+        out = self.dir / "out.pptx"
+        build_slides.build(self.spec, out)
+        slide = Presentation(out).slides[0]
+        self.assertEqual(slide.shapes.title.text, "Cover")  # the kept content is untouched
+        added = [s for s in slide.shapes if s.has_text_frame and "phase resistance" in s.text_frame.text]
+        self.assertEqual(len(added), 1)
+        box = added[0]
+        self.assertAlmostEqual(box.left / 914400, 0.5, places=3)
+        self.assertAlmostEqual(box.top / 914400, 5.8, places=3)
+        self.assertIn("oMath", slide._element.xml)
+        self.assertTrue(all(r.font.size == Pt(14) for p in box.text_frame.paragraphs for r in p.runs))
+        ids = [s.shape_id for s in slide.shapes]
+        self.assertEqual(len(ids), len(set(ids)))
+        self.assertEqual(sha(self.template), before)
+
+    def test_kept_slide_gains_a_picture_inside_its_box_keeping_aspect(self):
+        make_image(self.dir / "wide.png", (1600, 900))
+        self.spec.write_text('template = "template.pptx"\n[[slides]]\nkeep = 1\n'
+                             'add_images = [{ path = "wide.png", left = 1.0, top = 1.0, width = 8.0, height = 6.0 }]\n')
+        out = self.dir / "out.pptx"
+        build_slides.build(self.spec, out)
+        pic = next(s for s in Presentation(out).slides[0].shapes if s.shape_type == 13)
+        self.assertTrue(inside(pic, (914400, 914400, 8 * 914400, 6 * 914400)))
+        self.assertAlmostEqual(pic.width / pic.height, 1600 / 900, places=2)
+
+    def test_add_texts_without_its_geometry_is_an_error(self):
+        self.spec.write_text(self.SPEC.replace(", left = 0.5", ""))
+        with self.assertRaisesRegex(ValueError, "left"):
+            build_slides.build(self.spec, self.dir / "out.pptx")
+
+
 class ReadingOrderTests(unittest.TestCase):
     def test_rows_then_left_to_right(self):
         class S:
